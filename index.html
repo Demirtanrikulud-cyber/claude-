@@ -1,0 +1,1873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#05070f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Stellar Dominion">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Stellar Dominion</title>
+<style>
+:root{
+  --bg:#03050c; --panel:rgba(12,18,34,.94); --panel2:rgba(22,30,52,.95); --line:#24314f;
+  --text:#d8e2f2; --muted:#8393b0; --accent:#4fc3f7; --good:#66bb6a; --bad:#ef5350; --warn:#ffca28;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+  font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;user-select:none;-webkit-user-select:none}
+canvas#map{position:fixed;inset:0;width:100%;height:100%;touch-action:none;display:block}
+button{font:inherit;color:var(--text);background:#1b2742;border:1px solid #2f4170;border-radius:8px;
+  padding:6px 10px;cursor:pointer;min-height:34px}
+button:hover:not(:disabled){background:#243457;border-color:#4a64a8}
+button:disabled{opacity:.42;cursor:default}
+button.primary{background:#1d5c86;border-color:#3a8cc4}
+button.danger{background:#6a1f28;border-color:#a33a48}
+button.good{background:#1f5a2c;border-color:#3d9b52}
+button.x{background:transparent;border:none;font-size:18px;padding:2px 8px;min-height:30px}
+input,select{font:inherit;color:var(--text);background:#0f1729;border:1px solid #2f4170;border-radius:8px;padding:8px}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+small{color:var(--muted)}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;flex:none;border:1px solid rgba(255,255,255,.35)}
+.pl{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+
+/* top bar */
+#topbar{position:fixed;top:0;left:0;right:0;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;
+  padding:6px 10px;padding-top:max(6px,env(safe-area-inset-top));background:linear-gradient(#0a1022f2,#0a1022d0);
+  border-bottom:1px solid var(--line);z-index:5}
+#topbar .emp{display:flex;align-items:center;gap:6px;font-weight:600;max-width:180px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#topbar .res{display:flex;align-items:baseline;gap:3px;background:#111a30;border:1px solid var(--line);border-radius:8px;padding:3px 8px;white-space:nowrap}
+#topbar .res small{font-size:11px}
+#topbar .res .pos{color:var(--good)} #topbar .res .neg{color:var(--bad)}
+#topbar .date{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+#topbar .speed{display:flex;gap:3px}
+#topbar .speed button{min-width:38px;padding:4px 6px;min-height:32px}
+#topbar .speed button.on{background:#1d5c86;border-color:#4fc3f7}
+#topbar .menu{display:flex;gap:4px;margin-left:auto}
+#topbar .menu button{padding:4px 9px;min-height:32px}
+#tb-research{cursor:pointer}
+
+/* side panel */
+#panel{position:fixed;right:10px;top:64px;width:340px;max-height:calc(100% - 76px);overflow-y:auto;
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;z-index:4;
+  box-shadow:0 6px 30px rgba(0,0,0,.5)}
+#panel h4{margin:12px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.ph{display:flex;align-items:center;gap:8px}
+.ph .pt{flex:1;min-width:0} .ph .pt b{display:block;font-size:16px} .ph .pt small{display:block}
+.sub{margin:6px 0;color:var(--muted);font-size:13px}
+.kv{display:flex;justify-content:space-between;gap:8px;margin:3px 0}
+.bar{height:6px;background:#0b1222;border-radius:4px;overflow:hidden;border:1px solid #1d2a47}
+.bar>i{display:block;height:100%;background:var(--accent);width:0}
+.bar.def>i{background:#7e9cff} .bar.hp>i{background:var(--good)} .bar.col>i{background:var(--warn)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.opt{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:6px 8px;gap:1px}
+.opt b{font-size:13px} .opt small{font-size:11px;line-height:1.2}
+.row{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #18223b}
+.row:last-child{border-bottom:none}
+.row .grow{flex:1;min-width:0}
+.row button{min-height:28px;padding:2px 8px}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{background:#16213b;border:1px solid var(--line);border-radius:6px;padding:2px 6px;font-size:12px;display:inline-flex;align-items:center;gap:4px}
+.chip button{min-height:20px;padding:0 4px;border:none;background:transparent;color:var(--muted)}
+.hint{margin-top:10px;padding:8px;border-radius:8px;background:#10243a;border:1px solid #1f4a6e;color:#a9d7f5;font-size:13px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+
+/* toasts */
+#toasts{position:fixed;left:50%;transform:translateX(-50%);top:70px;z-index:8;display:flex;flex-direction:column;gap:6px;
+  align-items:center;pointer-events:none;width:min(92vw,460px)}
+.toast{pointer-events:auto;background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;
+  padding:8px 12px;box-shadow:0 4px 18px rgba(0,0,0,.5);animation:tin .25s ease-out;cursor:pointer;width:100%}
+@keyframes tin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+
+/* floating map controls */
+#mapctl{position:fixed;left:10px;bottom:max(12px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:6px;z-index:3}
+#mapctl button{width:42px;height:42px;font-size:18px;padding:0;background:rgba(20,30,52,.85)}
+
+/* modal */
+#modal{position:fixed;inset:0;background:rgba(2,4,10,.6);z-index:10;display:flex;align-items:center;justify-content:center;padding:12px}
+.modal-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:min(980px,100%);max-height:100%;display:flex;flex-direction:column;
+  box-shadow:0 10px 50px rgba(0,0,0,.6)}
+.modal-box.small{width:min(460px,100%)}
+.modal-head{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+.modal-head h2{margin:0;font-size:18px;flex:1}
+#modal-body{overflow-y:auto;padding:12px 14px}
+.techgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.techcol h3{margin:0 0 6px;font-size:13px;text-transform:uppercase;color:var(--muted);letter-spacing:.06em}
+.tech{display:block;width:100%;text-align:left;margin-bottom:6px;padding:7px 9px;position:relative;overflow:hidden}
+.tech b{display:block;font-size:13px} .tech small{display:block;font-size:11px}
+.tech.done{background:#173a24;border-color:#2f7a45;opacity:1}
+.tech.active{background:#173452;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.tech.locked{opacity:.4}
+.tech .tp{position:absolute;left:0;bottom:0;height:3px;background:var(--accent)}
+.dcard{background:#0f1729;border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
+.dh{display:flex;align-items:center;gap:8px}
+.dh b{flex:1}
+.badge{font-size:11px;padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.05em;border:1px solid}
+.badge.war{color:#ff8a80;border-color:#a33a48;background:#3a1218}
+.badge.peace{color:#b0bec5;border-color:#455a64;background:#18222b}
+.badge.alliance{color:#a5d6a7;border-color:#3d9b52;background:#13301b}
+.badge.dead{color:#777;border-color:#444}
+.log{font-size:13px;max-height:260px;overflow-y:auto}
+.log div{padding:2px 0;border-bottom:1px solid #141d33}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* full screens */
+#screen{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:16px;
+  background:radial-gradient(ellipse at 30% 20%,#1a2350 0%,#070a18 55%,#020309 100%);overflow-y:auto}
+.scr{width:min(520px,100%);text-align:center}
+.scr h1{font-size:clamp(34px,8vw,56px);margin:0 0 4px;letter-spacing:.08em;
+  background:linear-gradient(90deg,#9be7ff,#4fc3f7,#b39ddb);-webkit-background-clip:text;background-clip:text;color:transparent}
+.scr .tag{color:var(--muted);margin-bottom:24px}
+.scr .menu-btns{display:flex;flex-direction:column;gap:10px;max-width:300px;margin:0 auto}
+.scr .menu-btns button{padding:12px;font-size:16px}
+.form{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.form label{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:13px}
+.swatches{display:flex;flex-wrap:wrap;gap:8px}
+.swatch{width:34px;height:34px;border-radius:50%;border:2px solid transparent;cursor:pointer;min-height:0;padding:0}
+.swatch.on{border-color:#fff;box-shadow:0 0 0 2px #000 inset}
+.help{text-align:left;font-size:14px}
+.help h3{margin:14px 0 4px;color:var(--accent);font-size:15px}
+.help ul{margin:4px 0;padding-left:20px}
+.help table{border-collapse:collapse;font-size:13px}
+.help td,.help th{border:1px solid var(--line);padding:3px 7px}
+
+@media (max-width:760px){
+  body{font-size:13px}
+  #topbar{gap:4px 6px;padding:4px 6px;padding-top:max(4px,env(safe-area-inset-top))}
+  #topbar .emp{display:none}
+  #topbar .res{padding:2px 6px;font-size:12px}
+  #topbar .date{font-size:11px}
+  #topbar .speed{gap:2px}
+  #topbar .speed button{min-width:30px;font-size:12px;min-height:30px;padding:2px 4px}
+  #topbar .menu{margin-left:auto;gap:3px}
+  #topbar .menu button{font-size:12px;padding:2px 6px;min-height:30px}
+  #topbar .menu .long{display:none}
+  #panel{left:0;right:0;top:auto;bottom:0;width:auto;max-height:52vh;border-radius:14px 14px 0 0;
+    padding-bottom:max(10px,env(safe-area-inset-bottom))}
+  #mapctl.up{bottom:calc(52vh + 8px)}
+  .techgrid{grid-template-columns:1fr 1fr}
+  .cols{grid-template-columns:1fr}
+  #toasts{top:84px}
+}
+@media (max-width:420px){ .techgrid{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<canvas id="map"></canvas>
+
+<div id="topbar" class="hidden">
+  <div class="emp"><span class="dot" id="tb-color"></span><span id="tb-name"></span></div>
+  <div class="res" title="Energy (credits) — pays upkeep for ships and buildings">⚡<span id="tb-en">0</span><small id="tb-enr"></small></div>
+  <div class="res" title="Minerals — used to construct buildings and ships">◆<span id="tb-mi">0</span><small id="tb-mir"></small></div>
+  <div class="res" id="tb-research" data-act="openTech" title="Research — click to open the tech tree">🔬<span id="tb-re">0</span><small id="tb-rer"></small></div>
+  <div class="date" id="tb-date"></div>
+  <div class="speed">
+    <button data-act="pause" id="sp0" title="Pause (Space)">⏸</button>
+    <button data-act="speed" data-arg="1" id="sp1" title="Speed 1 (key 1)">1×</button>
+    <button data-act="speed" data-arg="2" id="sp2" title="Speed 2 (key 2)">2×</button>
+    <button data-act="speed" data-arg="4" id="sp4" title="Speed 3 (key 3)">4×</button>
+    <button data-act="speed" data-arg="8" id="sp8" title="Speed 4 (key 4)">8×</button>
+  </div>
+  <div class="menu">
+    <button data-act="openTech" title="Tech tree (T)">Tech</button>
+    <button data-act="openDiplo" title="Diplomacy (D)">Diplo<span class="long">macy</span></button>
+    <button data-act="openEmpire" title="Empire overview (E)">Empire</button>
+    <button data-act="openMenu" title="Menu (Esc)">☰</button>
+  </div>
+</div>
+
+<div id="panel" class="hidden"></div>
+<div id="toasts"></div>
+<div id="mapctl" class="hidden">
+  <button data-act="zoomIn" title="Zoom in">+</button>
+  <button data-act="zoomOut" title="Zoom out">−</button>
+  <button data-act="home" title="Centre on capital (H)">⌂</button>
+</div>
+
+<div id="modal" class="hidden">
+  <div class="modal-box" id="modal-box">
+    <div class="modal-head"><h2 id="modal-title"></h2><button class="x" data-act="closeModal" id="modal-close">✕</button></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<div id="screen"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   STELLAR DOMINION — real-time grand strategy, fully offline
+   ===================================================================== */
+
+// ---------- utilities ----------
+const $ = s => document.querySelector(s);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function fmt(n) { const a = Math.abs(n); if (a >= 1e6) return (n / 1e6).toFixed(1) + 'M'; if (a >= 1e4) return (n / 1e3).toFixed(1) + 'k'; return Math.floor(n).toString(); }
+function sgn(n, d = 1) { return (n >= 0 ? '+' : '') + n.toFixed(d); }
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function pick(arr, r = Math.random) { return arr[Math.floor(r() * arr.length)]; }
+function wpick(entries, r = Math.random) { let t = 0; for (const [, w] of entries) t += w; let x = r() * t; for (const [k, w] of entries) { if ((x -= w) <= 0) return k; } return entries[entries.length - 1][0]; }
+function ordinal(n) { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+
+// ---------- game data ----------
+const PLANETS = {
+  terran: { name: 'Terran', color: '#4caf50', hab: 1.0, min: 1.0, en: 1.0 },
+  ocean: { name: 'Ocean', color: '#2196f3', hab: 0.9, min: 0.8, en: 1.1 },
+  jungle: { name: 'Jungle', color: '#2e7d32', hab: 0.8, min: 0.9, en: 1.0 },
+  desert: { name: 'Desert', color: '#e0a84a', hab: 0.7, min: 1.2, en: 1.0 },
+  tundra: { name: 'Tundra', color: '#9ec9d6', hab: 0.6, min: 1.1, en: 0.9 },
+  ice: { name: 'Ice', color: '#d6f0ff', hab: 0.35, min: 1.2, en: 0.8 },
+  toxic: { name: 'Toxic', color: '#a4c639', hab: 0.25, min: 1.3, en: 1.3 },
+  barren: { name: 'Barren', color: '#9e8e80', hab: 0.2, min: 1.6, en: 0.8 },
+  molten: { name: 'Molten', color: '#ff5722', hab: 0.15, min: 1.8, en: 1.2 },
+  gas: { name: 'Gas Giant', color: '#c79bd8', hab: 0.15, min: 0.6, en: 1.8 },
+};
+const PLANET_WEIGHTS = [['terran', 4], ['ocean', 5], ['jungle', 5], ['desert', 8], ['tundra', 7], ['ice', 8], ['toxic', 7], ['barren', 10], ['molten', 6], ['gas', 8]];
+const STAR_COLORS = ['#fff4e0', '#ffd27a', '#ff9a6b', '#a8c8ff', '#ffffff', '#ffe9b0'];
+
+const BUILDINGS = {
+  mine: { name: 'Mining Complex', icon: '◆', cost: { minerals: 60 }, time: 10, jobs: 1, upkeep: 0.3, desc: '+4 minerals/day × planet richness' },
+  power: { name: 'Power Plant', icon: '⚡', cost: { minerals: 60 }, time: 10, jobs: 1, upkeep: 0, desc: '+4 energy/day × planet richness' },
+  lab: { name: 'Research Lab', icon: '🔬', cost: { minerals: 80, energy: 20 }, time: 14, jobs: 1, upkeep: 0.5, desc: '+3 research/day' },
+  shipyard: { name: 'Shipyard', icon: '⚓', cost: { minerals: 120 }, time: 20, jobs: 1, upkeep: 1, unique: true, desc: 'Build ships here (1 per world)' },
+  defense: { name: 'Defense Grid', icon: '🛡', cost: { minerals: 100 }, time: 16, jobs: 1, upkeep: 0.5, desc: '+100 planet defense, +4 planet firepower' },
+  habitat: { name: 'Habitat Dome', icon: '⌂', cost: { minerals: 80 }, time: 14, jobs: 0, upkeep: 0.5, desc: '+3 pop capacity (no worker needed)' },
+};
+const SHIPS = {
+  corvette: { name: 'Corvette', short: 'CV', hp: 30, atk: 4, speed: 42, cost: { minerals: 40 }, time: 8, upkeep: 0.2, tech: null, desc: 'Fast & cheap. Strong vs Battleships.' },
+  destroyer: { name: 'Destroyer', short: 'DD', hp: 60, atk: 6, speed: 36, cost: { minerals: 80 }, time: 14, upkeep: 0.4, tech: null, desc: 'Flak screen. Strong vs Corvettes.' },
+  cruiser: { name: 'Cruiser', short: 'CR', hp: 140, atk: 12, speed: 30, cost: { minerals: 170, energy: 20 }, time: 24, upkeep: 0.8, tech: 'cruisers', desc: 'Line ship. Strong vs Destroyers.' },
+  battleship: { name: 'Battleship', short: 'BB', hp: 360, atk: 28, speed: 24, cost: { minerals: 400, energy: 60 }, time: 40, upkeep: 1.6, tech: 'battleships', desc: 'Heavy guns. Strong vs Cruisers, weak vs Corvettes.' },
+  colony: { name: 'Colony Ship', short: 'COL', hp: 25, atk: 0, speed: 28, cost: { minerals: 90, energy: 40 }, time: 16, upkeep: 0.3, tech: null, desc: 'Settles an unclaimed world.' },
+};
+const WAR_CLASSES = ['corvette', 'destroyer', 'cruiser', 'battleship'];
+const BONUS = { corvette: { battleship: 2.2 }, destroyer: { corvette: 2.2 }, cruiser: { destroyer: 1.8 }, battleship: { cruiser: 1.8, corvette: 0.5 } };
+const bonus = (a, t) => (BONUS[a] && BONUS[a][t]) || 1;
+
+const TECHS = {
+  weapons1: { name: 'Laser Focusing', cat: 'Military', cost: 250, req: [], desc: '+15% ship damage' },
+  weapons2: { name: 'Plasma Cannons', cat: 'Military', cost: 700, req: ['weapons1'], desc: '+15% ship damage' },
+  weapons3: { name: 'Antimatter Lances', cat: 'Military', cost: 1600, req: ['weapons2'], desc: '+20% ship damage' },
+  armor1: { name: 'Composite Armor', cat: 'Military', cost: 250, req: [], desc: '+15% ship hull' },
+  armor2: { name: 'Neutronium Plating', cat: 'Military', cost: 700, req: ['armor1'], desc: '+15% ship hull' },
+  armor3: { name: 'Adaptive Hulls', cat: 'Military', cost: 1600, req: ['armor2'], desc: '+20% ship hull' },
+  flak: { name: 'Point Defense', cat: 'Military', cost: 450, req: ['weapons1'], desc: 'Destroyers deal +30% damage' },
+  cruisers: { name: 'Cruiser Hulls', cat: 'Engineering', cost: 400, req: [], desc: 'Unlocks Cruisers' },
+  battleships: { name: 'Battleship Hulls', cat: 'Engineering', cost: 1100, req: ['cruisers'], desc: 'Unlocks Battleships' },
+  engines1: { name: 'Ion Thrusters', cat: 'Engineering', cost: 300, req: [], desc: '+20% fleet speed' },
+  engines2: { name: 'Warp Drive', cat: 'Engineering', cost: 900, req: ['engines1'], desc: '+25% fleet speed' },
+  logistics: { name: 'Fleet Logistics', cat: 'Engineering', cost: 500, req: [], desc: '−25% ship upkeep, 2× repair speed' },
+  shields1: { name: 'Planetary Shields', cat: 'Engineering', cost: 350, req: [], desc: '+50% planet defense' },
+  shields2: { name: 'Fortress Worlds', cat: 'Engineering', cost: 1000, req: ['shields1'], desc: '+50% planet defense, +50% planet firepower' },
+  mining1: { name: 'Deep Core Mining', cat: 'Economy', cost: 300, req: [], desc: '+25% minerals' },
+  mining2: { name: 'Asteroid Harvesting', cat: 'Economy', cost: 900, req: ['mining1'], desc: '+25% minerals' },
+  power1: { name: 'Fusion Reactors', cat: 'Economy', cost: 300, req: [], desc: '+25% energy' },
+  power2: { name: 'Dyson Collectors', cat: 'Economy', cost: 900, req: ['power1'], desc: '+25% energy' },
+  research1: { name: 'Neural Networks', cat: 'Economy', cost: 350, req: [], desc: '+25% research' },
+  research2: { name: 'Quantum Computing', cat: 'Economy', cost: 1000, req: ['research1'], desc: '+25% research' },
+  hab1: { name: 'Terraforming', cat: 'Society', cost: 400, req: [], desc: '+20% habitability on every world' },
+  genetics: { name: 'Gene Tailoring', cat: 'Society', cost: 600, req: ['hab1'], desc: '+50% pop growth, +2 pop cap per world' },
+  admin: { name: 'Galactic Administration', cat: 'Society', cost: 500, req: [], desc: '+1 building slot on every world' },
+  diplomacy: { name: 'Xeno-Diplomacy', cat: 'Society', cost: 300, req: [], desc: '+20 opinion with every empire' },
+};
+const TECH_CATS = ['Military', 'Engineering', 'Economy', 'Society'];
+
+const DIFF = {
+  easy: { name: 'Easy', mult: 0.75, ai: 3.0, mil: 0.6, war: 2.2, grace: 400 },
+  normal: { name: 'Normal', mult: 1.0, ai: 2.0, mil: 1.0, war: 1.6, grace: 200 },
+  hard: { name: 'Hard', mult: 1.3, ai: 1.3, mil: 1.3, war: 1.3, grace: 110 },
+  insane: { name: 'Insane', mult: 1.7, ai: 0.9, mil: 1.6, war: 1.15, grace: 60 },
+};
+const PERS = {
+  militarist: { name: 'Militarist', aggr: 1.4, mil: 1.3, expand: 1.0, sci: 0.8, op: -10 },
+  expansionist: { name: 'Expansionist', aggr: 1.0, mil: 1.0, expand: 1.6, sci: 0.9, op: 0 },
+  scholarly: { name: 'Scholarly', aggr: 0.8, mil: 0.9, expand: 1.0, sci: 1.6, op: 5 },
+  pacifist: { name: 'Pacifist', aggr: 0.5, mil: 0.8, expand: 1.1, sci: 1.1, op: 15 },
+};
+const SIZES = { small: { name: 'Small (32 systems)', n: 32 }, medium: { name: 'Medium (56 systems)', n: 56 }, large: { name: 'Large (84 systems)', n: 84 }, huge: { name: 'Huge (120 systems)', n: 120 } };
+const COLORS = ['#4fc3f7', '#ef5350', '#66bb6a', '#ffca28', '#ab47bc', '#ff7043', '#26a69a', '#ec407a', '#d4e157', '#8d9eff'];
+const AI_NAMES = ['Varn Hegemony', 'Quell Collective', 'Ossari Dominion', 'Thalan Republic', 'Krynn Swarm', 'Eidolon Union', 'Sareth Imperium', 'Nova Concord', 'Draxis Pact', 'Myrr Theocracy'];
+const SYL1 = ['Al', 'Bel', 'Cor', 'Dra', 'Eri', 'Fen', 'Gal', 'Hel', 'Ix', 'Jor', 'Kel', 'Lun', 'Mor', 'Nex', 'Or', 'Pra', 'Qua', 'Ryn', 'Sol', 'Tau', 'Ul', 'Vex', 'Wyn', 'Xan', 'Yr', 'Zet', 'Ar', 'Ces', 'Del', 'Ka', 'Ma', 'No', 'Py', 'Si', 'Te', 'Vo', 'Ech', 'Ilt'];
+const SYL2 = ['a', 'on', 'is', 'ar', 'us', 'ex', 'ia', 'or', 'en', 'ae', 'ion', 'ix', 'ara', 'eus', 'ola', 'um', 'eth', 'yx', 'ane', 'ori'];
+const SUF = ['', '', '', '', '', '', ' Prime', ' Major', ' Minor', ' II', ' III', ' IV', ' Reach'];
+
+// ---------- global state ----------
+let G = null;              // the saved game state
+let byStar = new Map();    // starId -> fleets currently at star (rebuilt each step)
+let vis = new Uint8Array(0);
+let distCache = new Map();
+let sel = { star: null, fleet: null };
+let modalKind = null, modalArg = null;
+let dialogQueue = [];
+let fx = [];
+const cam = { x: 0, y: 0, z: 1 };
+let W = 0, H = 0, DPR = 1;
+const PLAYER = 0;
+
+// ---------- core helpers ----------
+const emp = id => G.empires[id];
+function relKey(a, b) { return a < b ? a + '_' + b : b + '_' + a; }
+function rel(a, b) { return G.rel[relKey(a, b)]; }
+function relS(a, b) { if (a === b) return 'self'; const r = rel(a, b); return r ? r.s : 'peace'; }
+function atWar(a, b) { return a !== b && a >= 0 && b >= 0 && relS(a, b) === 'war'; }
+function allied(a, b) { return a === b || relS(a, b) === 'alliance'; }
+
+function mods(e) {
+  if (e._m) return e._m;
+  const t = e.techs;
+  return e._m = {
+    dmg: 1 + (t.weapons1 ? .15 : 0) + (t.weapons2 ? .15 : 0) + (t.weapons3 ? .2 : 0),
+    hp: 1 + (t.armor1 ? .15 : 0) + (t.armor2 ? .15 : 0) + (t.armor3 ? .2 : 0),
+    speed: 1 + (t.engines1 ? .2 : 0) + (t.engines2 ? .25 : 0),
+    upkeep: t.logistics ? .75 : 1, repair: t.logistics ? 2 : 1,
+    def: 1 + (t.shields1 ? .5 : 0) + (t.shields2 ? .5 : 0), defAtk: t.shields2 ? 1.5 : 1,
+    min: 1 + (t.mining1 ? .25 : 0) + (t.mining2 ? .25 : 0),
+    en: 1 + (t.power1 ? .25 : 0) + (t.power2 ? .25 : 0),
+    res: 1 + (t.research1 ? .25 : 0) + (t.research2 ? .25 : 0),
+    hab: t.hab1 ? .2 : 0, growth: t.genetics ? 1.5 : 1, capBonus: t.genetics ? 2 : 0,
+    slots: t.admin ? 1 : 0, flak: t.flak ? 1.3 : 1, opinion: t.diplomacy ? 20 : 0,
+  };
+}
+function canAfford(e, cost) { return (e.res.minerals >= (cost.minerals || 0)) && (e.res.energy >= (cost.energy || 0)); }
+function pay(e, cost, sign = 1) { e.res.minerals -= sign * (cost.minerals || 0); e.res.energy -= sign * (cost.energy || 0); }
+function costStr(cost) { let s = ''; if (cost.minerals) s += '◆' + cost.minerals; if (cost.energy) s += ' ⚡' + cost.energy; return s.trim(); }
+function costValue(cost) { return (cost.minerals || 0) + (cost.energy || 0) * 1.5; }
+
+function countB(s, k) { let n = 0; for (const b of s.buildings) if (b === k) n++; return n; }
+function jobs(s) { let j = 0; for (const b of s.buildings) j += BUILDINGS[b].jobs; return j; }
+function isCapital(s) { return s.owner >= 0 && emp(s.owner).capital === s.id; }
+function starHab(s, eid = s.owner) { const e = eid >= 0 ? emp(eid) : null; return clamp(PLANETS[s.type].hab + (e ? mods(e).hab : 0), 0.05, 1); }
+function slots(s) { return s.size + (s.owner >= 0 ? mods(emp(s.owner)).slots : 0); }
+function popCap(s) { const m = mods(emp(s.owner)); return Math.max(1, s.size * 1.5 * starHab(s) + countB(s, 'habitat') * 3 + m.capBonus + (isCapital(s) ? 3 : 0)); }
+function defMax(s) { if (s.owner < 0) return 0; const m = mods(emp(s.owner)); return (60 + s.size * 15 + countB(s, 'defense') * 100 + (isCapital(s) ? 250 : 0)) * m.def; }
+function planetAtk(s) { if (s.owner < 0) return 0; const m = mods(emp(s.owner)); return (2 + countB(s, 'defense') * 4 + (isCapital(s) ? 3 : 0)) * m.defAtk; }
+function planetPower(s) { return s.owner < 0 ? 0 : Math.sqrt(planetAtk(s) * Math.max(0, s.defense)) * 1.2; }
+function starOutput(s) {
+  const e = emp(s.owner), m = mods(e), P = PLANETS[s.type];
+  const j = jobs(s), fill = j ? Math.min(1, s.pop / j) : 0, unemployed = Math.max(0, s.pop - j);
+  let en = countB(s, 'power') * 4 * P.en * fill + unemployed * 0.5 + s.pop * 0.1;
+  let mi = countB(s, 'mine') * 4 * P.min * fill;
+  let re = countB(s, 'lab') * 3 * fill + s.pop * 0.05;
+  if (isCapital(s)) { en += 4; mi += 3; re += 3; }
+  en *= m.en * e.mult; mi *= m.min * e.mult; re *= m.res * e.mult;
+  let up = 0; for (const b of s.buildings) up += BUILDINGS[b].upkeep;
+  return { en, mi, re, up };
+}
+
+// fleets
+function fleetTotal(f) { let n = 0; for (const c in f.ships) n += f.ships[c].n; return n; }
+function isArmed(f) { for (const c of WAR_CLASSES) if (f.ships[c] && f.ships[c].n > 0) return true; return false; }
+function colonyOnly(f) { return !isArmed(f) && f.ships.colony && f.ships.colony.n > 0; }
+function fleetSpeed(f) { let sp = Infinity; for (const c in f.ships) if (f.ships[c].n > 0) sp = Math.min(sp, SHIPS[c].speed); return (isFinite(sp) ? sp : 30) * mods(emp(f.owner)).speed; }
+function shipPower(c, m) { const S = SHIPS[c]; return Math.sqrt(S.atk * m.dmg * (c === 'destroyer' ? m.flak : 1) * S.hp * m.hp); }
+function fleetPower(f) { const m = mods(emp(f.owner)); let p = 0; for (const c in f.ships) { const sh = f.ships[c]; if (!sh.n) continue; const hpT = SHIPS[c].hp * m.hp * sh.n; p += sh.n * shipPower(c, m) * Math.max(0.2, 1 - sh.dmg / hpT); } return p; }
+function fleetHull(f) { const m = mods(emp(f.owner)); let a = 0, b = 0; for (const c in f.ships) { const sh = f.ships[c]; const t = SHIPS[c].hp * m.hp * sh.n; a += t - sh.dmg; b += t; } return b ? a / b : 1; }
+function addShips(f, c, n) { if (!f.ships[c]) f.ships[c] = { n: 0, dmg: 0 }; f.ships[c].n += n; }
+function cleanFleet(f) { for (const c in f.ships) if (f.ships[c].n <= 0) delete f.ships[c]; }
+function fleetName(e, colony) { if (colony) return 'Colony Ship'; e.fleetNo = (e.fleetNo || 0) + 1; return ordinal(e.fleetNo) + ' Fleet'; }
+function newFleet(owner, at, name) { const f = { id: G.nextId++, owner, name, ships: {}, at, path: [], from: null, to: null, prog: 0, autoCol: false, target: null }; G.fleets.push(f); return f; }
+function fleetPos(f) {
+  if (f.at !== null) { const s = G.stars[f.at]; return [s.x, s.y]; }
+  const a = G.stars[f.from], b = G.stars[f.to]; return [lerp(a.x, b.x, f.prog), lerp(a.y, b.y, f.prog)];
+}
+function fleetsAt(id) { return byStar.get(id) || []; }
+function hostilePower(starId, eid) { let p = 0; for (const f of fleetsAt(starId)) if (atWar(f.owner, eid)) p += fleetPower(f); return p; }
+function friendlyPower(starId, eid) { let p = 0; for (const f of fleetsAt(starId)) if (allied(f.owner, eid)) p += fleetPower(f); return p; }
+function hostileArmedAt(starId, eid) { for (const f of fleetsAt(starId)) if (atWar(f.owner, eid) && isArmed(f)) return true; return false; }
+
+// graph
+function laneLen(a, b) { const A = G.stars[a], B = G.stars[b]; return Math.hypot(A.x - B.x, A.y - B.y); }
+function dij(src) {
+  if (distCache.has(src)) return distCache.get(src);
+  const n = G.stars.length, dist = new Float64Array(n).fill(Infinity), prev = new Int32Array(n).fill(-1), done = new Uint8Array(n);
+  dist[src] = 0;
+  for (let it = 0; it < n; it++) {
+    let u = -1, best = Infinity;
+    for (let i = 0; i < n; i++) if (!done[i] && dist[i] < best) { best = dist[i]; u = i; }
+    if (u < 0) break; done[u] = 1;
+    for (const v of G.stars[u].lanes) { const d = best + laneLen(u, v); if (d < dist[v]) { dist[v] = d; prev[v] = u; } }
+  }
+  const r = { dist, prev }; distCache.set(src, r); return r;
+}
+function pathTo(r, src, dst) { const p = []; let c = dst; while (c !== src && c >= 0) { p.unshift(c); c = r.prev[c]; } return c === src ? p : null; }
+
+// ---------- galaxy generation ----------
+function genName(r, used) {
+  for (let i = 0; i < 200; i++) {
+    const n = pick(SYL1, r) + pick(SYL2, r) + (r() < 0.35 ? pick(SYL2, r) : '') + pick(SUF, r);
+    if (!used.has(n)) { used.add(n); return n; }
+  }
+  const n = 'Sector ' + used.size; used.add(n); return n;
+}
+function genGalaxy(n, seed) {
+  const r = mulberry32(seed);
+  const minD = 100, area = n * minD * minD * 2.1, GW = Math.sqrt(area * 1.6), GH = area / GW;
+  const pts = []; let tries = 0;
+  while (pts.length < n && tries < n * 600) {
+    tries++;
+    const x = (r() - 0.5) * GW, y = (r() - 0.5) * GH;
+    if ((x * x) / (GW * GW / 4) + (y * y) / (GH * GH / 4) > 1) continue;
+    let ok = true; for (const p of pts) if (Math.hypot(p.x - x, p.y - y) < minD) { ok = false; break; }
+    if (ok) pts.push({ x, y });
+  }
+  const N = pts.length, d = (i, j) => Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y);
+  // MST (Prim)
+  const inT = new Uint8Array(N), best = new Float64Array(N).fill(Infinity), par = new Int32Array(N).fill(-1);
+  const edges = new Set(); best[0] = 0;
+  for (let it = 0; it < N; it++) {
+    let u = -1, bv = Infinity; for (let i = 0; i < N; i++) if (!inT[i] && best[i] < bv) { bv = best[i]; u = i; }
+    inT[u] = 1; if (par[u] >= 0) edges.add(Math.min(u, par[u]) + ',' + Math.max(u, par[u]));
+    for (let v = 0; v < N; v++) if (!inT[v]) { const dv = d(u, v); if (dv < best[v]) { best[v] = dv; par[v] = u; } }
+  }
+  // Gabriel edges (planar), keep most short ones
+  for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
+    const dd = d(i, j); if (dd > minD * 2.3) continue;
+    const mx = (pts[i].x + pts[j].x) / 2, my = (pts[i].y + pts[j].y) / 2, rr = dd / 2;
+    let ok = true; for (let k = 0; k < N; k++) { if (k === i || k === j) continue; if (Math.hypot(pts[k].x - mx, pts[k].y - my) < rr * 0.98) { ok = false; break; } }
+    if (ok && r() < 0.72) edges.add(i + ',' + j);
+  }
+  const used = new Set();
+  const stars = pts.map((p, i) => {
+    const type = wpick(PLANET_WEIGHTS, r);
+    return {
+      id: i, x: Math.round(p.x), y: Math.round(p.y), name: genName(r, used), lanes: [],
+      type, size: wpick([[2, 2], [3, 4], [4, 4], [5, 3], [6, 1]], r), sc: Math.floor(r() * STAR_COLORS.length),
+      owner: -1, pop: 0, buildings: [], bq: [], sq: [], defense: 0, colonizing: null, seen: -1, exp: 0,
+    };
+  });
+  for (const e of edges) { const [a, b] = e.split(',').map(Number); stars[a].lanes.push(b); stars[b].lanes.push(a); }
+  return stars;
+}
+
+function newGame(opts) {
+  const seed = Math.floor(Math.random() * 1e9);
+  const r = mulberry32(seed ^ 0x5bd1e995);
+  const stars = genGalaxy(SIZES[opts.size].n, seed);
+  const nEmp = 1 + opts.ais;
+  G = {
+    v: 1, seed, time: 0, speed: 1, paused: false, diff: opts.diff, size: opts.size,
+    stars, empires: [], fleets: [], rel: {}, op: {}, nextId: 1, log: [], over: false, victoryShown: false,
+  };
+  distCache = new Map(); byStar = new Map(); fx = []; dialogQueue = [];
+  // capitals: spread out
+  const cands = stars.filter(s => s.lanes.length >= 2);
+  const caps = [pick(cands, r)];
+  while (caps.length < nEmp) {
+    let best = null, bd = -1;
+    for (const s of cands) { if (caps.includes(s)) continue; let md = Infinity; for (const c of caps) md = Math.min(md, Math.hypot(s.x - c.x, s.y - c.y)); md *= 0.85 + r() * 0.3; if (md > bd) { bd = md; best = s; } }
+    caps.push(best);
+  }
+  const colors = COLORS.filter(c => c !== opts.color);
+  const names = AI_NAMES.slice().sort(() => r() - 0.5);
+  const persKeys = Object.keys(PERS);
+  for (let i = 0; i < nEmp; i++) {
+    const isP = i === 0;
+    const e = {
+      id: i, name: isP ? (opts.name || 'Terran Federation') : names[i - 1], color: isP ? opts.color : colors[(i - 1) % colors.length],
+      isPlayer: isP, alive: true, pers: isP ? null : pick(persKeys, r), mult: isP ? 1 : DIFF[opts.diff].mult,
+      res: { energy: 150, minerals: 200, research: 0 }, techs: {}, techProg: {}, researching: null,
+      capital: caps[i].id, fleetNo: 0, aiT: 1 + r() * 2, diploT: 5 + r() * 10, power: 0, inc: { en: 0, mi: 0, re: 0 }, deficit: false, propT: 0, rally: null,
+    };
+    G.empires.push(e);
+    const c = caps[i];
+    c.owner = i; c.type = pick(['terran', 'ocean', 'jungle'], r); c.size = 6; c.pop = 8;
+    c.buildings = ['mine', 'power', 'lab', 'shipyard'];
+    // make neighbourhood fair: at least two decent worlds next door
+    let good = 0;
+    for (const nid of c.lanes) { const s = stars[nid]; if (PLANETS[s.type].hab >= 0.6) good++; }
+    for (const nid of c.lanes) { if (good >= 2) break; const s = stars[nid]; if (PLANETS[s.type].hab < 0.6 && s.owner < 0) { s.type = pick(['desert', 'tundra', 'jungle', 'ocean'], r); s.size = Math.max(s.size, 3); good++; } }
+  }
+  for (const e of G.empires) { const c = stars[e.capital]; c.defense = defMax(c); }
+  for (let a = 0; a < nEmp; a++) for (let b = 0; b < nEmp; b++) {
+    if (a < b) G.rel[relKey(a, b)] = { s: 'peace', truce: 0, since: 0, loss: {} };
+    if (a !== b) G.op[a + '>' + b] = 0;
+  }
+  for (const e of G.empires) {
+    const f = newFleet(e.id, e.capital, fleetName(e)); addShips(f, 'corvette', 3); addShips(f, 'destroyer', 1);
+    const c = newFleet(e.id, e.capital, 'Colony Ship'); addShips(c, 'colony', 1);
+  }
+  afterLoad();
+  notify(`Welcome, leader of the ${G.empires[0].name}. Expand, research and conquer!`, { color: '#4fc3f7' });
+}
+
+function afterLoad() {
+  distCache = new Map(); fx = []; sel = { star: null, fleet: null };
+  for (const e of G.empires) e._m = null;
+  rebuildIndex(); computeVis(); updateBorders(); updatePower();
+  const cap = G.stars[G.empires[0].capital] || G.stars[0];
+  cam.x = cap.x; cam.y = cap.y; cam.z = Math.min(W, H) < 700 ? 0.8 : 1;
+}
+
+// ---------- notifications ----------
+function notify(msg, o = {}) {
+  G.log.push({ d: Math.floor(G.time), m: msg, c: o.color || '#4fc3f7' });
+  if (G.log.length > 150) G.log.shift();
+  if (o.silent) return;
+  toast(msg, o.color, o.star);
+}
+function toast(msg, color = '#4fc3f7', star = null) {
+  const box = $('#toasts');
+  while (box.children.length >= 4) box.firstChild.remove();
+  const d = document.createElement('div');
+  d.className = 'toast'; d.style.borderLeftColor = color; d.textContent = msg;
+  if (star != null) { d.dataset.act = 'goto'; d.dataset.arg = star; }
+  box.appendChild(d);
+  setTimeout(() => d.remove(), 5500);
+}
+
+// ---------- simulation ----------
+function rebuildIndex() {
+  byStar = new Map();
+  for (const f of G.fleets) if (f.at !== null) { let a = byStar.get(f.at); if (!a) byStar.set(f.at, a = []); a.push(f); }
+}
+
+let visT = 0, powT = 0, borderT = 0, winT = 0;
+function step(dt) {
+  G.time += dt;
+  economy(dt);
+  movement(dt);
+  rebuildIndex();
+  combat(dt);
+  rebuildIndex();
+  colonization(dt);
+  upkeepStars(dt);
+  // opinion decay
+  const dec = Math.pow(0.99, dt);
+  for (const k in G.op) G.op[k] *= dec;
+  // AI
+  for (const e of G.empires) {
+    if (!e.alive || e.isPlayer) continue;
+    e.aiT -= dt; if (e.aiT <= 0) { e.aiT = DIFF[G.diff].ai * (0.8 + Math.random() * 0.4); aiTick(e); }
+    e.diploT -= dt; if (e.diploT <= 0) { e.diploT = 8 + Math.random() * 6; aiDiplo(e); }
+  }
+  if ((visT -= dt) <= 0) { visT = 0.3; computeVis(); }
+  if ((powT -= dt) <= 0) { powT = 2; updatePower(); }
+  if ((borderT -= dt) <= 0) { borderT = 5; updateBorders(); }
+  if ((winT -= dt) <= 0) { winT = 2; checkVictory(); }
+}
+
+function economy(dt) {
+  const inc = G.empires.map(() => ({ en: 0, mi: 0, re: 0, up: 0 }));
+  for (const s of G.stars) {
+    if (s.owner < 0) continue;
+    const o = starOutput(s), t = inc[s.owner];
+    t.en += o.en; t.mi += o.mi; t.re += o.re; t.up += o.up;
+  }
+  for (const f of G.fleets) { const m = mods(emp(f.owner)); for (const c in f.ships) inc[f.owner].up += f.ships[c].n * SHIPS[c].upkeep * m.upkeep; }
+  for (const e of G.empires) {
+    if (!e.alive) continue;
+    const t = inc[e.id];
+    if (e.deficit) { t.mi *= 0.5; t.re *= 0.5; }
+    const net = t.en - t.up;
+    e.inc = { en: net, mi: t.mi, re: t.re, up: t.up, gross: t.en };
+    e.res.energy += net * dt; e.res.minerals += t.mi * dt; e.res.research += t.re * dt;
+    if (e.res.energy < 0) { e.res.energy = 0; if (!e.deficit && e.isPlayer) notify('Energy deficit! Mineral and research output halved. Build power plants or reduce your fleet.', { color: '#ef5350' }); e.deficit = true; }
+    else if (e.res.energy > 5) e.deficit = false;
+    // research
+    if (e.researching) {
+      const k = e.researching, T = TECHS[k];
+      const need = T.cost - (e.techProg[k] || 0), x = Math.min(need, e.res.research);
+      e.techProg[k] = (e.techProg[k] || 0) + x; e.res.research -= x;
+      if (e.techProg[k] >= T.cost - 1e-6) {
+        e.techs[k] = true; e._m = null; e.researching = null;
+        if (e.isPlayer) notify(`Research complete: ${T.name} (${T.desc})`, { color: '#b39ddb' });
+      }
+    }
+  }
+}
+
+function upkeepStars(dt) {
+  for (const s of G.stars) {
+    if (s.owner < 0) continue;
+    const e = emp(s.owner), m = mods(e);
+    const besieged = hostileArmedAt(s.id, s.owner);
+    // population
+    const cap = popCap(s);
+    if (s.pop < cap) s.pop = Math.min(cap, s.pop + (0.03 * s.pop * (1 - s.pop / cap) + 0.008) * m.growth * dt);
+    else s.pop -= (s.pop - cap) * 0.05 * dt;
+    // defense regen
+    const dm = defMax(s);
+    if (!besieged) s.defense = Math.min(dm, s.defense + dm * 0.025 * dt);
+    else continue;
+    if (s.defense > dm) s.defense = dm;
+    // construction
+    if (s.bq.length) {
+      const q = s.bq[0]; q.p += dt;
+      if (q.p >= q.t) {
+        s.bq.shift();
+        if (s.buildings.length < slots(s)) { s.buildings.push(q.k); if (e.isPlayer) notify(`${BUILDINGS[q.k].name} completed at ${s.name}`, { color: '#66bb6a', star: s.id, silent: true }); }
+      }
+    }
+    if (s.sq.length && s.buildings.includes('shipyard')) {
+      const q = s.sq[0]; q.p += dt;
+      if (q.p >= q.t) { s.sq.shift(); spawnShip(s, q.k); }
+    }
+  }
+  // repairs
+  for (const f of G.fleets) {
+    if (f.at === null) continue;
+    const s = G.stars[f.at];
+    if (s.owner < 0 || !allied(s.owner, f.owner) || G.time - (s._combat || -99) < 1) continue;
+    const m = mods(emp(f.owner));
+    for (const c in f.ships) { const sh = f.ships[c]; if (sh.dmg > 0) sh.dmg = Math.max(0, sh.dmg - SHIPS[c].hp * m.hp * 0.06 * m.repair * dt * Math.min(sh.n, 4)); }
+  }
+}
+
+function spawnShip(s, c) {
+  const e = emp(s.owner);
+  let f = null;
+  if (c !== 'colony') f = fleetsAt(s.id).find(g => g.owner === s.owner && !g.path.length && g.at === s.id && !colonyOnly(g) && isArmed(g));
+  if (!f) { f = newFleet(s.owner, s.id, fleetName(e, c === 'colony')); let a = byStar.get(s.id); if (!a) byStar.set(s.id, a = []); a.push(f); }
+  addShips(f, c, 1);
+  if (e.isPlayer) notify(`${SHIPS[c].name} launched at ${s.name}`, { color: '#4fc3f7', star: s.id, silent: c !== 'colony' });
+}
+
+function movement(dt) {
+  for (const f of G.fleets) {
+    if (f.at !== null) {
+      if (!f.path.length) continue;
+      f.from = f.at; f.to = f.path.shift(); f.at = null; f.prog = 0;
+    }
+    const L = laneLen(f.from, f.to);
+    f.prog += fleetSpeed(f) * dt / L;
+    if (f.prog >= 1) { f.at = f.to; f.prog = 0; f.from = f.to = null; arrive(f); }
+  }
+}
+function arrive(f) {
+  const s = G.stars[f.at];
+  if (f.path.length) {
+    const blocked = G.fleets.some(g => g.at === s.id && atWar(g.owner, f.owner) && isArmed(g));
+    if (blocked) { f.path = []; if (f.owner === PLAYER) notify(`${f.name} was intercepted at ${s.name}!`, { color: '#ffca28', star: s.id }); }
+    return;
+  }
+  if (f.autoCol && colonyOnly(f) && s.owner < 0 && !s.colonizing) startColonize(f);
+}
+
+function orderMove(f, target) {
+  if (f.at !== null) {
+    if (f.at === target) { f.path = []; return true; }
+    const r = dij(f.at); if (!isFinite(r.dist[target])) return false;
+    f.path = pathTo(r, f.at, target);
+  } else {
+    const ra = dij(f.to), rb = dij(f.from), L = laneLen(f.from, f.to);
+    const ca = (1 - f.prog) * L + ra.dist[target], cb = f.prog * L + rb.dist[target];
+    if (cb < ca) { const of = f.from; f.from = f.to; f.to = of; f.prog = 1 - f.prog; f.path = target === f.to ? [] : pathTo(rb, f.to, target); }
+    else f.path = target === f.to ? [] : pathTo(ra, f.to, target);
+  }
+  f.autoCol = colonyOnly(f) && G.stars[target].owner < 0;
+  return true;
+}
+function fleetEta(f) {
+  let d = 0, cur;
+  if (f.at !== null) cur = f.at; else { d += (1 - f.prog) * laneLen(f.from, f.to); cur = f.to; }
+  for (const p of f.path) { d += laneLen(cur, p); cur = p; }
+  return d / fleetSpeed(f);
+}
+function fleetDest(f) { return f.path.length ? f.path[f.path.length - 1] : (f.at !== null ? f.at : f.to); }
+
+function combat(dt) {
+  for (const [sid, fl] of byStar) {
+    const s = G.stars[sid];
+    const parties = new Set(fl.map(f => f.owner)); if (s.owner >= 0) parties.add(s.owner);
+    const P = [...parties]; let hostile = false;
+    for (let i = 0; i < P.length && !hostile; i++) for (let j = i + 1; j < P.length; j++) if (atWar(P[i], P[j])) { hostile = true; break; }
+    if (!hostile) continue;
+    s._combat = G.time;
+    const pend = []; let planetDmg = 0; const planetBy = new Map();
+    for (const f of fl) {
+      const enemies = fl.filter(g => atWar(f.owner, g.owner));
+      let Wt = 0; for (const g of enemies) for (const c in g.ships) Wt += g.ships[c].n;
+      const m = mods(emp(f.owner));
+      for (const c in f.ships) {
+        const S = SHIPS[c], n = f.ships[c].n; if (!n || !S.atk) continue;
+        const dmg = n * S.atk * m.dmg * (c === 'destroyer' ? m.flak : 1) * dt;
+        if (Wt > 0) { for (const g of enemies) for (const t in g.ships) { const nt = g.ships[t].n; if (nt) pend.push([g, t, dmg * nt / Wt * bonus(c, t), f.owner]); } }
+        else if (s.owner >= 0 && atWar(f.owner, s.owner) && s.defense > 0) { planetDmg += dmg * 0.5; planetBy.set(f.owner, (planetBy.get(f.owner) || 0) + dmg); }
+      }
+    }
+    if (s.owner >= 0 && s.defense > 0) {
+      const enemies = fl.filter(g => atWar(s.owner, g.owner));
+      let Wt = 0; for (const g of enemies) for (const c in g.ships) Wt += g.ships[c].n;
+      const pa = planetAtk(s) * dt;
+      if (Wt > 0) for (const g of enemies) for (const t in g.ships) { const nt = g.ships[t].n; if (nt) pend.push([g, t, pa * nt / Wt, s.owner]); }
+    }
+    for (const [g, t, d, by] of pend) {
+      const sh = g.ships[t]; if (!sh || sh.n <= 0) continue;
+      sh.dmg += d; const hp = SHIPS[t].hp * mods(emp(g.owner)).hp;
+      while (sh.dmg >= hp && sh.n > 0) { sh.dmg -= hp; sh.n--; onKill(g, t, by, s); }
+      if (sh.n <= 0) { sh.n = 0; sh.dmg = 0; }
+    }
+    if (planetDmg > 0) s.defense = Math.max(0, s.defense - planetDmg);
+    for (const f of fl) {
+      cleanFleet(f);
+      if (fleetTotal(f) === 0 && f.owner === PLAYER) notify(`${f.name} was destroyed at ${s.name}.`, { color: '#ef5350', star: s.id });
+    }
+    if (s.owner === PLAYER && G.time - (s._alert || -999) > 30 && fl.some(f => atWar(f.owner, PLAYER) && isArmed(f))) {
+      s._alert = G.time; notify(`⚠ ${s.name} is under attack!`, { color: '#ff7043', star: s.id });
+    }
+    // capture
+    if (s.owner >= 0 && s.defense <= 0) {
+      const alive = fl.filter(f => fleetTotal(f) > 0);
+      const defended = alive.some(f => isArmed(f) && allied(f.owner, s.owner));
+      if (!defended) {
+        let bestO = -1, bp = 0;
+        for (const f of alive) if (isArmed(f) && atWar(f.owner, s.owner)) { const p = fleetPower(f) + (planetBy.get(f.owner) || 0); if (p > bp) { bp = p; bestO = f.owner; } }
+        if (bestO >= 0) capture(s, bestO);
+      }
+    }
+  }
+  G.fleets = G.fleets.filter(f => fleetTotal(f) > 0);
+  if (sel.fleet && !G.fleets.includes(sel.fleet)) sel.fleet = null;
+}
+function onKill(g, t, by, s) {
+  const r = rel(g.owner, by); if (r) r.loss[g.owner] = (r.loss[g.owner] || 0) + costValue(SHIPS[t].cost);
+  if (vis[s.id]) fx.push({ x: s.x + (Math.random() - 0.5) * 50, y: s.y + (Math.random() - 0.5) * 50, t: 0, c: emp(g.owner).color, big: t === 'battleship' || t === 'cruiser' });
+}
+function capture(s, newOwner) {
+  const old = s.owner, oe = emp(old), ne = emp(newOwner);
+  const wasCap = oe.capital === s.id;
+  s.owner = newOwner; s.pop = Math.max(1, s.pop * 0.6);
+  if (s.buildings.length) s.buildings.splice(Math.floor(Math.random() * s.buildings.length), 1);
+  s.bq = []; s.sq = []; s.colonizing = null; s.defense = defMax(s) * 0.15;
+  const r = rel(old, newOwner); if (r) r.loss[old] = (r.loss[old] || 0) + 250;
+  if (wasCap) { const rest = G.stars.filter(t => t.owner === old); oe.capital = rest.length ? rest.sort((a, b) => b.pop - a.pop)[0].id : -1; }
+  if (ne.capital < 0) ne.capital = s.id;
+  if (newOwner === PLAYER) notify(`We captured ${s.name} from the ${oe.name}!`, { color: '#66bb6a', star: s.id });
+  else if (old === PLAYER) notify(`${s.name} has fallen to the ${ne.name}!`, { color: '#ef5350', star: s.id });
+  else if (vis[s.id]) notify(`${ne.name} captured ${s.name} from ${oe.name}.`, { color: '#90a4ae', silent: true });
+  if (!G.stars.some(t => t.owner === old)) eliminate(old, newOwner);
+}
+function eliminate(id, by) {
+  const e = emp(id); e.alive = false;
+  G.fleets = G.fleets.filter(f => f.owner !== id);
+  for (const s of G.stars) if (s.colonizing && s.colonizing.owner === id) s.colonizing = null;
+  for (const o of G.empires) if (o.id !== id) { const r = rel(id, o.id); if (r) r.s = 'peace'; }
+  if (id === PLAYER) { G.over = true; openModal('gameover', 'defeat'); }
+  else notify(`The ${e.name} has been destroyed${by != null ? ' by the ' + emp(by).name : ''}!`, { color: '#ffca28' });
+  if (sel.fleet && !G.fleets.includes(sel.fleet)) sel.fleet = null;
+}
+function startColonize(f) {
+  const s = G.stars[f.at];
+  if (s.owner >= 0 || s.colonizing || !f.ships.colony || !f.ships.colony.n) return false;
+  f.ships.colony.n--; cleanFleet(f);
+  if (fleetTotal(f) === 0) { G.fleets = G.fleets.filter(g => g !== f); if (sel.fleet === f) sel.fleet = null; }
+  s.colonizing = { owner: f.owner, p: 0 };
+  if (f.owner === PLAYER) notify(`Colonization of ${s.name} has begun.`, { color: '#ffca28', star: s.id, silent: true });
+  return true;
+}
+function colonization(dt) {
+  for (const s of G.stars) {
+    const c = s.colonizing; if (!c) continue;
+    if (!emp(c.owner).alive) { s.colonizing = null; continue; }
+    if (hostileArmedAt(s.id, c.owner)) { s.colonizing = null; if (c.owner === PLAYER) notify(`Colonization of ${s.name} was disrupted by hostile ships!`, { color: '#ef5350', star: s.id }); continue; }
+    c.p += dt / 15;
+    if (c.p >= 1) {
+      s.owner = c.owner; s.pop = 1; s.buildings = []; s.bq = []; s.sq = []; s.colonizing = null; s.defense = defMax(s) * 0.5;
+      if (c.owner === PLAYER) notify(`New colony established at ${s.name}!`, { color: '#66bb6a', star: s.id });
+    }
+  }
+}
+
+function computeVis() {
+  const n = G.stars.length; vis = new Uint8Array(n);
+  const friend = id => id === PLAYER || relS(PLAYER, id) === 'alliance';
+  const mark = (id, nb) => { vis[id] = 1; if (nb) for (const l of G.stars[id].lanes) vis[l] = 1; };
+  for (const s of G.stars) if (s.owner >= 0 && friend(s.owner)) mark(s.id, true);
+  for (const f of G.fleets) if (friend(f.owner)) { if (f.at !== null) mark(f.at, true); else { mark(f.from, false); mark(f.to, false); } }
+  if (G.over) vis.fill(1);
+  for (const s of G.stars) if (vis[s.id]) { s.exp = 1; s.seen = s.owner; }
+}
+function fleetVisible(f) {
+  if (f.owner === PLAYER || relS(PLAYER, f.owner) === 'alliance') return true;
+  return f.at !== null ? !!vis[f.at] : !!(vis[f.from] || vis[f.to]);
+}
+function updatePower() {
+  for (const e of G.empires) e.power = 0;
+  for (const f of G.fleets) emp(f.owner).power += fleetPower(f);
+  for (const s of G.stars) if (s.owner >= 0) emp(s.owner).power += planetPower(s) * 0.5 + 4;
+}
+function updateBorders() {
+  const b = new Set();
+  for (const m of G.stars) {
+    const os = new Set(); if (m.owner >= 0) os.add(m.owner);
+    for (const l of m.lanes) if (G.stars[l].owner >= 0) os.add(G.stars[l].owner);
+    const a = [...os]; for (let i = 0; i < a.length; i++) for (let j = i + 1; j < a.length; j++) b.add(relKey(a[i], a[j]));
+  }
+  G._borders = b;
+}
+function borders(a, b) { return G._borders && G._borders.has(relKey(a, b)); }
+function commonEnemy(a, b) { for (const c of G.empires) if (c.alive && c.id !== a && c.id !== b && atWar(a, c.id) && atWar(b, c.id)) return true; return false; }
+function opinion(a, b) {
+  const ea = emp(a), eb = emp(b);
+  let v = (ea.isPlayer ? 0 : PERS[ea.pers].op) + mods(eb).opinion + (G.op[a + '>' + b] || 0);
+  const r = relS(a, b);
+  if (r === 'war') v -= 40; else if (r === 'alliance') v += 25;
+  if (borders(a, b)) v -= 10;
+  if (commonEnemy(a, b)) v += 20;
+  return clamp(Math.round(v), -100, 100);
+}
+function opinionWord(v) { return v >= 60 ? 'Friendly' : v >= 25 ? 'Cordial' : v > -25 ? 'Neutral' : v > -60 ? 'Hostile' : 'Hateful'; }
+
+// ---------- diplomacy actions ----------
+function setWar(a, b) { const r = rel(a, b); r.s = 'war'; r.since = G.time; r.loss = { [a]: 0, [b]: 0 }; }
+function declareWar(a, b) {
+  if (relS(a, b) !== 'peace') return 'Not possible';
+  const r = rel(a, b);
+  if (r.truce > G.time) return `Truce in effect until day ${Math.ceil(r.truce)}`;
+  setWar(a, b);
+  G.op[b + '>' + a] = (G.op[b + '>' + a] || 0) - 50;
+  for (const c of G.empires) if (c.id !== a && c.id !== b) G.op[c.id + '>' + a] = (G.op[c.id + '>' + a] || 0) - 5;
+  const A = emp(a), B = emp(b);
+  if (b === PLAYER) notify(`⚔ The ${A.name} has declared war on us!`, { color: '#ef5350' });
+  else if (a === PLAYER) notify(`We declared war on the ${B.name}.`, { color: '#ef5350' });
+  else notify(`${A.name} declared war on ${B.name}.`, { color: '#90a4ae', silent: !(vis.length && (borders(PLAYER, a) || borders(PLAYER, b))) });
+  // defensive alliances drag allies in
+  for (const c of G.empires) {
+    if (!c.alive || c.id === a || c.id === b || relS(c.id, b) !== 'alliance') continue;
+    if (relS(c.id, a) === 'alliance') rel(c.id, a).s = 'peace';
+    if (relS(c.id, a) === 'peace') {
+      setWar(c.id, a);
+      if (c.id === PLAYER) notify(`Honouring our alliance, we are now at war with the ${A.name}.`, { color: '#ef5350' });
+      else if (a === PLAYER) notify(`The ${c.name} joins the war against us as an ally of the ${B.name}!`, { color: '#ef5350' });
+    }
+  }
+  computeVis();
+  return null;
+}
+function makePeace(a, b) {
+  const r = rel(a, b); if (r.s !== 'war') return;
+  r.s = 'peace'; r.truce = G.time + 150;
+  if (a === PLAYER || b === PLAYER) notify(`Peace signed with the ${emp(a === PLAYER ? b : a).name}. Truce for 150 days.`, { color: '#66bb6a' });
+  else notify(`${emp(a).name} and ${emp(b).name} have made peace.`, { color: '#90a4ae', silent: true });
+}
+function makeAlliance(a, b) {
+  const r = rel(a, b); if (r.s !== 'peace') return;
+  r.s = 'alliance';
+  if (a === PLAYER || b === PLAYER) notify(`Alliance formed with the ${emp(a === PLAYER ? b : a).name}!`, { color: '#66bb6a' });
+  else notify(`${emp(a).name} and ${emp(b).name} formed an alliance.`, { color: '#90a4ae', silent: true });
+  computeVis();
+}
+function breakAlliance(a, b) {
+  const r = rel(a, b); if (r.s !== 'alliance') return;
+  r.s = 'peace'; r.truce = G.time + 60;
+  G.op[b + '>' + a] = (G.op[b + '>' + a] || 0) - 30;
+  if (a === PLAYER || b === PLAYER) notify(`Alliance with the ${emp(a === PLAYER ? b : a).name} has ended.`, { color: '#ffca28' });
+  computeVis();
+}
+function aiWantsPeace(e, o) {
+  const r = rel(e.id, o.id), days = G.time - r.since;
+  if (days < 40) return false;
+  const pe = e.power, po = o.power, le = r.loss[e.id] || 0, lo = r.loss[o.id] || 0;
+  if (pe < po * 0.6) return true;
+  if (le > lo * 1.6 && le > 250) return true;
+  if (days > 100 && lo > 700 && le < lo) return Math.random() < 0.3; // war goals met: take the gains
+  if (days > 250 && pe < po * 1.2) return Math.random() < 0.4;
+  if (days > 450) return Math.random() < 0.5;
+  return false;
+}
+function aiAcceptsAlliance(e, o) { return relS(e.id, o.id) === 'peace' && opinion(e.id, o.id) > 40 && (commonEnemy(e.id, o.id) || opinion(e.id, o.id) > 65); }
+
+// ---------- player / shared actions ----------
+function queueBuilding(e, s, k) {
+  const B = BUILDINGS[k];
+  if (s.owner !== e.id) return 'Not your system';
+  if (s.buildings.length + s.bq.length >= slots(s)) return 'No free building slots';
+  if (B.unique && (s.buildings.includes(k) || s.bq.some(q => q.k === k))) return 'Only one per world';
+  if (!canAfford(e, B.cost)) return 'Not enough resources';
+  pay(e, B.cost); s.bq.push({ k, p: 0, t: B.time }); return null;
+}
+function queueShip(e, s, c) {
+  const S = SHIPS[c];
+  if (s.owner !== e.id || !s.buildings.includes('shipyard')) return 'Needs a shipyard';
+  if (S.tech && !e.techs[S.tech]) return 'Requires ' + TECHS[S.tech].name;
+  if (s.sq.length >= 8) return 'Queue full';
+  if (!canAfford(e, S.cost)) return 'Not enough resources';
+  pay(e, S.cost); s.sq.push({ k: c, p: 0, t: S.time }); return null;
+}
+function splitFleet(f, cls) {
+  if (f.at === null) return;
+  const e = emp(f.owner);
+  const g = newFleet(f.owner, f.at, fleetName(e, false));
+  if (cls) { g.ships[cls] = f.ships[cls]; delete f.ships[cls]; if (cls === 'colony') g.name = 'Colony Ship'; }
+  else {
+    for (const c in f.ships) { const h = Math.floor(f.ships[c].n / 2); if (h > 0) { addShips(g, c, h); f.ships[c].n -= h; } }
+    if (fleetTotal(g) === 0) { const ks = Object.keys(f.ships); if (ks.length > 1) { const c = ks[ks.length - 1]; g.ships[c] = f.ships[c]; delete f.ships[c]; } }
+  }
+  cleanFleet(f); cleanFleet(g);
+  if (colonyOnly(g)) g.name = 'Colony Ship';
+  G.fleets = G.fleets.filter(x => fleetTotal(x) > 0);
+  rebuildIndex();
+  return fleetTotal(g) ? g : null;
+}
+function mergeHere(f) {
+  if (f.at === null) return 0;
+  let n = 0;
+  for (const g of G.fleets) {
+    if (g === f || g.owner !== f.owner || g.at !== f.at) continue;
+    for (const c in g.ships) { addShips(f, c, g.ships[c].n); f.ships[c].dmg += g.ships[c].dmg; g.ships[c].n = 0; }
+    n++;
+  }
+  G.fleets = G.fleets.filter(x => fleetTotal(x) > 0);
+  if (isArmed(f) && f.name === 'Colony Ship') f.name = fleetName(emp(f.owner));
+  rebuildIndex();
+  return n;
+}
+
+// ---------- AI ----------
+function aiTick(e) {
+  const stars = G.stars.filter(s => s.owner === e.id); if (!stars.length) return;
+  const fleets = G.fleets.filter(f => f.owner === e.id);
+  const wars = G.empires.filter(o => o.alive && atWar(e.id, o.id));
+  aiEconomy(e, stars, wars);
+  aiResearch(e, wars);
+  aiShipyards(e, stars, fleets, wars);
+  aiColonize(e, fleets);
+  aiMilitary(e, stars, fleets, wars);
+}
+function aiEconomy(e, stars, wars) {
+  const P = PERS[e.pers];
+  let yards = stars.filter(s => s.buildings.includes('shipyard') || s.bq.some(q => q.k === 'shipyard')).length;
+  for (const s of stars.slice().sort((a, b) => b.pop - a.pop)) {
+    if (s.bq.length || hostileArmedAt(s.id, e.id)) continue;
+    const free = slots(s) - s.buildings.length; if (free <= 0) continue;
+    let k = null;
+    if (!s.buildings.includes('shipyard') && (yards === 0 || (stars.length >= yards * 5 && s.size >= 4 && s.pop >= 3) || (e.res.minerals > 1500 && s.size >= 3 && s.pop >= 2))) { k = 'shipyard'; }
+    else {
+      const j = jobs(s), cap = popCap(s);
+      if (j >= cap - 0.5 && countB(s, 'habitat') < 2 && free > 1) k = 'habitat';
+      else if (j >= s.pop + 1.5) continue;
+      else {
+        const Pl = PLANETS[s.type];
+        const front = wars.some(o => s.lanes.some(l => G.stars[l].owner === o.id));
+        const w = [
+          ['power', (e.inc.en < 2 + stars.length * 0.4 ? 6 : 1.2) * Pl.en],
+          ['mine', 2.6 * Pl.min],
+          ['lab', 1.6 * P.sci],
+          ['defense', countB(s, 'defense') >= 2 ? 0 : (front ? 2.5 : 0.25)],
+        ];
+        k = wpick(w);
+      }
+    }
+    if (k && canAfford(e, BUILDINGS[k].cost)) { queueBuilding(e, s, k); if (k === 'shipyard') yards++; }
+  }
+}
+function aiResearch(e, wars) {
+  if (e.researching) return;
+  const P = PERS[e.pers];
+  const avail = Object.keys(TECHS).filter(k => !e.techs[k] && TECHS[k].req.every(r => e.techs[r]));
+  if (!avail.length) return;
+  e.researching = wpick(avail.map(k => {
+    const T = TECHS[k]; let w = 1;
+    if (T.cat === 'Economy') w = 1.5 * P.sci;
+    if (T.cat === 'Military') w = (wars.length ? 1.6 : 0.9) * P.mil;
+    if (k === 'cruisers' || k === 'battleships') w = 2.2 * P.mil;
+    if (k === 'hab1' || k === 'genetics' || k === 'admin') w = 1.3 * P.expand;
+    if (k === 'diplomacy') w = 0.4;
+    return [k, w / Math.sqrt(T.cost / 250)];
+  }));
+}
+function aiShipyards(e, stars, fleets, wars) {
+  const P = PERS[e.pers], D = DIFF[G.diff];
+  const yards = stars.filter(s => s.buildings.includes('shipyard'));
+  if (!yards.length) return;
+  let cols = fleets.filter(f => f.ships.colony).length + yards.reduce((a, s) => a + s.sq.filter(q => q.k === 'colony').length, 0);
+  const cap = G.stars[e.capital] || stars[0], d = dij(cap.id).dist;
+  const reach = 650 + stars.length * 45;
+  const targets = G.stars.filter(s => s.owner < 0 && !s.colonizing && d[s.id] < reach).length;
+  let wantCol = targets > 0 && cols < Math.round(1 + P.expand * 0.7 + stars.length / 10);
+  let mil = fleets.reduce((a, f) => a + fleetPower(f), 0);
+  const m = mods(e);
+  for (const s of yards) for (const q of s.sq) if (q.k !== 'colony') mil += shipPower(q.k, m);
+  const wantMil = (20 + stars.length * 12 + G.time * 0.08) * D.mil * P.mil * (wars.length ? 1.6 : 1);
+  for (const s of yards) {
+    if (s.sq.length >= (e.res.minerals > 1500 ? 4 : 2)) continue;
+    if (wantCol && canAfford(e, SHIPS.colony.cost) && !wars.some(o => o.power > e.power)) { queueShip(e, s, 'colony'); wantCol = false; continue; }
+    const rich = e.res.minerals > 700;
+    if ((mil < wantMil || rich) && (e.inc.en > 0.5 || e.res.energy > 150)) {
+      const c = aiPickClass(e, wars);
+      if (c && canAfford(e, SHIPS[c].cost)) { queueShip(e, s, c); mil += shipPower(c, m); }
+    }
+  }
+}
+function aiPickClass(e, wars) {
+  const avail = WAR_CLASSES.filter(c => !SHIPS[c].tech || e.techs[SHIPS[c].tech]);
+  const comp = {}; const rivals = new Set(wars.map(o => o.id));
+  if (!rivals.size) for (const o of G.empires) if (o.alive && o.id !== e.id && borders(e.id, o.id)) rivals.add(o.id);
+  for (const f of G.fleets) if (rivals.has(f.owner)) for (const c in f.ships) comp[c] = (comp[c] || 0) + f.ships[c].n * costValue(SHIPS[c].cost);
+  let top = null, tv = 0; for (const c of WAR_CLASSES) if ((comp[c] || 0) > tv) { tv = comp[c]; top = c; }
+  return wpick(avail.map(c => {
+    let w = { corvette: 2, destroyer: 2, cruiser: 3, battleship: 3 }[c];
+    if (top) { if (bonus(c, top) > 1) w += 4; if (bonus(top, c) > 1) w *= 0.35; }
+    return [c, w];
+  }));
+}
+function aiColonize(e, fleets) {
+  const cols = fleets.filter(colonyOnly);
+  const claimed = new Set(cols.map(f => f.target).filter(x => x != null));
+  const m = mods(e);
+  for (const f of cols) {
+    if (f.at === null || f.path.length) continue;
+    const s = G.stars[f.at];
+    if (s.owner < 0 && !s.colonizing && !hostileArmedAt(s.id, e.id) && (f.target === s.id || f.target == null)) { startColonize(f); continue; }
+    const d = dij(f.at).dist; let best = null, bs = -1;
+    for (const t of G.stars) {
+      if (t.owner >= 0 || t.colonizing || (claimed.has(t.id) && t.id !== f.target)) continue;
+      if (!isFinite(d[t.id]) || d[t.id] > 1000 || hostileArmedAt(t.id, e.id)) continue;
+      const P = PLANETS[t.type], hab = clamp(P.hab + m.hab, 0.05, 1);
+      let sc = (hab * t.size + 1.2) * (P.min + P.en) / (1 + d[t.id] / 150);
+      if (t.lanes.some(l => G.stars[l].owner === e.id)) sc *= 1.4;
+      if (t.lanes.some(l => G.stars[l].owner >= 0 && G.stars[l].owner !== e.id)) sc *= 0.6;
+      if (sc > bs) { bs = sc; best = t; }
+    }
+    if (best) { f.target = best.id; claimed.add(best.id); orderMove(f, best.id); }
+  }
+}
+function nearestSafe(e, from) {
+  const d = dij(from).dist; let best = null, bd = Infinity;
+  for (const s of G.stars) if (s.owner === e.id && !hostileArmedAt(s.id, e.id) && d[s.id] < bd) { bd = d[s.id]; best = s.id; }
+  return best;
+}
+function aiMilitary(e, stars, fleets, wars) {
+  let armed = fleets.filter(isArmed);
+  // retreat from hopeless fights
+  for (const f of armed) {
+    if (f.at === null) continue;
+    const hp = hostilePower(f.at, e.id); if (hp <= 0) continue;
+    if (friendlyPower(f.at, e.id) < hp * 0.35) { const h = nearestSafe(e, f.at); if (h != null && h !== f.at) orderMove(f, h); }
+  }
+  const busy = f => f.at === null || f.path.length || hostilePower(f.at, e.id) > 0 || (G.stars[f.at].owner >= 0 && atWar(e.id, G.stars[f.at].owner));
+  // merge idle fleets sharing a star
+  const seen = new Map();
+  for (const f of armed) { if (busy(f)) continue; const o = seen.get(f.at); if (o) mergeHere(o); else seen.set(f.at, f); }
+  armed = G.fleets.filter(f => f.owner === e.id && isArmed(f));
+  let idle = armed.filter(f => !busy(f));
+  const used = new Set();
+  // defend
+  const threatened = stars.filter(s => hostilePower(s.id, e.id) > 0).sort((a, b) => (b.pop + b.size) - (a.pop + a.size));
+  for (const s of threatened) {
+    const need = hostilePower(s.id, e.id) * 1.2 - friendlyPower(s.id, e.id); if (need <= 0) continue;
+    const d = dij(s.id).dist;
+    const cands = idle.filter(f => !used.has(f.id)).sort((a, b) => d[a.at] - d[b.at]);
+    let sum = 0; const pickd = [];
+    for (const f of cands) { if (d[f.at] > 750) break; pickd.push(f); sum += fleetPower(f); if (sum >= need) break; }
+    if (sum >= need * 0.8) for (const f of pickd) { orderMove(f, s.id); used.add(f.id); }
+  }
+  const free = idle.filter(f => !used.has(f.id)).sort((a, b) => fleetPower(b) - fleetPower(a));
+  if (!free.length) return;
+  if (wars.length) {
+    const main = free[0], mp = fleetPower(main), d = dij(main.at).dist;
+    let best = null, bs = 0;
+    for (const s of G.stars) {
+      if (s.owner < 0 || !atWar(e.id, s.owner) || !isFinite(d[s.id])) continue;
+      const str = hostilePower(s.id, e.id) + planetPower(s);
+      if (mp < str * 1.25) continue;
+      const val = 2 + s.pop + s.size + s.buildings.length + (isCapital(s) ? 6 : 0);
+      const sc = val / (1 + d[s.id] / 200) / (1 + str / 60);
+      if (sc > bs) { bs = sc; best = s; }
+    }
+    if (best) {
+      orderMove(main, best.id);
+      for (const f of free.slice(1)) if (d[f.at] < 450 && Math.random() < 0.6) orderMove(f, best.id);
+    } else for (const f of free.slice(1)) if (f.at !== main.at) orderMove(f, main.at);
+  } else {
+    const rally = e.rally != null && G.stars[e.rally].owner === e.id ? e.rally : e.capital;
+    if (rally >= 0) for (const f of free) if (f.at !== rally && Math.random() < 0.3) orderMove(f, rally);
+  }
+}
+function aiDiplo(e) {
+  const D = DIFF[G.diff], P = PERS[e.pers];
+  // staging point: own border system facing least-liked neighbour
+  let worst = null, wo = 999;
+  for (const o of G.empires) if (o.alive && o.id !== e.id && borders(e.id, o.id)) { const v = opinion(e.id, o.id); if (v < wo) { wo = v; worst = o; } }
+  e.rally = null;
+  if (worst) { const b = G.stars.filter(s => s.owner === e.id && s.lanes.some(l => G.stars[l].owner === worst.id)).sort((a, c) => c.pop - a.pop)[0]; if (b) e.rally = b.id; }
+  for (const o of G.empires) {
+    if (o === e || !o.alive) continue;
+    const r = rel(e.id, o.id);
+    if (r.s === 'war') {
+      if (aiWantsPeace(e, o)) {
+        if (o.isPlayer) { if (G.time > e.propT) { e.propT = G.time + 60; proposeToPlayer('peace', e.id); } }
+        else if (aiWantsPeace(o, e) || Math.random() < 0.25) makePeace(e.id, o.id);
+      }
+    } else if (r.s === 'alliance') {
+      if (opinion(e.id, o.id) < -10) breakAlliance(e.id, o.id);
+    } else if (opinion(e.id, o.id) > 55 && commonEnemy(e.id, o.id)) {
+      if (o.isPlayer) { if (G.time > e.propT) { e.propT = G.time + 90; proposeToPlayer('alliance', e.id); } }
+      else if (aiAcceptsAlliance(o, e)) makeAlliance(e.id, o.id);
+    }
+  }
+  if (G.time < D.grace) return;
+  const wars = G.empires.filter(o => o.alive && atWar(e.id, o.id));
+  if (wars.length >= 2 || (wars.length === 1 && e.power < wars[0].power * 1.6)) return;
+  // appetite for war grows as free land runs out and as the game goes on
+  const cap = G.stars[e.capital], dd = cap ? dij(cap.id).dist : null;
+  const landLeft = dd && G.stars.some(s => s.owner < 0 && !s.colonizing && dd[s.id] < 900);
+  let thr = D.war / P.aggr * (landLeft ? 1 : 0.8) * Math.max(0.65, 1 - (G.time - D.grace) / 3000);
+  const cands = G.empires.filter(o => o.alive && o !== e && relS(e.id, o.id) === 'peace' && rel(e.id, o.id).truce < G.time && borders(e.id, o.id));
+  cands.sort((a, b) => a.power - b.power);
+  for (const o of cands) {
+    const t = thr * (G.empires.some(c => c.alive && atWar(o.id, c.id)) ? 0.85 : 1);
+    if (e.power / (o.power + 1) > t && opinion(e.id, o.id) < 20 && Math.random() < 0.4) { declareWar(e.id, o.id); break; }
+  }
+}
+function proposeToPlayer(kind, from) { dialogQueue.push({ kind, from }); if (!modalKind) showNextDialog(); }
+
+// ---------- victory ----------
+function checkVictory() {
+  if (G.over) return;
+  if (!emp(PLAYER).alive) return;
+  const rivals = G.empires.filter(e => !e.isPlayer && e.alive).length;
+  const mine = G.stars.filter(s => s.owner === PLAYER).length;
+  if (!G.victoryShown && (rivals === 0 || mine >= G.stars.length * 0.6)) { G.victoryShown = true; openModal('gameover', rivals === 0 ? 'conquest' : 'hegemony'); }
+}
+
+// ---------- rendering ----------
+const canvas = $('#map'), ctx = canvas.getContext('2d');
+let bgStars = [];
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2); W = window.innerWidth; H = window.innerHeight;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  if (!bgStars.length) for (let i = 0; i < 260; i++) bgStars.push({ x: Math.random(), y: Math.random(), b: Math.random() * 0.7 + 0.2, s: Math.random() < 0.1 ? 1.6 : 0.9, p: Math.random() * 0.12 + 0.02 });
+}
+window.addEventListener('resize', resize); resize();
+const w2s = (x, y) => [(x - cam.x) * cam.z + W / 2, (y - cam.y) * cam.z + H / 2];
+const s2w = (x, y) => [(x - W / 2) / cam.z + cam.x, (y - H / 2) / cam.z + cam.y];
+function hexA(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; }
+function shownOwner(s) { return vis[s.id] ? s.owner : s.seen; }
+function starR(s) { return (4 + s.size * 0.9) * clamp(cam.z, 0.55, 1.6); }
+
+let fleetHits = [];
+function fleetScreenPositions() {
+  const out = [], groups = new Map();
+  for (const f of G.fleets) {
+    if (!fleetVisible(f)) continue;
+    if (f.at !== null) { let g = groups.get(f.at); if (!g) groups.set(f.at, g = []); g.push(f); }
+    else { const [x, y] = fleetPos(f); const [sx, sy] = w2s(x, y); const a = G.stars[f.from], b = G.stars[f.to]; out.push({ f, x: sx, y: sy, ang: Math.atan2(b.y - a.y, b.x - a.x) }); }
+  }
+  for (const [sid, fl] of groups) {
+    const s = G.stars[sid], [sx, sy] = w2s(s.x, s.y), base = starR(s) + 13;
+    // one icon per owner (colony ships separate); tapping again cycles through the stack
+    const stacks = new Map();
+    for (const f of fl.sort((a, b) => a.id - b.id)) { const k = f.owner + (colonyOnly(f) ? 'c' : 'w'); let a = stacks.get(k); if (!a) stacks.set(k, a = []); a.push(f); }
+    let i = 0;
+    for (const [, st] of stacks) {
+      const ring = Math.floor(i / 8), k = i % 8, ang = -Math.PI / 2 + k * (Math.PI / 4) + ring * 0.39, rr = base + ring * 13;
+      const f = st.includes(sel.fleet) ? sel.fleet : st[0];
+      out.push({ f, stack: st, x: sx + Math.cos(ang) * rr, y: sy + Math.sin(ang) * rr, ang: -Math.PI / 2 }); i++;
+    }
+  }
+  return out;
+}
+
+function draw(time) {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = '#03050c'; ctx.fillRect(0, 0, W, H);
+  // background starfield (parallax)
+  for (const b of bgStars) {
+    let x = (b.x * W * 1.3 - cam.x * b.p * cam.z) % W; if (x < 0) x += W;
+    let y = (b.y * H * 1.3 - cam.y * b.p * cam.z) % H; if (y < 0) y += H;
+    ctx.fillStyle = `rgba(200,215,255,${b.b * 0.55})`; ctx.fillRect(x, y, b.s, b.s);
+  }
+  if (!G) return;
+  // nebula glow at galaxy centre
+  { const [cx, cy] = w2s(0, 0); const r = 900 * cam.z; const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, 'rgba(70,60,140,0.13)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
+  const margin = 120;
+  const onScreen = (x, y) => x > -margin && y > -margin && x < W + margin && y < H + margin;
+  const sp = G.stars.map(s => w2s(s.x, s.y));
+  // territory
+  for (const s of G.stars) {
+    const o = shownOwner(s); if (o < 0) continue;
+    const [x, y] = sp[s.id]; if (!onScreen(x, y)) continue;
+    const r = 78 * cam.z, col = emp(o).color;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, hexA(col, vis[s.id] ? 0.26 : 0.12)); g.addColorStop(0.7, hexA(col, vis[s.id] ? 0.12 : 0.05)); g.addColorStop(1, hexA(col, 0));
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  }
+  // lanes
+  ctx.lineWidth = Math.max(1, 1.4 * Math.min(cam.z, 1.3));
+  for (const s of G.stars) for (const l of s.lanes) {
+    if (l < s.id) continue;
+    const [x1, y1] = sp[s.id], [x2, y2] = sp[l];
+    if (!onScreen(x1, y1) && !onScreen(x2, y2)) continue;
+    const a = shownOwner(s), b = shownOwner(G.stars[l]);
+    ctx.strokeStyle = (a >= 0 && a === b) ? hexA(emp(a).color, 0.5) : 'rgba(120,140,190,0.28)';
+    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  }
+  // selected fleet path
+  if (sel.fleet && G.fleets.includes(sel.fleet)) {
+    const f = sel.fleet; const pts = [w2s(...fleetPos(f))];
+    if (f.at === null) pts.push(sp[f.to]); for (const p of f.path) pts.push(sp[p]);
+    if (pts.length > 1) {
+      ctx.save(); ctx.setLineDash([6, 6]); ctx.lineDashOffset = -time / 40; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) ctx.lineTo(p[0], p[1]); ctx.stroke(); ctx.restore();
+      const e = pts[pts.length - 1]; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(e[0], e[1], starR(G.stars[fleetDest(f)]) + 8, 0, Math.PI * 2); ctx.stroke();
+    }
+  }
+  // stars
+  const showNames = cam.z > 0.42;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (const s of G.stars) {
+    const [x, y] = sp[s.id]; if (!onScreen(x, y)) continue;
+    const r = starR(s), o = shownOwner(s);
+    // glow
+    const gc = STAR_COLORS[s.sc];
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r * 2.6); g.addColorStop(0, hexA(gc, 0.55)); g.addColorStop(1, hexA(gc, 0));
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r * 2.6, 0, Math.PI * 2); ctx.fill();
+    // body
+    ctx.fillStyle = s.exp ? PLANETS[s.type].color : '#4a5370';
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.arc(x + r * 0.35, y + r * 0.3, r * 0.8, 0, Math.PI * 2); ctx.fill();
+    if (o >= 0) { ctx.strokeStyle = emp(o).color; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, r + 2.5, 0, Math.PI * 2); ctx.stroke(); }
+    if (sel.star === s.id) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(x, y, r + 7, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
+    // combat pulse
+    if (vis[s.id] && G.time - (s._combat || -99) < 0.5) {
+      const pr = r + 6 + (time / 60 % 10);
+      ctx.strokeStyle = `rgba(255,80,60,${0.9 - (time / 60 % 10) / 12})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, pr, 0, Math.PI * 2); ctx.stroke();
+    }
+    // colonizing
+    if (s.colonizing && vis[s.id]) {
+      ctx.strokeStyle = emp(s.colonizing.owner).color; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(x, y, r + 5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * s.colonizing.p); ctx.stroke();
+    }
+    // capital marker
+    if (o >= 0 && emp(o).capital === s.id) { ctx.fillStyle = '#ffd54f'; ctx.font = `${Math.round(10 + 3 * Math.min(cam.z, 1.4))}px system-ui`; ctx.textBaseline = 'bottom'; ctx.fillText('★', x, y - r - 3); ctx.textBaseline = 'top'; }
+    // defense bar when damaged
+    if (o >= 0 && vis[s.id]) { const dm = defMax(s); if (s.defense < dm * 0.98) { const bw = 26; ctx.fillStyle = '#0008'; ctx.fillRect(x - bw / 2, y + r + 3, bw, 4); ctx.fillStyle = s.defense < dm * 0.3 ? '#ef5350' : '#7e9cff'; ctx.fillRect(x - bw / 2, y + r + 3, bw * s.defense / dm, 4); } }
+    if (showNames) {
+      ctx.font = `${cam.z > 1.2 ? 12 : 11}px system-ui`;
+      ctx.fillStyle = o >= 0 ? hexA(emp(o).color, 0.95) : 'rgba(205,215,235,0.75)';
+      let label = s.name; if (o >= 0 && vis[s.id] && s.buildings.includes('shipyard')) label = '⚓ ' + label;
+      ctx.fillText(label, x, y + r + 9);
+    }
+  }
+  // fleets
+  fleetHits = fleetScreenPositions();
+  const combatBeams = new Map();
+  for (const h of fleetHits) {
+    const { f, x, y } = h; if (!onScreen(x, y)) continue;
+    const col = emp(f.owner).color, n = h.stack ? h.stack.reduce((a, g) => a + fleetTotal(g), 0) : fleetTotal(f);
+    const sz = 6 + Math.min(6, Math.log2(n + 1) * 1.6);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(h.ang + Math.PI / 2);
+    ctx.beginPath();
+    if (colonyOnly(f)) { ctx.rect(-sz * 0.6, -sz * 0.6, sz * 1.2, sz * 1.2); }
+    else { ctx.moveTo(0, -sz); ctx.lineTo(sz * 0.8, sz * 0.75); ctx.lineTo(0, sz * 0.35); ctx.lineTo(-sz * 0.8, sz * 0.75); ctx.closePath(); }
+    ctx.fillStyle = col; ctx.fill();
+    ctx.lineWidth = sel.fleet === f ? 2.5 : 1; ctx.strokeStyle = sel.fleet === f ? '#fff' : 'rgba(0,0,0,0.7)'; ctx.stroke();
+    ctx.restore();
+    ctx.font = 'bold 11px system-ui'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    const lbl = h.stack && h.stack.length > 1 ? `${n} (${h.stack.length})` : String(n);
+    ctx.fillStyle = '#000a'; ctx.fillText(lbl, x + sz + 2, y + 1); ctx.fillStyle = '#fff'; ctx.fillText(lbl, x + sz + 1, y);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    if (f.at !== null && G.time - (G.stars[f.at]._combat || -99) < 0.5) { let a = combatBeams.get(f.at); if (!a) combatBeams.set(f.at, a = []); a.push(h); }
+  }
+  // combat beams
+  for (const [, hs] of combatBeams) {
+    for (let i = 0; i < 4; i++) {
+      const a = pick(hs), b = pick(hs);
+      if (a === b || !atWar(a.f.owner, b.f.owner) || !isArmed(a.f)) continue;
+      ctx.strokeStyle = hexA(emp(a.f.owner).color, 0.9); ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x + (Math.random() - 0.5) * 8, b.y + (Math.random() - 0.5) * 8); ctx.stroke();
+    }
+  }
+  // explosions
+  for (const e of fx) {
+    const [x, y] = w2s(e.x, e.y), k = e.t / (e.big ? 1.2 : 0.7), r = (e.big ? 22 : 12) * k * Math.max(0.6, cam.z);
+    ctx.fillStyle = `rgba(255,${Math.round(200 - 120 * k)},80,${0.8 * (1 - k)})`; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = hexA(e.c, 1 - k); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, r * 1.4, 0, Math.PI * 2); ctx.stroke();
+  }
+}
+
+// ---------- input ----------
+const pointers = new Map(); let drag = null, pinch = null;
+function zoomAt(sx, sy, f) {
+  const [wx, wy] = s2w(sx, sy);
+  cam.z = clamp(cam.z * f, 0.2, 3.2);
+  cam.x = wx - (sx - W / 2) / cam.z; cam.y = wy - (sy - H / 2) / cam.z;
+}
+canvas.addEventListener('pointerdown', e => {
+  canvas.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pointers.size === 1) drag = { sx: e.clientX, sy: e.clientY, cx: cam.x, cy: cam.y, moved: false, button: e.button };
+  else if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: cam.z, w: s2w((a.x + b.x) / 2, (a.y + b.y) / 2) }; drag = null;
+  }
+});
+canvas.addEventListener('pointermove', e => {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinch && pointers.size >= 2) {
+    const [a, b] = [...pointers.values()];
+    const d = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    cam.z = clamp(pinch.z * d / pinch.d, 0.2, 3.2);
+    cam.x = pinch.w[0] - (mx - W / 2) / cam.z; cam.y = pinch.w[1] - (my - H / 2) / cam.z;
+  } else if (drag) {
+    const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+    if (!drag.moved && Math.hypot(dx, dy) > 7) drag.moved = true;
+    if (drag.moved) { cam.x = drag.cx - dx / cam.z; cam.y = drag.cy - dy / cam.z; }
+  }
+});
+function endPointer(e) {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.delete(e.pointerId);
+  if (drag && !drag.moved && e.type === 'pointerup') handleTap(e.clientX, e.clientY, drag.button);
+  if (pointers.size < 2) pinch = null;
+  drag = null;
+}
+canvas.addEventListener('pointerup', endPointer);
+canvas.addEventListener('pointercancel', endPointer);
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+canvas.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+
+function hitFleet(x, y) {
+  let best = null, bd = 16;
+  for (const h of fleetHits) { const d = Math.hypot(h.x - x, h.y - y); if (d < bd) { bd = d; best = h; } }
+  if (!best) return null;
+  if (best.stack && best.stack.length > 1 && best.stack.includes(sel.fleet)) return best.stack[(best.stack.indexOf(sel.fleet) + 1) % best.stack.length];
+  return best.f;
+}
+function hitStar(x, y) {
+  let best = null, bd = Infinity;
+  for (const s of G.stars) { const [sx, sy] = w2s(s.x, s.y); const d = Math.hypot(sx - x, sy - y); if (d < Math.max(18, starR(s) + 8) && d < bd) { bd = d; best = s.id; } }
+  return best;
+}
+function handleTap(x, y, button) {
+  if (!G || modalKind) return;
+  const f = hitFleet(x, y), s = hitStar(x, y);
+  const myFleet = sel.fleet && sel.fleet.owner === PLAYER ? sel.fleet : null;
+  if (button === 2) { if (myFleet && s != null) commandMove(myFleet, s); return; }
+  if (f && !(myFleet && s != null && f.owner !== PLAYER)) { selectFleet(f); return; }
+  if (s != null) { if (myFleet) { commandMove(myFleet, s); return; } selectStar(s); return; }
+  sel.star = null; sel.fleet = null; refreshUI(true);
+}
+function commandMove(f, s) {
+  if (orderMove(f, s)) {
+    const st = G.stars[s];
+    toast(f.at === s ? `${f.name} holding at ${st.name}` : `${f.name} → ${st.name}${f.autoCol ? ' (will colonize)' : ''}`, '#4fc3f7');
+  } else toast('No route to that system', '#ef5350');
+  refreshUI(true);
+}
+function selectFleet(f) { sel.fleet = f; sel.star = null; refreshUI(true); }
+function selectStar(id) { sel.star = id; sel.fleet = null; refreshUI(true); }
+function centerOn(id) { const s = G.stars[id]; cam.x = s.x; cam.y = s.y; }
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (e.key === 'Escape') { if (modalKind) actions.closeModal(); else if (sel.fleet || sel.star != null) { sel.fleet = null; sel.star = null; refreshUI(true); } else if (G) openModal('menu'); return; }
+  if (!G || $('#screen').style.display !== 'none') return;
+  if (modalKind === 'dialog' || modalKind === 'gameover') return;
+  if (e.key === ' ') { e.preventDefault(); actions.pause(); }
+  else if (e.key === '1') actions.speed('1'); else if (e.key === '2') actions.speed('2'); else if (e.key === '3') actions.speed('4'); else if (e.key === '4') actions.speed('8');
+  else if (e.key === 't' || e.key === 'T') toggleModal('tech');
+  else if (e.key === 'd' || e.key === 'D') toggleModal('diplo');
+  else if (e.key === 'e' || e.key === 'E') toggleModal('empire');
+  else if (e.key === 'h' || e.key === 'H') actions.home();
+  else if (e.key === '+' || e.key === '=') actions.zoomIn(); else if (e.key === '-') actions.zoomOut();
+});
+
+// ---------- UI rendering ----------
+function applyView(el, v) {
+  if (el._html !== v.html) { el.innerHTML = v.html; el._html = v.html; }
+  if (v.live) for (const k in v.live) { const n = el.querySelector(`[data-live="${k}"]`); if (n && n.textContent !== v.live[k]) n.textContent = v.live[k]; }
+  if (v.w) for (const k in v.w) { const n = el.querySelector(`[data-w="${k}"]`); if (n) n.style.width = clamp(v.w[k], 0, 100).toFixed(1) + '%'; }
+}
+function bar(key, cls = '') { return `<div class="bar ${cls}"><i data-w="${key}"></i></div>`; }
+function dateStr(t) { const d = Math.floor(t); return `${2300 + Math.floor(d / 360)}.${String(d % 360 + 1).padStart(3, '0')}`; }
+
+function updateTopbar() {
+  const e = emp(PLAYER);
+  $('#tb-color').style.background = e.color; $('#tb-name').textContent = e.name;
+  $('#tb-en').textContent = fmt(e.res.energy); $('#tb-mi').textContent = fmt(e.res.minerals);
+  const rr = (id, v) => { const n = $(id); n.textContent = ' ' + sgn(v); n.className = v >= 0 ? 'pos' : 'neg'; };
+  rr('#tb-enr', e.inc.en || 0); rr('#tb-mir', e.inc.mi || 0);
+  if (e.researching) { const T = TECHS[e.researching]; $('#tb-re').textContent = T.name.split(' ')[0] + ' ' + Math.floor((e.techProg[e.researching] || 0) / T.cost * 100) + '%'; }
+  else $('#tb-re').textContent = fmt(e.res.research) + (Object.keys(e.techs).length < Object.keys(TECHS).length ? ' (pick!)' : '');
+  rr('#tb-rer', e.inc.re || 0);
+  $('#tb-date').textContent = dateStr(G.time);
+  for (const v of [0, 1, 2, 4, 8]) $('#sp' + v).classList.toggle('on', v === 0 ? G.paused : (!G.paused && G.speed === v));
+}
+
+function shipRows(f, own) {
+  const m = mods(emp(f.owner)); let h = ''; const live = {}, w = {};
+  for (const c of [...WAR_CLASSES, 'colony']) {
+    const sh = f.ships[c]; if (!sh) continue;
+    const hpT = SHIPS[c].hp * m.hp * sh.n;
+    live['sn' + c] = '×' + sh.n; w['sh' + c] = (1 - sh.dmg / hpT) * 100;
+    h += `<div class="row"><div class="grow"><b>${SHIPS[c].name}</b> <span data-live="sn${c}"></span><br><small>${SHIPS[c].desc}</small>${bar('sh' + c, 'hp')}</div>${own && f.at !== null && Object.keys(f.ships).length > 1 ? `<button data-act="splitClass" data-arg="${c}" title="Split this ship type into its own fleet">Split</button>` : ''}</div>`;
+  }
+  return { h, live, w };
+}
+
+function fleetPanel(f) {
+  const e = emp(f.owner), own = f.owner === PLAYER;
+  const live = {}, w = {};
+  let h = `<div class="ph"><span class="dot" style="background:${e.color}"></span><div class="pt"><b>${esc(f.name)}</b><small>${esc(e.name)}${own ? '' : ' · ' + relS(PLAYER, f.owner)}</small></div><button class="x" data-act="deselect">✕</button></div>`;
+  let status;
+  if (f.at !== null) {
+    const s = G.stars[f.at];
+    if (G.time - (s._combat || -99) < 0.5) status = `⚔ In combat at ${s.name}`;
+    else if (f.path.length) status = `Departing ${s.name}`;
+    else status = `Idle at ${s.name}`;
+  } else status = `→ ${G.stars[fleetDest(f)].name} · ETA ${Math.ceil(fleetEta(f))} days`;
+  if (f.at !== null && f.path.length) status = `→ ${G.stars[fleetDest(f)].name} · ETA ${Math.ceil(fleetEta(f))} days`;
+  live.fst = status; live.fpow = Math.round(fleetPower(f)).toString(); live.fspd = Math.round(fleetSpeed(f)).toString();
+  h += `<div class="sub" data-live="fst"></div><div class="kv"><span>Strength <b data-live="fpow"></b></span><span>Speed <b data-live="fspd"></b></span></div>`;
+  const sr = shipRows(f, own); h += `<h4>Ships</h4>` + sr.h; Object.assign(live, sr.live); Object.assign(w, sr.w);
+  if (own) {
+    h += `<div class="btns">`;
+    if (f.at !== null && fleetTotal(f) > 1) h += `<button data-act="split">Split in half</button>`;
+    if (f.at !== null && fleetsAt(f.at).some(g => g !== f && g.owner === PLAYER)) h += `<button data-act="merge">Merge fleets here</button>`;
+    if (f.at === null || f.path.length) h += `<button data-act="stop">Stop</button>`;
+    if (f.at !== null && f.ships.colony && G.stars[f.at].owner < 0 && !G.stars[f.at].colonizing) h += `<button class="good" data-act="colonize">Colonize ${esc(G.stars[f.at].name)}</button>`;
+    h += `<button data-act="viewStar" data-arg="${f.at !== null ? f.at : f.to}">View system</button></div>`;
+    h += `<div class="hint">${matchMedia('(pointer:coarse)').matches ? 'Tap' : 'Click (or right-click)'} any system to send this fleet there.${colonyOnly(f) ? ' Sending a colony ship to an unclaimed system colonizes it on arrival.' : ''} Tap empty space or ✕ to deselect.</div>`;
+  }
+  return { html: h, live, w };
+}
+
+function starPanel(s) {
+  const pe = emp(PLAYER), live = {}, w = {};
+  const o = shownOwner(s), owner = o >= 0 ? emp(o) : null, mine = s.owner === PLAYER, seen = !!vis[s.id];
+  let h = `<div class="ph"><span class="dot" style="background:${owner ? owner.color : '#4a5370'}"></span><div class="pt"><b>${esc(s.name)}</b><small>${owner ? esc(owner.name) + (owner.capital === s.id ? ' · Capital' : '') : (s.exp ? 'Unclaimed' : 'Unexplored')}${!seen && s.exp ? ' · last known' : ''}</small></div><button class="x" data-act="deselect">✕</button></div>`;
+  if (!s.exp) {
+    h += `<p class="muted">Move a fleet next to this system to reveal it.</p>`;
+    return { html: h };
+  }
+  const P = PLANETS[s.type], hab = starHab(s, mine ? PLAYER : (o >= 0 ? o : PLAYER));
+  h += `<div class="sub"><span class="pl" style="background:${P.color}"></span>${P.name} · Size ${s.size} · Habitability ${Math.round(hab * 100)}%<br>Richness: ◆×${P.min} ⚡×${P.en}</div>`;
+  if (mine) {
+    const out = starOutput(s), cap = popCap(s);
+    live.pop = `${s.pop.toFixed(1)} / ${cap.toFixed(1)}`; live.jobs = `${jobs(s)} jobs`;
+    live.out = `⚡${out.en.toFixed(1)}  ◆${out.mi.toFixed(1)}  🔬${out.re.toFixed(1)}`; live.up = `−⚡${out.up.toFixed(1)}`;
+    const dm = defMax(s); live.def = `${Math.round(s.defense)} / ${Math.round(dm)}`; w.def = s.defense / dm * 100;
+    h += `<div class="kv"><span>Population</span><span><b data-live="pop"></b> · <span data-live="jobs"></span></span></div>
+      <div class="kv"><span>Output</span><b data-live="out"></b></div><div class="kv"><span>Upkeep</span><span data-live="up"></span></div>
+      <div class="kv"><span>Defense</span><span data-live="def"></span></div>${bar('def', 'def')}`;
+    if (s.pop < jobs(s) - 0.5) h += `<div class="sub" style="color:var(--warn)">Not enough workers — buildings run at reduced output. Build a Habitat Dome or wait for growth.</div>`;
+    const used = s.buildings.length + s.bq.length, sl = slots(s);
+    h += `<h4>Buildings ${s.buildings.length}/${sl}</h4><div class="chips">`;
+    s.buildings.forEach((b, i) => { h += `<span class="chip">${BUILDINGS[b].icon} ${BUILDINGS[b].name}<button data-act="demolish" data-arg="${i}" title="Demolish (no refund)">✕</button></span>`; });
+    if (!s.buildings.length) h += `<span class="muted">None yet</span>`;
+    h += `</div>`;
+    s.bq.forEach((q, i) => { w['bq' + i] = q.p / q.t * 100; h += `<div class="row"><div class="grow">${BUILDINGS[q.k].icon} ${BUILDINGS[q.k].name}${i ? ' <small>(queued)</small>' : ''}${bar('bq' + i)}</div><button data-act="cancelB" data-arg="${i}" title="Cancel (full refund)">✕</button></div>`; });
+    h += `<h4>Construct</h4><div class="grid2">`;
+    for (const k in BUILDINGS) {
+      const B = BUILDINGS[k];
+      const uniqueBlock = B.unique && (s.buildings.includes(k) || s.bq.some(q => q.k === k));
+      const dis = used >= sl || uniqueBlock || !canAfford(pe, B.cost);
+      h += `<button class="opt" data-act="build" data-arg="${k}" ${dis ? 'disabled' : ''} title="${esc(B.desc)}"><b>${B.icon} ${B.name}</b><small>${costStr(B.cost)} · ${B.time}d</small><small>${B.desc}</small></button>`;
+    }
+    h += `</div>`;
+    if (s.buildings.includes('shipyard')) {
+      h += `<h4>Shipyard</h4>`;
+      s.sq.forEach((q, i) => { w['sq' + i] = q.p / q.t * 100; h += `<div class="row"><div class="grow">${SHIPS[q.k].name}${i ? ' <small>(queued)</small>' : ''}${bar('sq' + i)}</div><button data-act="cancelS" data-arg="${i}" title="Cancel (full refund)">✕</button></div>`; });
+      h += `<div class="grid2">`;
+      for (const c in SHIPS) {
+        const S = SHIPS[c], locked = S.tech && !pe.techs[S.tech];
+        const dis = locked || s.sq.length >= 8 || !canAfford(pe, S.cost);
+        h += `<button class="opt" data-act="ship" data-arg="${c}" ${dis ? 'disabled' : ''}><b>${S.name}</b><small>${locked ? 'Requires ' + TECHS[S.tech].name : costStr(S.cost) + ' · ' + S.time + 'd'}</small><small>${S.desc}</small></button>`;
+      }
+      h += `</div>`;
+    }
+  } else if (owner) {
+    if (seen) {
+      const dm = defMax(s); live.def = `${Math.round(s.defense)} / ${Math.round(dm)}`; w.def = s.defense / dm * 100; live.pop = s.pop.toFixed(1);
+      h += `<div class="kv"><span>Population</span><b data-live="pop"></b></div><div class="kv"><span>Buildings</span><span>${s.buildings.length}/${slots(s)}</span></div><div class="kv"><span>Defense</span><span data-live="def"></span></div>${bar('def', 'def')}`;
+    } else h += `<p class="muted">No current intel. Move a fleet nearby for live information.</p>`;
+    const rs = relS(PLAYER, o);
+    h += `<div class="kv"><span>Relation</span><span class="badge ${rs}">${rs}</span></div><div class="btns"><button data-act="openDiplo">Diplomacy</button></div>`;
+  } else {
+    if (s.colonizing) {
+      const ce = emp(s.colonizing.owner); w.col = s.colonizing.p * 100;
+      h += `<div class="sub">Being colonized by <b style="color:${ce.color}">${esc(ce.name)}</b></div>${bar('col', 'col')}`;
+    } else {
+      const capP = Math.max(1, s.size * 1.5 * hab);
+      h += `<div class="sub">Potential population ≈ ${capP.toFixed(1)} · ${s.size} building slots</div>`;
+      const cols = G.fleets.filter(f => f.owner === PLAYER && colonyOnly(f));
+      if (cols.length) h += `<div class="btns"><button class="good" data-act="sendColony" data-arg="${s.id}">Send nearest colony ship</button></div>`;
+      else h += `<div class="sub">Build a Colony Ship at a shipyard to settle this world.</div>`;
+    }
+  }
+  // fleets here
+  const fl = fleetsAt(s.id).filter(fleetVisible);
+  if (fl.length) {
+    h += `<h4>Fleets here</h4>`;
+    for (const f of fl) {
+      const fe = emp(f.owner);
+      live['fp' + f.id] = `${fleetTotal(f)} ships · str ${Math.round(fleetPower(f))}`;
+      h += `<div class="row"><span class="dot" style="background:${fe.color}"></span><div class="grow">${esc(f.name)}<br><small data-live="fp${f.id}"></small></div><button data-act="selFleet" data-arg="${f.id}">${f.owner === PLAYER ? 'Select' : 'View'}</button></div>`;
+    }
+  }
+  return { html: h, live, w };
+}
+
+function refreshUI(force) {
+  if (!G) return;
+  updateTopbar();
+  const panel = $('#panel');
+  let v = null;
+  if (sel.fleet && G.fleets.includes(sel.fleet)) v = fleetPanel(sel.fleet);
+  else if (sel.star != null) v = starPanel(G.stars[sel.star]);
+  if (v) { panel.classList.remove('hidden'); if (force) panel._html = null; applyView(panel, v); $('#mapctl').classList.add('up'); }
+  else { panel.classList.add('hidden'); panel._html = null; $('#mapctl').classList.remove('up'); }
+  if (modalKind && ['tech', 'diplo', 'empire'].includes(modalKind)) renderModal();
+}
+
+// ---------- modals ----------
+function openModal(kind, arg) { modalKind = kind; modalArg = arg; $('#modal-body')._html = null; $('#modal').classList.remove('hidden'); renderModal(); }
+function toggleModal(kind) { if (modalKind === kind) actions.closeModal(); else if (!modalKind || ['tech', 'diplo', 'empire'].includes(modalKind)) openModal(kind); }
+function modalPauses() { return modalKind && ['menu', 'dialog', 'gameover', 'help', 'load', 'save'].includes(modalKind); }
+function showNextDialog() {
+  while (dialogQueue.length) {
+    const d = dialogQueue.shift(); const e = emp(d.from);
+    if (!e.alive) continue;
+    if (d.kind === 'peace' && relS(PLAYER, d.from) !== 'war') continue;
+    if (d.kind === 'alliance' && relS(PLAYER, d.from) !== 'peace') continue;
+    openModal('dialog', d); return;
+  }
+}
+function renderModal() {
+  const body = $('#modal-body'), box = $('#modal-box');
+  let title = '', v = { html: '' }, small = false, closable = true;
+  if (modalKind === 'tech') { title = 'Research'; v = techView(); }
+  else if (modalKind === 'diplo') { title = 'Diplomacy'; v = diploView(); }
+  else if (modalKind === 'empire') { title = 'Empire Overview'; v = empireView(); }
+  else if (modalKind === 'menu') { title = 'Menu'; small = true; v = { html: menuView() }; }
+  else if (modalKind === 'save') { title = 'Save Game'; small = true; v = { html: slotsView('save') }; }
+  else if (modalKind === 'load') { title = 'Load Game'; small = true; v = { html: slotsView('load') }; }
+  else if (modalKind === 'help') { title = 'How to Play'; v = { html: helpHtml() }; }
+  else if (modalKind === 'dialog') {
+    const d = modalArg, e = emp(d.from); small = true; closable = false;
+    title = d.kind === 'peace' ? 'Peace Proposal' : 'Alliance Proposal';
+    v = { html: `<div class="dh"><span class="dot" style="background:${e.color}"></span><b>${esc(e.name)}</b><span class="muted">${PERS[e.pers].name}</span></div>
+      <p>${d.kind === 'peace' ? `The ${esc(e.name)} offers to end the war. A 150-day truce would follow.` : `The ${esc(e.name)} proposes a defensive alliance. Allies share vision and join wars declared against each other.`}</p>
+      <div class="btns"><button class="good" data-act="dialogYes">Accept</button><button class="danger" data-act="dialogNo">Decline</button></div>` };
+  }
+  else if (modalKind === 'gameover') {
+    small = true; closable = false;
+    const k = modalArg;
+    title = k === 'defeat' ? 'Defeat' : 'Victory!';
+    const msg = k === 'defeat' ? 'Your empire has fallen. The stars belong to others now.' : k === 'conquest' ? 'Every rival empire has been destroyed. The galaxy is yours!' : 'You control 60% of the galaxy. Your hegemony is unchallenged!';
+    v = { html: `<p style="font-size:16px">${msg}</p><p class="muted">Day ${Math.floor(G.time)} · ${G.stars.filter(s => s.owner === PLAYER).length} systems</p>
+      <div class="btns">${k !== 'defeat' ? '<button class="primary" data-act="closeModal">Keep playing</button>' : '<button data-act="closeModal">Observe galaxy</button>'}<button data-act="newGameScreen">New game</button><button data-act="title">Title screen</button></div>` };
+    closable = true;
+  }
+  $('#modal-title').textContent = title;
+  $('#modal-close').classList.toggle('hidden', !closable);
+  box.classList.toggle('small', small);
+  applyView(body, v);
+}
+
+function techView() {
+  const e = emp(PLAYER), live = {}, w = {};
+  live.bank = fmt(e.res.research); live.rate = sgn(e.inc.re || 0);
+  let h = `<div class="kv" style="margin-bottom:10px"><span>Research stored: <b data-live="bank"></b> (<span data-live="rate"></span>/day)</span><span class="muted">Click a technology to research it. Progress is kept if you switch.</span></div>`;
+  if (e.researching) { const T = TECHS[e.researching]; w.cur = (e.techProg[e.researching] || 0) / T.cost * 100; h += `<div style="margin-bottom:12px">Researching <b>${T.name}</b> — ${T.desc}${bar('cur')}</div>`; }
+  else h += `<div class="hint" style="margin:0 0 12px">No active research — research points are being stored. Pick a technology!</div>`;
+  h += `<div class="techgrid">`;
+  for (const cat of TECH_CATS) {
+    h += `<div class="techcol"><h3>${cat}</h3>`;
+    for (const k in TECHS) {
+      const T = TECHS[k]; if (T.cat !== cat) continue;
+      const done = !!e.techs[k], locked = !T.req.every(r => e.techs[r]), active = e.researching === k;
+      const cls = done ? 'done' : active ? 'active' : locked ? 'locked' : '';
+      const prog = e.techProg[k] || 0;
+      if (prog > 0 && !done) w['t' + k] = prog / T.cost * 100;
+      h += `<button class="tech ${cls}" data-act="research" data-arg="${k}" ${done || locked ? 'disabled' : ''}><b>${T.name}</b><small>${T.desc}</small><small>${done ? '✓ Researched' : `🔬 ${T.cost}` + (locked ? ' · needs ' + T.req.map(r => TECHS[r].name).join(', ') : '')}</small>${prog > 0 && !done ? `<i class="tp" data-w="t${k}"></i>` : ''}</button>`;
+    }
+    h += `</div>`;
+  }
+  return { html: h + '</div>', live, w };
+}
+
+function diploView() {
+  const p = emp(PLAYER), live = {};
+  let h = `<p class="muted" style="margin-top:0">AI empires judge you by shared borders, wars, alliances, gifts and common enemies. Alliances are defensive: if someone declares war on an ally, the other joins in.</p>`;
+  for (const e of G.empires) {
+    if (e.isPlayer) continue;
+    const rs = e.alive ? relS(PLAYER, e.id) : 'dead';
+    h += `<div class="dcard"><div class="dh"><span class="dot" style="background:${e.color}"></span><b>${esc(e.name)}</b><span class="badge ${rs}">${rs === 'dead' ? 'destroyed' : rs}</span></div>`;
+    if (!e.alive) { h += `</div>`; continue; }
+    const r = rel(PLAYER, e.id);
+    const ratio = e.power / Math.max(1, p.power);
+    const strength = ratio > 1.6 ? 'Much stronger' : ratio > 1.15 ? 'Stronger' : ratio > 0.85 ? 'Comparable' : ratio > 0.55 ? 'Weaker' : 'Much weaker';
+    const op = opinion(e.id, PLAYER);
+    live['op' + e.id] = `${op > 0 ? '+' : ''}${op} (${opinionWord(op)})`;
+    live['sys' + e.id] = String(G.stars.filter(s => s.owner === e.id).length);
+    const wars = G.empires.filter(o => o.alive && o.id !== e.id && atWar(e.id, o.id)).map(o => o.id === PLAYER ? 'You' : o.name);
+    const allies = G.empires.filter(o => o.alive && o.id !== e.id && relS(e.id, o.id) === 'alliance').map(o => o.id === PLAYER ? 'You' : o.name);
+    h += `<div class="sub">${PERS[e.pers].name} · <span data-live="sys${e.id}"></span> systems · Military: ${strength}${borders(PLAYER, e.id) ? ' · Shares a border' : ''}</div>
+      <div class="kv"><span>Opinion of you</span><b data-live="op${e.id}"></b></div>
+      ${wars.length ? `<div class="sub">At war with: ${esc(wars.join(', '))}</div>` : ''}${allies.length ? `<div class="sub">Allied with: ${esc(allies.join(', '))}</div>` : ''}
+      ${rs === 'peace' && r.truce > G.time ? `<div class="sub">Truce until day ${Math.ceil(r.truce)}</div>` : ''}<div class="btns">`;
+    if (rs === 'war') h += `<button class="good" data-act="peace" data-arg="${e.id}">Propose peace</button>`;
+    if (rs === 'peace') h += `<button class="danger" data-act="war" data-arg="${e.id}" ${r.truce > G.time ? 'disabled' : ''}>Declare war</button><button data-act="ally" data-arg="${e.id}">Propose alliance</button>`;
+    if (rs === 'alliance') h += `<button data-act="breakAlly" data-arg="${e.id}">End alliance</button>`;
+    h += `<button data-act="gift" data-arg="${e.id}" ${p.res.energy < 100 ? 'disabled' : ''}>Gift ⚡100</button></div></div>`;
+  }
+  return { html: h, live };
+}
+
+function empireView() {
+  const e = emp(PLAYER), live = {};
+  const stars = G.stars.filter(s => s.owner === PLAYER), fleets = G.fleets.filter(f => f.owner === PLAYER);
+  live.esys = String(stars.length); live.epop = stars.reduce((a, s) => a + s.pop, 0).toFixed(1);
+  live.epow = Math.round(e.power).toString(); live.eships = String(fleets.reduce((a, f) => a + fleetTotal(f), 0));
+  live.einc = `⚡${sgn(e.inc.en || 0)}  ◆${sgn(e.inc.mi || 0)}  🔬${sgn(e.inc.re || 0)}`; live.eup = `⚡${(e.inc.up || 0).toFixed(1)}/day`;
+  let h = `<div class="cols"><div>
+    <div class="kv"><span>Systems</span><b data-live="esys"></b></div><div class="kv"><span>Population</span><b data-live="epop"></b></div>
+    <div class="kv"><span>Ships</span><b data-live="eships"></b></div><div class="kv"><span>Military strength</span><b data-live="epow"></b></div>
+    <div class="kv"><span>Net income/day</span><b data-live="einc"></b></div><div class="kv"><span>Total upkeep</span><span data-live="eup"></span></div>
+    <div class="kv"><span>Technologies</span><span>${Object.keys(e.techs).length}/${Object.keys(TECHS).length}</span></div>
+    <div class="kv"><span>Difficulty</span><span>${DIFF[G.diff].name}</span></div>
+    <h4>Systems</h4>`;
+  for (const s of stars.sort((a, b) => b.pop - a.pop)) h += `<div class="row"><span class="pl" style="background:${PLANETS[s.type].color}"></span><div class="grow">${esc(s.name)}${isCapital(s) ? ' ★' : ''} <small>pop ${s.pop.toFixed(0)} · ${s.buildings.length}/${slots(s)}${s.buildings.includes('shipyard') ? ' · ⚓' : ''}</small></div><button data-act="goto" data-arg="${s.id}">Go</button></div>`;
+  h += `<h4>Fleets</h4>`;
+  for (const f of fleets) h += `<div class="row"><div class="grow">${esc(f.name)} <small>${fleetTotal(f)} ships · ${f.at !== null && !f.path.length ? 'at ' + esc(G.stars[f.at].name) : 'moving'}</small></div><button data-act="gotoFleet" data-arg="${f.id}">Go</button></div>`;
+  if (!fleets.length) h += `<div class="muted">No fleets.</div>`;
+  h += `</div><div><h4 style="margin-top:0">Event log</h4><div class="log">`;
+  for (const l of G.log.slice().reverse()) h += `<div><small>${dateStr(l.d)}</small> <span style="color:${l.c}">●</span> ${esc(l.m)}</div>`;
+  h += `</div></div></div>`;
+  return { html: h, live };
+}
+
+function menuView() {
+  return `<div class="menu-btns" style="display:flex;flex-direction:column;gap:8px">
+    <button class="primary" data-act="closeModal">Resume</button>
+    <button data-act="openSave">Save game</button>
+    <button data-act="openLoad">Load game</button>
+    <button data-act="exportSave">Export save to file</button>
+    <button data-act="importSave">Import save from file</button>
+    <button data-act="openHelp">How to play</button>
+    <button data-act="title">Quit to title (autosaves)</button>
+  </div><p class="muted" style="font-size:12px;margin-bottom:0">The game autosaves every 2 minutes and when you leave the page. Saves are stored in this browser on this device — use Export to move a save to another device.</p>`;
+}
+
+// ---------- save / load ----------
+const SLOT_KEYS = ['auto', '1', '2', '3'];
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+function lsDel(k) { try { localStorage.removeItem(k); } catch (e) { } }
+function serialize() { return JSON.stringify({ meta: { name: emp(PLAYER).name, color: emp(PLAYER).color, day: Math.floor(G.time), systems: G.stars.filter(s => s.owner === PLAYER).length, diff: G.diff, size: G.size, at: Date.now() }, game: G }, (k, v) => k[0] === '_' ? undefined : v); }
+function saveTo(slot) { if (!G || (G.over && slot === 'auto')) return false; return lsSet('stellar_dominion_' + slot, serialize()); }
+function slotMeta(slot) { const raw = lsGet('stellar_dominion_' + slot); if (!raw) return null; try { return JSON.parse(raw).meta; } catch (e) { return null; } }
+function loadData(obj) {
+  if (!obj || !obj.game || !obj.game.stars) throw new Error('Not a Stellar Dominion save');
+  G = obj.game; G.paused = true;
+  afterLoad(); startPlaying();
+  toast(`Loaded — day ${Math.floor(G.time)}. Game is paused; press ▶ to continue.`, '#66bb6a');
+}
+function loadFrom(slot) { const raw = lsGet('stellar_dominion_' + slot); if (!raw) return; try { loadData(JSON.parse(raw)); } catch (e) { toast('Could not load save: ' + e.message, '#ef5350'); } }
+function slotsView(mode) {
+  let h = '';
+  for (const k of SLOT_KEYS) {
+    if (mode === 'save' && k === 'auto') continue;
+    const m = slotMeta(k);
+    h += `<div class="row"><div class="grow"><b>${k === 'auto' ? 'Autosave' : 'Slot ' + k}</b><br><small>${m ? `${esc(m.name)} · ${dateStr(m.day)} · ${m.systems} systems · ${new Date(m.at).toLocaleString()}` : 'Empty'}</small></div>`;
+    if (mode === 'save') h += `<button class="primary" data-act="saveSlot" data-arg="${k}">Save</button>`;
+    else if (m) h += `<button class="primary" data-act="loadSlot" data-arg="${k}">Load</button><button data-act="delSlot" data-arg="${k}" title="Delete">🗑</button>`;
+    h += `</div>`;
+  }
+  if (mode === 'load') h += `<div class="btns"><button data-act="importSave">Import from file…</button></div>`;
+  return h;
+}
+function exportSave() {
+  const blob = new Blob([serialize()], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `stellar-dominion-${dateStr(G.time)}.json`; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function importSave() {
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json';
+  inp.onchange = () => { const f = inp.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { try { loadData(JSON.parse(rd.result)); } catch (e) { toast('Import failed: ' + e.message, '#ef5350'); } }; rd.readAsText(f); };
+  inp.click();
+}
+setInterval(() => { if (G && !G.over && $('#screen').style.display === 'none') saveTo('auto'); }, 120000);
+document.addEventListener('visibilitychange', () => { if (document.hidden && G && $('#screen').style.display === 'none') saveTo('auto'); });
+window.addEventListener('pagehide', () => { if (G && $('#screen').style.display === 'none') saveTo('auto'); });
+
+// ---------- screens ----------
+let ngColor = COLORS[0];
+function showScreen(html) { const s = $('#screen'); s.innerHTML = html; s.style.display = 'flex'; $('#topbar').classList.add('hidden'); $('#panel').classList.add('hidden'); $('#mapctl').classList.add('hidden'); }
+function titleScreen() {
+  const hasAuto = !!slotMeta('auto'), anySave = SLOT_KEYS.some(k => slotMeta(k));
+  showScreen(`<div class="scr"><h1>STELLAR DOMINION</h1><div class="tag">Real-time galactic grand strategy · plays fully offline</div>
+    <div class="menu-btns">
+      ${hasAuto ? '<button class="primary" data-act="continue">Continue</button>' : ''}
+      <button class="${hasAuto ? '' : 'primary'}" data-act="newGameScreen">New game</button>
+      ${anySave ? '<button data-act="loadScreen">Load game</button>' : ''}
+      <button data-act="importSave">Import save file</button>
+      <button data-act="helpScreen">How to play</button>
+    </div></div>`);
+}
+function newGameScreen() {
+  showScreen(`<div class="scr"><h1 style="font-size:32px">New Game</h1><div class="form">
+    <label>Empire name<input id="ng-name" maxlength="32" value="Terran Federation"></label>
+    <label>Empire colour<div class="swatches">${COLORS.map(c => `<button class="swatch ${c === ngColor ? 'on' : ''}" style="background:${c}" data-act="ngColor" data-arg="${c}"></button>`).join('')}</div></label>
+    <label>Galaxy size<select id="ng-size">${Object.entries(SIZES).map(([k, v]) => `<option value="${k}" ${k === 'medium' ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label>
+    <label>AI rivals: <b id="ng-ai-v">4</b><input type="range" id="ng-ai" min="1" max="7" value="4" oninput="document.getElementById('ng-ai-v').textContent=this.value"></label>
+    <label>Difficulty<select id="ng-diff">${Object.entries(DIFF).map(([k, v]) => `<option value="${k}" ${k === 'normal' ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label>
+    <div class="btns" style="justify-content:space-between"><button data-act="title">Back</button><button class="primary" data-act="startGame">Launch ▶</button></div>
+  </div></div>`);
+}
+function loadScreen() {
+  showScreen(`<div class="scr"><h1 style="font-size:32px">Load Game</h1><div class="form">${slotsView('load')}<div class="btns"><button data-act="title">Back</button></div></div></div>`);
+}
+function helpScreen() { showScreen(`<div class="scr" style="width:min(760px,100%)"><div class="form">${helpHtml()}<div class="btns"><button class="primary" data-act="title">Back</button></div></div></div>`); }
+function startPlaying() {
+  $('#screen').style.display = 'none'; $('#screen').innerHTML = '';
+  $('#topbar').classList.remove('hidden'); $('#mapctl').classList.remove('hidden');
+  modalKind = null; $('#modal').classList.add('hidden');
+  refreshUI(true);
+}
+function helpHtml() {
+  return `<div class="help">
+  <h3>Goal</h3>Grow from a single world into a galactic empire. You win by destroying every rival <b>or</b> controlling 60% of all systems. You lose if your last system falls.
+  <h3>Time</h3>The game runs in real time. Use <b>⏸ / 1× / 2× / 4× / 8×</b> (keys <b>Space, 1–4</b>). Pause any time to plan — orders can be given while paused.
+  <h3>Controls</h3><ul>
+   <li><b>Pan:</b> drag the map. <b>Zoom:</b> mouse wheel or pinch. <b>⌂</b> centres on your capital.</li>
+   <li><b>Select</b> a system or fleet by tapping/clicking it.</li>
+   <li><b>Move:</b> with one of your fleets selected, tap/click any system (or right-click on desktop). Fleets travel along hyperlanes.</li>
+   <li>Tap empty space or ✕ to deselect. Keys: <b>T</b> tech, <b>D</b> diplomacy, <b>E</b> empire, <b>H</b> home, <b>Esc</b> menu.</li></ul>
+  <h3>Economy</h3><ul>
+   <li><b>⚡ Energy</b> pays upkeep for ships and buildings. Running out halves mineral and research output.</li>
+   <li><b>◆ Minerals</b> build everything. <b>🔬 Research</b> unlocks technologies.</li>
+   <li>Each building needs <b>1 worker</b> (population) except Habitat Domes. Population grows toward the planet's cap, set by size and habitability.</li>
+   <li>Planet types have richness multipliers: Barren/Molten worlds are mineral-rich, Gas Giants energy-rich, Terran/Ocean worlds grow big populations.</li></ul>
+  <h3>Expansion</h3>Build a <b>Colony Ship</b> at a shipyard and send it to an unclaimed system — it colonizes automatically on arrival (15 days). Hostile warships disrupt colonization.
+  <h3>Ships &amp; combat</h3>Fleets fight automatically when they meet an enemy you're at war with. Planets shoot back with their defense; once a planet's defense hits zero and no defending warships remain, it is <b>captured</b>.
+  <table><tr><th>Ship</th><th>Strong vs</th><th>Notes</th></tr>
+   <tr><td>Corvette</td><td>Battleship</td><td>Fast, cheap swarm</td></tr>
+   <tr><td>Destroyer</td><td>Corvette</td><td>Anti-swarm flak</td></tr>
+   <tr><td>Cruiser</td><td>Destroyer</td><td>Needs Cruiser Hulls</td></tr>
+   <tr><td>Battleship</td><td>Cruiser</td><td>Needs Battleship Hulls; weak vs Corvettes</td></tr></table>
+   Look at what the enemy fields and build the counter. Fleets repair slowly in your own (or allied) systems. A fleet passing through a system held by enemy warships is stopped there.
+  <h3>Diplomacy</h3>Every pair of empires is at <b>peace</b>, <b>war</b> or in an <b>alliance</b>. AIs remember your actions: gifts raise opinion, wars and shared borders lower it, common enemies bring you together. Peace forces a 150-day truce. AIs may declare war when they think you are weak — keep a fleet!
+  <h3>Saving</h3>Autosaves every 2 minutes and whenever you leave the page. Manual save slots are in the ☰ menu. Saves live in this browser; use <b>Export</b>/<b>Import</b> to move them.
+  </div>`;
+}
+
+// ---------- actions ----------
+const actions = {
+  closeModal() {
+    if (modalKind === 'dialog') return;
+    const wasGameover = modalKind === 'gameover';
+    modalKind = null; $('#modal').classList.add('hidden');
+    if (wasGameover && G && G.over) { computeVis(); }
+    if (dialogQueue.length) showNextDialog();
+  },
+  deselect() { sel.fleet = null; sel.star = null; refreshUI(true); },
+  selFleet(id) { const f = G.fleets.find(x => x.id === +id); if (f) selectFleet(f); },
+  viewStar(id) { selectStar(+id); },
+  goto(id) { if (!G) return; id = +id; centerOn(id); if (modalKind && !['dialog', 'gameover'].includes(modalKind)) actions.closeModal(); if (!(sel.fleet && sel.fleet.owner === PLAYER)) selectStar(id); },
+  gotoFleet(id) { const f = G.fleets.find(x => x.id === +id); if (!f) return; const [x, y] = fleetPos(f); cam.x = x; cam.y = y; actions.closeModal(); selectFleet(f); },
+  build(k) { const s = G.stars[sel.star]; const err = queueBuilding(emp(PLAYER), s, k); if (err) toast(err, '#ef5350'); refreshUI(true); },
+  cancelB(i) { const s = G.stars[sel.star]; const q = s.bq.splice(+i, 1)[0]; if (q) pay(emp(PLAYER), BUILDINGS[q.k].cost, -1); refreshUI(true); },
+  demolish(i) { const s = G.stars[sel.star]; const b = s.buildings[+i]; if (!b) return; s.buildings.splice(+i, 1); if (b === 'shipyard' && !s.buildings.includes('shipyard')) { for (const q of s.sq) pay(emp(PLAYER), SHIPS[q.k].cost, -1); s.sq = []; } toast(`${BUILDINGS[b].name} demolished`, '#ffca28'); refreshUI(true); },
+  ship(c) { const s = G.stars[sel.star]; const err = queueShip(emp(PLAYER), s, c); if (err) toast(err, '#ef5350'); refreshUI(true); },
+  cancelS(i) { const s = G.stars[sel.star]; const q = s.sq.splice(+i, 1)[0]; if (q) pay(emp(PLAYER), SHIPS[q.k].cost, -1); refreshUI(true); },
+  split() { const g = splitFleet(sel.fleet); if (g) toast(`Split off ${g.name}`, '#4fc3f7'); refreshUI(true); },
+  splitClass(c) { const g = splitFleet(sel.fleet, c); if (g) toast(`${SHIPS[c].name}s split into ${g.name}`, '#4fc3f7'); refreshUI(true); },
+  merge() { const n = mergeHere(sel.fleet); if (n) toast(`Merged ${n} fleet${n > 1 ? 's' : ''} into ${sel.fleet.name}`, '#4fc3f7'); refreshUI(true); },
+  stop() { const f = sel.fleet; f.path = []; f.autoCol = false; refreshUI(true); },
+  colonize() { startColonize(sel.fleet); refreshUI(true); },
+  sendColony(id) {
+    id = +id; const cols = G.fleets.filter(f => f.owner === PLAYER && colonyOnly(f));
+    let best = null, bd = Infinity; const d = dij(id).dist;
+    for (const f of cols) { const at = f.at !== null ? f.at : f.to; if (d[at] < bd) { bd = d[at]; best = f; } }
+    if (best) { orderMove(best, id); toast(`${best.name} → ${G.stars[id].name} (will colonize)`, '#66bb6a'); }
+    refreshUI(true);
+  },
+  research(k) { emp(PLAYER).researching = k; refreshUI(true); },
+  pause() { G.paused = !G.paused; refreshUI(); },
+  speed(v) { G.speed = +v; G.paused = false; refreshUI(); },
+  openTech() { if (G && !G.over) openModal('tech'); },
+  openDiplo() { if (G) openModal('diplo'); },
+  openEmpire() { if (G) openModal('empire'); },
+  openMenu() { openModal('menu'); },
+  openSave() { openModal('save'); },
+  openLoad() { openModal('load'); },
+  openHelp() { openModal('help'); },
+  war(id, el) {
+    if (el.dataset.confirm !== '1') { el.dataset.confirm = '1'; el.textContent = 'Confirm war?'; return; }
+    const err = declareWar(PLAYER, +id); if (err) toast(err, '#ef5350'); renderModal();
+  },
+  peace(id) {
+    const e = emp(+id), r = rel(PLAYER, e.id);
+    if (G.time < (e._peaceAsk || -99)) { toast(`The ${e.name} won't consider peace again so soon.`, '#ffca28'); return; }
+    e._peaceAsk = G.time + 30;
+    if (aiWantsPeace(e, emp(PLAYER)) || (opinion(e.id, PLAYER) > 0 && G.time - r.since > 60)) makePeace(PLAYER, e.id);
+    else toast(`The ${e.name} refuses peace — hurt them more first.`, '#ef5350');
+    renderModal();
+  },
+  ally(id) {
+    const e = emp(+id);
+    if (aiAcceptsAlliance(e, emp(PLAYER))) makeAlliance(PLAYER, e.id);
+    else toast(`The ${e.name} declines (needs opinion > 40 and a common enemy, or > 65).`, '#ffca28');
+    renderModal();
+  },
+  breakAlly(id) { breakAlliance(PLAYER, +id); renderModal(); },
+  gift(id) {
+    const p = emp(PLAYER); if (p.res.energy < 100) return;
+    p.res.energy -= 100; const k = id + '>' + PLAYER, cur = G.op[k] || 0;
+    G.op[k] = cur + 20 * (1 - clamp(cur, 0, 90) / 100);
+    toast(`Gift sent to the ${emp(+id).name}. Opinion improved.`, '#66bb6a'); renderModal();
+  },
+  dialogYes() { const d = modalArg; modalKind = null; $('#modal').classList.add('hidden'); if (d.kind === 'peace') makePeace(PLAYER, d.from); else makeAlliance(PLAYER, d.from); showNextDialog(); },
+  dialogNo() { const d = modalArg; modalKind = null; $('#modal').classList.add('hidden'); G.op[d.from + '>' + PLAYER] = (G.op[d.from + '>' + PLAYER] || 0) - 5; showNextDialog(); },
+  saveSlot(k) { if (saveTo(k)) toast(`Saved to slot ${k}`, '#66bb6a'); else toast('Save failed (storage unavailable?) — try Export instead.', '#ef5350'); renderModal(); },
+  loadSlot(k) { loadFrom(k); },
+  delSlot(k) { lsDel('stellar_dominion_' + k); if ($('#screen').style.display === 'none') renderModal(); else { SLOT_KEYS.some(x => slotMeta(x)) ? loadScreen() : titleScreen(); } },
+  exportSave() { if (G) exportSave(); },
+  importSave() { importSave(); },
+  continue() { loadFrom('auto'); },
+  newGameScreen() { if (G && !G.over && $('#screen').style.display === 'none') saveTo('auto'); modalKind = null; $('#modal').classList.add('hidden'); newGameScreen(); },
+  loadScreen() { loadScreen(); },
+  helpScreen() { helpScreen(); },
+  title() { if (G && !G.over && $('#screen').style.display === 'none') saveTo('auto'); modalKind = null; $('#modal').classList.add('hidden'); G = null; titleScreen(); },
+  ngColor(c, el) { ngColor = c; document.querySelectorAll('.swatch').forEach(s => s.classList.toggle('on', s === el)); },
+  startGame() {
+    const opts = { name: $('#ng-name').value.trim() || 'Terran Federation', color: ngColor, size: $('#ng-size').value, ais: +$('#ng-ai').value, diff: $('#ng-diff').value };
+    const maxAI = Math.floor(SIZES[opts.size].n / 7) - 1; if (opts.ais > maxAI) { opts.ais = maxAI; }
+    newGame(opts); startPlaying();
+    setTimeout(() => toast('Tip: tap your capital (★) to construct buildings and ships. Pause with ⏸ any time.', '#4fc3f7'), 1200);
+  },
+  zoomIn() { zoomAt(W / 2, H / 2, 1.3); },
+  zoomOut() { zoomAt(W / 2, H / 2, 1 / 1.3); },
+  home() { if (G && emp(PLAYER).capital >= 0) centerOn(emp(PLAYER).capital); },
+};
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]'); if (!t || t.disabled) return;
+  const fn = actions[t.dataset.act]; if (fn) { fn(t.dataset.arg, t); }
+});
+
+// ---------- main loop ----------
+let last = performance.now(), uiT = 0;
+function frame(t) {
+  const dt = Math.min(0.1, (t - last) / 1000); last = t;
+  if (G && $('#screen').style.display === 'none') {
+    if (!G.paused && !modalPauses()) {
+      let gd = dt * G.speed;
+      while (gd > 1e-6) { const s = Math.min(gd, 0.1); step(s); gd -= s; }
+    }
+    for (const e of fx) e.t += dt; fx = fx.filter(e => e.t < (e.big ? 1.2 : 0.7));
+    draw(t);
+    uiT += dt; if (uiT > 0.25) { uiT = 0; refreshUI(); }
+  } else draw(t);
+  requestAnimationFrame(frame);
+}
+titleScreen();
+requestAnimationFrame(frame);
+
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
+}
+</script>
+</body>
+</html>
