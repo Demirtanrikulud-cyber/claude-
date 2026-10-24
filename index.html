@@ -155,7 +155,7 @@ small{color:var(--muted)}
   #panel{left:0;right:0;top:auto;bottom:0;width:auto;max-height:52vh;border-radius:14px 14px 0 0;
     padding-bottom:max(10px,env(safe-area-inset-bottom))}
   #mapctl.up{bottom:calc(52vh + 8px)}
-  #mapctl.upc{bottom:66px}
+  #mapctl.upc{bottom:92px}
   .techgrid{grid-template-columns:1fr 1fr}
   .cols{grid-template-columns:1fr}
   #toasts{top:140px}
@@ -179,11 +179,67 @@ small{color:var(--muted)}
 .planetrow .pl{width:14px;height:14px;margin:0}
 .tag{font-size:10.5px;padding:1px 5px;border-radius:5px;background:#1d2a47;color:#a9c4ef;margin-left:4px}
 .tag.real{background:#2a1d47;color:#cdb4ff}
-#panel.collapsed{max-height:58px!important;overflow:hidden}
+#panel.collapsed{max-height:84px!important;overflow:hidden}
 .pcol{display:none;background:transparent;border:none;font-size:16px;padding:2px 6px;min-height:30px}
 @media (max-width:760px){ .pcol{display:inline-block} }
 @media (max-width:500px){ #topbar .date{display:none} #topbar .res{padding:2px 5px} }
 .ground{background:#2a1418;border:1px solid #6a2a33;border-radius:8px;padding:8px;margin:8px 0}
+/* ---- phone polish: notch-safe edges, finger-sized targets, no lost taps ---- */
+button,select,input,.res{touch-action:manipulation}
+#topbar{padding-left:max(6px,env(safe-area-inset-left));padding-right:max(6px,env(safe-area-inset-right))}
+#topbar .menu button[data-act="openMenu"]{min-width:38px;font-size:16px}
+#viewnav{left:max(10px,env(safe-area-inset-left))}
+#mapctl{left:max(10px,env(safe-area-inset-left))}
+button.x{min-width:40px;min-height:40px;font-size:20px}
+.pcol{min-width:40px;min-height:40px;font-size:18px}
+.chip button{min-height:30px;padding:0 9px;margin:-4px -4px -4px 0}
+.row button{min-height:36px;min-width:36px}
+.opt b svg{vertical-align:-3px;margin-right:2px}
+.bombline{color:#ffb74d}
+#modal{padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+#modal-head,.modal-head{flex:none}
+#modal-body{-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+/* full screens scroll from the top instead of centring off-screen */
+#screen{flex-direction:column;align-items:center;justify-content:flex-start;
+  padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));-webkit-overflow-scrolling:touch}
+.scr{margin:auto 0;flex:none}
+.form .check{flex-direction:row;align-items:center;gap:10px;color:var(--text);font-size:14px}
+.form .check input{width:22px;height:22px;margin:0}
+/* how to play: collapsible sections */
+.help details{border:1px solid var(--line);border-radius:10px;margin:8px 0;background:#0f1729}
+.help summary{cursor:pointer;padding:10px 12px;font-weight:600;color:var(--accent);font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.help summary::-webkit-details-marker{display:none}
+.help summary::after{content:'▸';color:var(--muted);transition:transform .15s}
+.help details[open] summary::after{transform:rotate(90deg)}
+.help details>div{padding:0 12px 12px;line-height:1.45}
+.help table{width:100%;table-layout:fixed;word-wrap:break-word}
+.help p{margin:6px 0}
+/* save text fallback (iOS home-screen apps cannot download files) */
+.savebox{width:100%;height:140px;font:11px/1.3 ui-monospace,monospace;resize:vertical;user-select:text;-webkit-user-select:text}
+/* tutorial */
+#tut{position:fixed;left:max(10px,env(safe-area-inset-left));top:110px;z-index:9;width:min(360px,calc(100% - 20px));background:rgba(16,30,52,.97);
+  border:1px solid #3a8cc4;border-radius:12px;padding:10px 12px;box-shadow:0 8px 30px rgba(0,0,0,.55);font-size:13.5px;line-height:1.4}
+#tut .th{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+#tut .th b{flex:1;font-size:15px;color:#9be7ff}
+#tut .th small{white-space:nowrap}
+#tut .tb{color:#d8e2f2}
+#tut .btns{justify-content:flex-end;margin-top:8px}
+#tut .btns button{min-height:36px}
+#tut.min .tb,#tut.min .btns{display:none}
+#tut.done{border-color:#3d9b52}
+.tut-hl{outline:2px solid #ffca28!important;outline-offset:2px;animation:tutp 1.1s ease-in-out infinite}
+@keyframes tutp{50%{outline-color:rgba(255,202,40,.25);box-shadow:0 0 14px rgba(255,202,40,.6)}}
+@media (max-width:760px){ #tut{left:max(6px,env(safe-area-inset-left));width:calc(100% - 12px);font-size:13px;padding:8px 10px} }
+#modal{z-index:30}
+@media (max-width:760px){ #panel{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))} }
+#tut .th .x{min-width:34px;min-height:34px;margin:-6px -6px -6px 0}
+#tut .btns{margin-top:6px;align-items:center}
+#tut .btns button{min-height:34px;padding:4px 12px}
+#tut .btns .link{background:transparent;border:none;color:var(--muted);margin-right:auto;padding-left:0}
+#tut.min{padding:4px 10px}
+#tut.min .th{margin:0}
+@media (max-width:760px){ #tut .th b{font-size:14px} #tut .tb{font-size:12.5px;line-height:1.35} }
+
 </style>
 </head>
 <body>
@@ -215,6 +271,7 @@ small{color:var(--muted)}
 <div id="viewnav" class="hidden"></div>
 <div id="panel" class="hidden"></div>
 <div id="toasts"></div>
+<div id="tut" class="hidden"></div>
 <div id="mapctl" class="hidden">
   <button data-act="zoomIn" title="Zoom in">+</button>
   <button data-act="zoomOut" title="Zoom out">−</button>
@@ -1512,9 +1569,12 @@ const WEAPONS = {
   missile: { name: 'Missile', dmg: 40, pen: 16, rof: 5.5, track: 0.8, tt: 0.9, kind: 'missile', breach: 0.6, fire: 0.45 },
   torpedo: { name: 'Torpedo', dmg: 150, pen: 22, rof: 10, track: 0.5, tt: 1.3, kind: 'torpedo', breach: 0.9, fire: 0.5 },
   battery: { name: 'Planetary battery', dmg: 35, pen: 14, rof: 3.5, track: 0.6, tt: 0.3, kind: 'rail', breach: 0.45, fire: 0.2 },
+  fighters: { name: 'Strike craft wing', dmg: 14, pen: 9, rof: 2.6, track: 0.95, tt: 1.7, kind: 'fighter', breach: 0.2, fire: 0.18 },
+  siegebomb: { name: 'Siege bombs', dmg: 70, pen: 12, rof: 4, track: 0.1, tt: 1.1, kind: 'bomb', breach: 0.4, fire: 0.5, planet: 1 },
+  lance: { name: 'Spinal lance', dmg: 300, pen: 40, rof: 9, track: 0.25, tt: 0.3, kind: 'lance', breach: 1, fire: 0.7 },
 };
-const BIG_PREF = { railgun: 1, heavyrail: 1, missile: 1, torpedo: 1, battery: 0 };
-const SMALL_PREF = { autocannon: 1, flak: 1 };
+const BIG_PREF = { railgun: 1, heavyrail: 1, missile: 1, torpedo: 1, lance: 1, battery: 0 };
+const SMALL_PREF = { autocannon: 1, flak: 1, fighters: 1 };
 
 // ship classes. st = structure, ev = evasion, pd = point-defense rating, vent = air lost per breach per day, len = draw length
 const SHIPS = {
@@ -1523,10 +1583,15 @@ const SHIPS = {
   cruiser: { name: 'Cruiser', size: 4, crew: 260, st: 420, armor: 9, ev: 0.15, speed: 30, pd: 0.5, vent: 0.035, len: 26, weapons: ['railgun', 'railgun', 'missile', 'autocannon'], cost: { minerals: 180, energy: 20 }, time: 24, upkeep: 0.8, tech: 'cruisers', desc: 'Railgun line ship. Punches through Destroyer armour.' },
   battleship: { name: 'Battleship', size: 8, crew: 750, st: 1250, armor: 16, ev: 0.05, speed: 24, pd: 0.8, vent: 0.02, len: 42, weapons: ['heavyrail', 'heavyrail', 'heavyrail', 'missile', 'missile', 'flak', 'autocannon'], cost: { minerals: 420, energy: 60 }, time: 40, upkeep: 1.6, tech: 'battleships', desc: 'Armoured giant. Crushes Cruisers; vulnerable to torpedo swarms.' },
   transport: { name: 'Troop Transport', size: 1, crew: 25, st: 100, armor: 3, ev: 0.2, speed: 32, pd: 0, vent: 0.12, len: 17, weapons: [], troops: 40, cost: { minerals: 60, energy: 10 }, time: 10, upkeep: 0.2, tech: null, desc: 'Carries 40 soldiers. Lands them once orbital defenses fall.' },
+  frigate: { name: 'Missile Frigate', size: 2, crew: 60, st: 130, armor: 4, ev: 0.3, speed: 34, pd: 0.3, vent: 0.07, len: 18, weapons: ['missile', 'missile', 'autocannon'], cost: { minerals: 100, energy: 15 }, time: 15, upkeep: 0.45, tech: null, desc: 'Missile boat. Its missiles breach hulls and start fires, but it is fragile.' },
+  tender: { name: 'Repair Tender', size: 2, crew: 140, st: 240, armor: 5, ev: 0.15, speed: 32, pd: 0.8, vent: 0.05, len: 22, weapons: ['flak'], repair: 1, cost: { minerals: 130, energy: 30 }, time: 18, upkeep: 0.6, tech: 'damagecontrol', desc: 'Repairs its fleet anywhere and helps seal breaches and fight fires, even mid-battle.' },
+  bomber: { name: 'Siege Bomber', size: 3, crew: 90, st: 280, armor: 7, ev: 0.15, speed: 28, pd: 0.2, vent: 0.05, len: 24, weapons: ['siegebomb', 'siegebomb', 'autocannon'], bomb: 6, cost: { minerals: 150, energy: 40 }, time: 20, upkeep: 0.7, tech: 'siege', desc: 'Smashes orbital defenses and bombards planets. Weak against warships.' },
+  carrier: { name: 'Carrier', size: 6, crew: 520, st: 820, armor: 10, ev: 0.05, speed: 26, pd: 1.2, vent: 0.025, len: 38, weapons: ['fighters', 'fighters', 'fighters', 'fighters', 'flak', 'flak'], cost: { minerals: 320, energy: 80 }, time: 34, upkeep: 1.3, tech: 'carriers', desc: 'Launches strike-craft wings that hunt small, nimble ships.' },
+  titan: { name: 'Titan', size: 16, crew: 2400, st: 3800, armor: 24, ev: 0.02, speed: 19, pd: 2, vent: 0.01, len: 72, weapons: ['lance', 'heavyrail', 'heavyrail', 'heavyrail', 'heavyrail', 'missile', 'missile', 'missile', 'flak', 'flak', 'flak'], bomb: 4, unique: 1, cost: { minerals: 1100, energy: 300 }, time: 80, upkeep: 4, tech: 'titans', desc: 'Flagship colossus. Its spinal lance can split a Battleship. One per empire.' },
   colony: { name: 'Colony Ship', size: 1, crew: 40, st: 120, armor: 2, ev: 0.1, speed: 28, pd: 0, vent: 0.1, len: 20, weapons: [], cost: { minerals: 90, energy: 40 }, time: 16, upkeep: 0.3, tech: null, desc: 'Settles an unclaimed world.' },
 };
-const WAR_CLASSES = ['corvette', 'destroyer', 'cruiser', 'battleship'];
-const CLASS_ORDER = ['battleship', 'cruiser', 'destroyer', 'corvette', 'transport', 'colony'];
+const WAR_CLASSES = ['corvette', 'frigate', 'destroyer', 'cruiser', 'carrier', 'battleship', 'titan'];
+const CLASS_ORDER = ['titan', 'battleship', 'carrier', 'cruiser', 'bomber', 'tender', 'frigate', 'destroyer', 'corvette', 'transport', 'colony'];
 
 const TECHS = {
   weapons1: { name: 'Coilgun Accelerators', cat: 'Military', cost: 400, req: [], desc: '+15% weapon damage, +1 penetration' },
@@ -1536,11 +1601,14 @@ const TECHS = {
   armor2: { name: 'Neutronium Plating', cat: 'Military', cost: 1120, req: ['armor1'], desc: '+15% armour, +10% structure' },
   armor3: { name: 'Adaptive Hulls', cat: 'Military', cost: 2560, req: ['armor2'], desc: '+20% armour, +10% structure' },
   pd1: { name: 'Point Defense Lasers', cat: 'Military', cost: 720, req: ['weapons1'], desc: '+40% missile & torpedo interception' },
-  damagecontrol: { name: 'Damage Control Drones', cat: 'Military', cost: 640, req: [], desc: '2× speed sealing hull breaches & fighting fires' },
+  damagecontrol: { name: 'Damage Control Drones', cat: 'Military', cost: 640, req: [], desc: '2× speed sealing hull breaches & fighting fires. Unlocks Repair Tenders' },
+  siege: { name: 'Orbital Bombardment', cat: 'Military', cost: 600, req: [], desc: 'Unlocks Siege Bombers, +50% bombardment' },
   ground1: { name: 'Powered Armor', cat: 'Military', cost: 640, req: [], desc: '+40% soldier strength (attack & defense)' },
   ground2: { name: 'Orbital Drop Doctrine', cat: 'Military', cost: 1440, req: ['ground1'], desc: '+40% soldier strength, +25% garrisons' },
   cruisers: { name: 'Cruiser Hulls', cat: 'Engineering', cost: 640, req: [], desc: 'Unlocks Cruisers' },
   battleships: { name: 'Battleship Hulls', cat: 'Engineering', cost: 1760, req: ['cruisers'], desc: 'Unlocks Battleships' },
+  carriers: { name: 'Flight Decks', cat: 'Engineering', cost: 1200, req: ['cruisers'], desc: 'Unlocks Carriers' },
+  titans: { name: 'Titan Keel', cat: 'Engineering', cost: 3200, req: ['battleships'], desc: 'Unlocks the Titan (one per empire)' },
   engines1: { name: 'Fusion Torches', cat: 'Engineering', cost: 480, req: [], desc: '+20% fleet speed' },
   engines2: { name: 'Alcubierre Drive', cat: 'Engineering', cost: 1440, req: ['engines1'], desc: '+25% fleet speed' },
   logistics: { name: 'Fleet Logistics', cat: 'Engineering', cost: 800, req: [], desc: '+30% fleet capacity, −25% upkeep, 2× repairs' },
@@ -1558,14 +1626,14 @@ const TECHS = {
   diplomacy: { name: 'Xeno-Linguistics', cat: 'Society', cost: 480, req: [], desc: '+20 opinion with every empire' },
 };
 const TECH_CATS = ['Military', 'Engineering', 'Economy', 'Society'];
-// endless late-game research, unlocked after 18 technologies; each level costs 50% more
+// endless late-game research, unlocked after 20 technologies; each level costs 50% more
 const REPEAT = {
   rep_dmg: { name: 'Weapon Refinement', base: 1600, desc: '+5% weapon damage per level' },
   rep_hull: { name: 'Hull Reinforcement', base: 1600, desc: '+5% ship structure per level' },
   rep_eco: { name: 'Industrial Automation', base: 2000, desc: '+5% energy, mineral & research output per level' },
   rep_ground: { name: 'Veteran Legions', base: 1400, desc: '+5% soldier strength per level' },
 };
-const REPEAT_UNLOCK = 18;
+const REPEAT_UNLOCK = 20;
 // major planetary projects: expensive late-game sinks for minerals & energy
 const PROJECTS = {
   terraform: { name: 'Terraform', icon: '🌱', cost: { minerals: 500, energy: 250 }, time: 60, max: 2, desc: '+25% habitability on the main world' },
@@ -1593,6 +1661,7 @@ const AI_NAMES = ['Varn Hegemony', 'Quell Collective', 'Ossari Dominion', 'Thala
 const AI_HOMES = { 'Varn Hegemony': 'Varnis', 'Quell Collective': 'Quellar', 'Ossari Dominion': 'Ossar', 'Thalan Republic': 'Thala', 'Krynn Swarm': 'Krynnhive', 'Eidolon Union': 'Eidos', 'Sareth Imperium': 'Sareth Prime', 'Nova Concord': 'Novara', 'Draxis Pact': 'Draxis', 'Myrr Theocracy': 'Myrrhal' };
 const HUMAN_SHIP_NAMES = ['Valiant', 'Resolute', 'Endeavour', 'Intrepid', 'Vigilant', 'Defiant', 'Orion', 'Tempest', 'Aurora', 'Hyperion', 'Odyssey', 'Pathfinder', 'Sentinel', 'Dauntless', 'Constellation', 'Enterprise', 'Discovery', 'Challenger', 'Atlantis', 'Columbia', 'Galileo', 'Kepler', 'Copernicus', 'Magellan', 'Armstrong', 'Gagarin', 'Tereshkova', 'Halley', 'Hubble', 'Sagan', 'Vanguard', 'Ranger', 'Mariner', 'Pioneer', 'Voyager', 'Cassini', 'Juno', 'Artemis', 'Apollo', 'Gemini', 'Liberty', 'Fortitude', 'Tenacity', 'Indomitable', 'Invincible', 'Relentless', 'Steadfast', 'Audacious', 'Courageous', 'Victory', 'Thunderer', 'Warspite', 'Nautilus', 'Leviathan', 'Typhoon', 'Cyclone', 'Avalanche', 'Yamato', 'Bismarck', 'Hood', 'Nimitz', 'Ark Royal', 'Shenzhou', 'Chandrayaan', 'Tiangong'];
 const CORVETTE_NAMES = ['Hornet', 'Wasp', 'Viper', 'Dart', 'Kestrel', 'Falcon', 'Swift', 'Lancer', 'Raptor', 'Sparrow', 'Stinger', 'Javelin'];
+const TITAN_NAMES = ['Leviathan', 'Colossus', 'Behemoth', 'Juggernaut', 'Sovereign', 'Goliath', 'Imperator', 'Titanomachy'];
 const COLONY_NAMES = ['Hope', 'New Dawn', 'Promise', 'Ark', 'Genesis', 'Exodus', 'Mayflower', 'Horizon', 'Providence', 'Endurance'];
 const ALIEN_SYL = ["Kra", "Vex", "Zhul", "Ith", "Mor", "Xa", "Quo", "Thel", "Ska", "Ny", "Orr", "Vass", "Ul", "Kesh", "Tyr", "Aeth", "Gor", "Sil", "Ra", "Phy"];
 
@@ -1629,7 +1698,7 @@ function mods(e) {
     pen: (t.weapons1 ? 1 : 0) + (t.weapons2 ? 2 : 0) + (t.weapons3 ? 3 : 0),
     armor: 1 + (t.armor1 ? .15 : 0) + (t.armor2 ? .15 : 0) + (t.armor3 ? .2 : 0),
     hull: 1 + (t.armor1 ? .1 : 0) + (t.armor2 ? .1 : 0) + (t.armor3 ? .1 : 0),
-    pd: t.pd1 ? 1.4 : 1, dc: t.damagecontrol ? 2 : 1,
+    pd: t.pd1 ? 1.4 : 1, dc: t.damagecontrol ? 2 : 1, bomb: t.siege ? 1.5 : 1,
     ground: 1 + (t.ground1 ? .4 : 0) + (t.ground2 ? .4 : 0), garrison: t.ground2 ? 1.25 : 1,
     speed: 1 + (t.engines1 ? .2 : 0) + (t.engines2 ? .25 : 0),
     upkeep: t.logistics ? .75 : 1, repair: t.logistics ? 2 : 1, cap: t.logistics ? 1.3 : 1,
@@ -1690,7 +1759,8 @@ function starOutput(s) {
   let mi = countB(s, 'mine') * 3 * P.min * fill;
   let re = countB(s, 'lab') * 2.5 * fill + s.pop * 0.05;
   if (isCapital(s)) { en += 4; mi += 3; re += 3; }
-  en *= m.en * e.mult; mi *= m.min * e.mult; re *= m.res * e.mult;
+  const ruin = 1 - 0.6 * (s.devast || 0); // bombed-out cities produce less
+  en *= m.en * e.mult * ruin; mi *= m.min * e.mult * ruin; re *= m.res * e.mult * ruin;
   let up = 0; for (const b of s.buildings) up += BUILDINGS[b].upkeep;
   s.planets.forEach((p, i) => { if (i !== s.pi && p.out) { const y = outpostYield(p, e); en += y.en; mi += y.mi; up += OUTPOST.upkeep; } });
   return { en, mi, re, up };
@@ -1713,6 +1783,7 @@ function shipName(e, c) {
     if (c === 'corvette') return `${CORVETTE_NAMES[k % CORVETTE_NAMES.length]}-${k}`;
     if (c === 'transport') return `Dropship T-${k}`;
     if (c === 'colony') return `${COLONY_NAMES[k % COLONY_NAMES.length]} ${Math.floor(k / COLONY_NAMES.length) + 1}`;
+    if (c === 'titan') return `${pre} ${TITAN_NAMES[k % TITAN_NAMES.length]}`;
     const n = HUMAN_SHIP_NAMES[(k * 7 + e.id) % HUMAN_SHIP_NAMES.length];
     return `${pre} ${n}`;
   }
@@ -1726,6 +1797,13 @@ function makeShip(e, c) {
   return { id: G.nextId++, c, n: shipName(e, c), st: S.st * m.hull, cr: S.crew, air: 1, br: 0, fi: 0, en: 1, wp: 1, tr: S.troops ? S.troops * m.ground : 0, cd: S.weapons.map(w => Math.random() * WEAPONS[w].rof), lh: -1 };
 }
 function fleetTotal(f) { return f.ships.length; }
+// orbital bombardment strength: Siege Bombers and Titans are built for it, other warships help by size
+function bombardPower(f) {
+  let b = 0;
+  for (const sh of f.ships) { const S = SHIPS[sh.c]; if (!S.weapons.length) continue; b += (S.bomb || S.size * 0.5) * sh.wp * (0.4 + 0.6 * clamp(sh.cr / S.crew, 0, 1)); }
+  return b * mods(emp(f.owner)).bomb;
+}
+function hasUnique(e, c) { return G.fleets.some(f => f.owner === e.id && f.ships.some(sh => sh.c === c)) || G.stars.some(s => s.owner === e.id && s.sq.some(q => q.k === c)); }
 function isArmed(f) { for (const sh of f.ships) if (SHIPS[sh.c].weapons.length) return true; return false; }
 function colonyOnly(f) { return f.ships.length > 0 && f.ships.every(sh => sh.c === 'colony'); }
 function transportOnly(f) { return f.ships.length > 0 && f.ships.every(sh => sh.c === 'transport'); }
@@ -1993,6 +2071,7 @@ function step(dt) {
   G.fleets = G.fleets.filter(f => f.ships.length > 0);
   rebuildIndex();
   invasions(dt);
+  bombardment(dt);
   colonization(dt);
   upkeepStars(dt);
   const dec = Math.pow(0.99, dt);
@@ -2060,6 +2139,7 @@ function upkeepStars(dt) {
     else s.pop -= (s.pop - cap) * 0.05 * dt;
     const dm = defMax(s);
     if (s.defense > dm) s.defense = dm;
+    if (s.devast && G.time - (s._bomb || -99) > 2) { s.devast = Math.max(0, s.devast - 0.004 * dt); if (s.devast < 0.005) s.devast = 0; }
     if (besieged) continue;
     s.defense = Math.min(dm, s.defense + dm * 0.025 * dt);
     if (!s.inv) { const gm = garrisonMax(s); s.garrison = Math.min(gm, s.garrison + gm * 0.03 * dt); }
@@ -2121,6 +2201,7 @@ function orderMove(f, target) {
     else f.path = target === f.to ? [] : pathTo(ra, f.to, target);
   }
   f.autoCol = colonyOnly(f) && G.stars[target].owner < 0;
+  if (target !== f.at) f.bomb = false;
   return true;
 }
 function fleetEta(f) {
@@ -2158,14 +2239,15 @@ function fire(s, from, owner, tgt, tOwner, wk, m) {
   let hit = true, icpt = 0;
   if (tgt) {
     hit = Math.random() < 1 - SHIPS[tgt.c].ev * (1 - W.track);
-    if (W.kind === 'missile' || W.kind === 'torpedo') {
-      const pd = sidePD(s, tOwner); const p = Math.min(0.85, pd / (pd + 5) * (W.kind === 'torpedo' ? 1.15 : 1));
+    if (W.kind === 'missile' || W.kind === 'torpedo' || W.kind === 'fighter') {
+      // point defense shoots down missiles and torpedoes; agile strike craft are harder to stop
+      const pd = sidePD(s, tOwner); const p = Math.min(0.85, pd / (pd + 5) * (W.kind === 'torpedo' ? 1.15 : W.kind === 'fighter' ? 0.5 : 1));
       if (Math.random() < p) icpt = 0.5 + Math.random() * 0.4;
     }
-  } else if (W.kind === 'missile' || W.kind === 'torpedo') {
+  } else if (W.kind === 'missile' || W.kind === 'torpedo' || W.kind === 'bomb') {
     const pd = s.defense > 0 ? countB(s, 'defense') * 1.5 : 0; if (Math.random() < pd / (pd + 5)) icpt = 0.6 + Math.random() * 0.3;
   }
-  projs.push({ s: s.id, from, to: tgt, o: owner, to_o: tOwner, w: wk, t: 0, tt: W.tt * (0.85 + Math.random() * 0.3), hit, icpt, dmg: W.dmg * m.dmg, pen: W.pen + m.pen, sd: Math.random() });
+  projs.push({ s: s.id, from, to: tgt, o: owner, to_o: tOwner, w: wk, t: 0, tt: W.tt * (0.85 + Math.random() * 0.3), hit, icpt, dmg: W.dmg * m.dmg * (W.planet ? m.bomb : 1), pen: W.pen + m.pen, sd: Math.random() });
 }
 function combat(dt) {
   pdCache = new Map();
@@ -2187,7 +2269,10 @@ function combat(dt) {
         const rate = sh.wp * (0.4 + 0.6 * clamp(sh.cr / S.crew, 0, 1)); if (rate < 0.03) continue;
         for (let i = 0; i < S.weapons.length; i++) {
           sh.cd[i] -= dt * rate; if (sh.cd[i] > 0) continue;
-          const wk = S.weapons[i]; sh.cd[i] += WEAPONS[wk].rof * (0.85 + Math.random() * 0.3);
+          const wk = S.weapons[i];
+          if (WEAPONS[wk].planet && !canPlanet) { sh.cd[i] = 0; continue; } // siege bombs only fall on planets
+          sh.cd[i] += WEAPONS[wk].rof * (0.85 + Math.random() * 0.3);
+          if (WEAPONS[wk].planet) { fire(s, sh, f.owner, null, s.owner, wk, m); continue; }
           const t = en.length ? pickTarget(en, wk) : null;
           if (t) fire(s, sh, f.owner, t[0], t[1].owner, wk, m);
           else if (canPlanet) fire(s, sh, f.owner, null, s.owner, wk, m);
@@ -2219,7 +2304,7 @@ function stepProjectiles(dt) {
     if (!p.hit) continue;
     if (!p.to) { // orbital defenses
       if (s.owner < 0 || !atWar(p.o, s.owner)) continue;
-      s.defense = Math.max(0, s.defense - p.dmg * (p.pen >= 8 ? 0.3 : 0.05));
+      s.defense = Math.max(0, s.defense - p.dmg * (p.pen >= 8 ? 0.3 : 0.05) * (WEAPONS[p.w].planet ? 2.5 : 1));
       evt(s, { k: 'phit', p });
       continue;
     }
@@ -2258,9 +2343,11 @@ function shipEffects(dt) {
     const calm = s && G.time - (s._combat || -99) > 1;
     const port = calm && s.owner >= 0 && allied(s.owner, f.owner);
     const yard = port && s.owner === f.owner && s.buildings.includes('shipyard');
-    let lost = 0;
+    let lost = 0, tend = 0;
+    for (const sh of f.ships) if (SHIPS[sh.c].repair && sh.wp > 0.2) tend += clamp(sh.cr / SHIPS[sh.c].crew, 0, 1);
+    tend = Math.min(2, tend);
     for (const sh of f.ships) {
-      const S = SHIPS[sh.c], stM = S.st * m.hull, ce = clamp(sh.cr / S.crew, 0, 1), dc = ce * m.dc;
+      const S = SHIPS[sh.c], stM = S.st * m.hull, ce = clamp(sh.cr / S.crew, 0, 1), dc = ce * m.dc * (1 + 0.6 * tend);
       if (sh.br > 0) {
         sh.air -= S.vent * sh.br * dt;
         if (Math.random() < 0.2 * dc * dt * sh.br) sh.br--;
@@ -2272,6 +2359,10 @@ function shipEffects(dt) {
       }
       if (sh.air < 0) sh.air = 0;
       if (sh.air < 0.35) sh.cr -= S.crew * (0.18 * (0.35 - sh.air) / 0.35 + 0.01) * dt;
+      if (tend && !port && (!s || calm)) { // a Repair Tender patches the fleet wherever it is
+        sh.st = Math.min(stM, sh.st + stM * 0.01 * tend * m.repair * dt);
+        sh.en = Math.min(1, sh.en + 0.03 * tend * dt); sh.wp = Math.min(1, sh.wp + 0.03 * tend * dt);
+      }
       if (port) {
         sh.st = Math.min(stM, sh.st + stM * (yard ? 0.05 : 0.012) * m.repair * dt);
         sh.en = Math.min(1, sh.en + (yard ? 0.15 : 0.03) * dt); sh.wp = Math.min(1, sh.wp + (yard ? 0.15 : 0.03) * dt);
@@ -2335,6 +2426,43 @@ function invasions(dt) {
   }
   G.fleets = G.fleets.filter(f => f.ships.length > 0);
 }
+// ---------- orbital bombardment ----------
+// Fleets ordered to bombard rain fire on an enemy world once its orbital defenses are down:
+// soldiers die, cities burn, buildings are flattened and the world's output collapses.
+function canBombard(f) {
+  if (f.at === null || f.path.length || !isArmed(f)) return false;
+  const s = G.stars[f.at]; return s.owner >= 0 && atWar(f.owner, s.owner);
+}
+function bombardState(f) {
+  const s = G.stars[f.at];
+  if (s.defense > 0.5) return 'waiting'; // the guns are still hammering the orbital defenses
+  if (hostileArmedAt(s.id, f.owner)) return 'contested';
+  return 'firing';
+}
+function bombardment(dt) {
+  for (const f of G.fleets) {
+    if (!f.bomb) continue;
+    if (!canBombard(f)) { if (f.at !== null && !f.path.length) f.bomb = false; continue; }
+    if (bombardState(f) !== 'firing') continue;
+    const s = G.stars[f.at], B = bombardPower(f) * dt; if (B <= 0) continue;
+    const victim = s.owner;
+    s._bomb = G.time; s._bombBy = f.owner;
+    s.garrison = Math.max(0, s.garrison - B * 0.7);
+    s.pop = Math.max(0.3, s.pop - B * 0.015);
+    s.devast = Math.min(1, (s.devast || 0) + B * 0.0025);
+    if (s.buildings.length && Math.random() < B * 0.006) {
+      const b = s.buildings.splice(Math.floor(Math.random() * s.buildings.length), 1)[0];
+      if (victim === PLAYER) notify(`Bombs destroyed the ${BUILDINGS[b].name} on ${prim(s).n}!`, { color: '#ef5350', star: s.id, silent: true });
+      else if (f.owner === PLAYER) notify(`Our bombardment flattened a ${BUILDINGS[b].name} on ${prim(s).n}.`, { color: '#ffca28', star: s.id, silent: true });
+    }
+    // atrocities are remembered
+    G.op[victim + '>' + f.owner] = (G.op[victim + '>' + f.owner] || 0) - B * 0.12;
+    for (const o of G.empires) if (o.alive && o.id !== victim && o.id !== f.owner) G.op[o.id + '>' + f.owner] = (G.op[o.id + '>' + f.owner] || 0) - B * 0.015;
+    if (victim === PLAYER && G.time - (s._bombAlert || -999) > 30) { s._bombAlert = G.time; notify(`⚠ ${prim(s).n} is under orbital bombardment!`, { color: '#ef5350', star: s.id }); }
+    if (f.owner === PLAYER && G.time - (s._bombNote || -999) > 60) { s._bombNote = G.time; notify(`💣 ${f.name} is bombarding ${prim(s).n}: the garrison and cities are being hit.`, { color: '#ffca28', star: s.id }); }
+  }
+}
+
 function capture(s, newOwner) {
   const old = s.owner, oe = emp(old), ne = emp(newOwner);
   const wasCap = oe.capital === s.id;
@@ -2516,6 +2644,7 @@ function queueShip(e, s, c) {
   const S = SHIPS[c];
   if (s.owner !== e.id || !s.buildings.includes('shipyard')) return 'Needs a shipyard';
   if (S.tech && !e.techs[S.tech]) return 'Requires ' + TECHS[S.tech].name;
+  if (S.unique && hasUnique(e, c)) return `Only one ${S.name} per empire`;
   if (s.sq.length >= 8) return 'Queue full';
   if (!canAfford(e, S.cost)) return 'Not enough resources';
   pay(e, S.cost); s.sq.push({ k: c, p: 0, t: S.time }); return null;
@@ -2628,7 +2757,8 @@ function aiResearch(e, wars) {
     const T = TECHS[k]; let w = 1;
     if (T.cat === 'Economy') w = 1.5 * P.sci;
     if (T.cat === 'Military') w = (wars.length ? 1.6 : 0.9) * P.mil;
-    if (k === 'cruisers' || k === 'battleships') w = 2.2 * P.mil;
+    if (k === 'cruisers' || k === 'battleships' || k === 'carriers' || k === 'titans') w = 2.2 * P.mil;
+    if (k === 'siege') w = (wars.length ? 2 : 1) * P.aggr;
     if (k === 'hab1' || k === 'genetics' || k === 'admin') w = 1.3 * P.expand;
     if (k === 'diplomacy') w = 0.4;
     return [k, w / Math.sqrt(techCost(e, k) / 400)];
@@ -2661,17 +2791,25 @@ function aiShipyards(e, stars, fleets, wars) {
   }
 }
 function aiPickClass(e, wars) {
-  const avail = WAR_CLASSES.filter(c => !SHIPS[c].tech || e.techs[SHIPS[c].tech]);
+  const ok = c => (!SHIPS[c].tech || e.techs[SHIPS[c].tech]) && !(SHIPS[c].unique && hasUnique(e, c));
+  const avail = WAR_CLASSES.filter(ok);
   const comp = {}; const rivals = new Set(wars.map(o => o.id));
   if (!rivals.size) for (const o of G.empires) if (o.alive && o.id !== e.id && borders(e.id, o.id)) rivals.add(o.id);
   for (const f of G.fleets) if (rivals.has(f.owner)) for (const sh of f.ships) comp[sh.c] = (comp[sh.c] || 0) + costValue(SHIPS[sh.c].cost);
   let top = null, tv = 0; for (const c of WAR_CLASSES) if ((comp[c] || 0) > tv) { tv = comp[c]; top = c; }
-  const counter = { corvette: 'destroyer', destroyer: 'cruiser', cruiser: 'battleship', battleship: 'corvette' };
-  return wpick(avail.map(c => {
-    let w = { corvette: 2, destroyer: 2, cruiser: 3, battleship: 3 }[c];
-    if (top) { if (counter[top] === c) w += 5; if (counter[c] === top) w *= 0.35; }
+  // what beats what: flak escorts kill small craft and missiles, railguns punch armour, torpedoes and lances gut capital ships
+  const counter = { corvette: ['destroyer', 'carrier'], frigate: ['destroyer'], destroyer: ['cruiser'], cruiser: ['battleship', 'titan'], carrier: ['destroyer', 'battleship'], battleship: ['corvette', 'titan'], titan: ['corvette'] };
+  const own = {}; for (const f of G.fleets) if (f.owner === e.id) for (const sh of f.ships) own[sh.c] = (own[sh.c] || 0) + 1;
+  const warships = WAR_CLASSES.reduce((a, c) => a + (own[c] || 0), 0);
+  const opts = avail.map(c => {
+    let w = { corvette: 2, frigate: 1.6, destroyer: 2, cruiser: 3, carrier: 2.4, battleship: 3, titan: 5 }[c];
+    if (top) { if (counter[top] && counter[top].includes(c)) w += 5; if (counter[c] && counter[c].includes(top)) w *= 0.35; }
     return [c, w];
-  }));
+  });
+  // support ships: a tender for every eight warships, bombers once a war is on
+  if (ok('tender') && warships >= 6 && (own.tender || 0) < warships / 8) opts.push(['tender', 3]);
+  if (ok('bomber') && wars.length && (own.bomber || 0) < 1 + warships / 8) opts.push(['bomber', 2 * PERS[e.pers].aggr]);
+  return wpick(opts);
 }
 function aiColonize(e, fleets) {
   const cols = fleets.filter(colonyOnly);
@@ -2707,6 +2845,8 @@ function aiMilitary(e, stars, fleets, wars) {
     if (hp <= 0) continue;
     if (friendlyPower(f.at, e.id) < hp * 0.35) { const h = nearestSafe(e, f.at); if (h != null && h !== f.at) orderMove(f, h); }
   }
+  // fleets sitting over an enemy world keep bombarding it if it is still well defended on the ground
+  for (const f of armed) if (f.at !== null && !f.path.length && canBombard(f) && !f.bomb && G.stars[f.at].garrison > 40 && Math.random() < 0.3 * PERS[e.pers].aggr) f.bomb = true;
   const busy = f => f.at === null || f.path.length || hostilePower(f.at, e.id) > 0 || (G.stars[f.at].owner >= 0 && atWar(e.id, G.stars[f.at].owner));
   const seen = new Map();
   for (const f of armed) { if (busy(f)) continue; const o = seen.get(f.at); if (o) mergeHere(o, g => isArmed(g) || transportOnly(g)); else seen.set(f.at, f); }
@@ -2737,6 +2877,7 @@ function aiMilitary(e, stars, fleets, wars) {
     }
     if (best) {
       orderMove(main, best.id);
+      main.bomb = PERS[e.pers].aggr >= 1.2 || best.garrison > 60 || Math.random() < 0.3;
       for (const f of free.slice(1)) if (d[f.at] < 450 && Math.random() < 0.6) orderMove(f, best.id);
     } else for (const f of free.slice(1)) if (f.at !== main.at) orderMove(f, main.at);
   } else {
@@ -2990,6 +3131,11 @@ const ATMO = { earth: [110, 170, 255], terran: [110, 170, 255], ocean: [100, 160
 
 // --- panel icons: top-down silhouettes of the angular cyberpunk hulls ---
 const SVG_SHAPES = {
+  frigate: { h: 'M15 0 L16.5 8 L16.8 27 L15.6 29 L14.4 29 L13.2 27 L13.5 8 Z M9 9 L12 9 L12 22 L9 22 Z M18 9 L21 9 L21 22 L18 22 Z', a: 'M15 0 L17 9 L23 12 L21 17 L17 16 L16 29 L14 29 L13 16 L9 17 L7 12 L13 9 Z' },
+  tender: { h: 'M15 1 L19 6 L19 26 L17 29 L13 29 L11 26 L11 6 Z M7 3 L9 3 L9 18 L7 18 Z M21 3 L23 3 L23 18 L21 18 Z M7 3 L23 3 L23 5 L7 5 Z', a: 'M15 1 L19 7 L24 9 L22 15 L19 13 L18 28 L12 28 L11 13 L8 15 L6 9 L11 7 Z' },
+  bomber: { h: 'M15 2 L17 9 L28 24 L27 27 L18 23 L16 28 L14 28 L12 23 L3 27 L2 24 L13 9 Z', a: 'M15 2 L18 10 L29 18 L26 27 L18 21 L15 28 L12 21 L4 27 L1 18 L12 10 Z' },
+  carrier: { h: 'M12 0 L18 0 L20 4 L20 27 L18 30 L12 30 L10 27 L10 4 Z M20 10 L23 10 L23 18 L20 18 Z', a: 'M15 0 L19 6 L27 9 L27 15 L19 16 L18 29 L12 29 L11 16 L3 15 L3 9 L11 6 Z' },
+  titan: { h: 'M15 0 L16.5 4 L19 7 L21 9 L21 26 L19 29 L11 29 L9 26 L9 9 L11 7 L13.5 4 Z M6 12 L9 11 L9 24 L6 23 Z M24 12 L21 11 L21 24 L24 23 Z', a: 'M15 0 L18 6 L28 10 L29 16 L20 18 L22 26 L17 23 L15 30 L13 23 L8 26 L10 18 L1 16 L2 10 L12 6 Z' },
   corvette: { h: 'M15 1 L17.5 11 L24 25 L19 27 L15.8 23 L14.2 23 L11 27 L6 25 L12.5 11 Z', a: 'M15 1 L18 9 L26 20 L23 28 L17 22 L15 26 L13 22 L7 28 L4 20 L12 9 Z' },
   destroyer: { h: 'M15 0 L16.6 9 L17 26 L15.8 29 L14.2 29 L13 26 L13.4 9 Z M10.5 6 L11.5 6 L11.5 27 L10.5 27 Z M18.5 6 L19.5 6 L19.5 27 L18.5 27 Z', a: 'M15 0 L17 10 L22 16 L17 18 L16 29 L14 29 L13 18 L8 16 L13 10 Z' },
   cruiser: { h: 'M15 0 L18 8 L21 12 L21 24 L18 27 L16 29 L14 29 L12 27 L9 24 L9 12 L12 8 Z', a: 'M15 0 L18 8 L26 13 L25 18 L18 19 L17 29 L13 29 L12 19 L5 18 L4 13 L12 8 Z' },
@@ -3244,6 +3390,49 @@ function humanDefs(cls) {
     d.push(D(box(0.04, 0.03, 0.1), 'weapon', [0.13, 0.035, 0.18]), D(box(0.04, 0.03, 0.1), 'weapon', [-0.13, 0.035, 0.18]));
     for (const [x, z] of [[0.03, -0.48], [-0.03, -0.48], [0.075, -0.47], [-0.075, -0.47]]) engine(d, x, 0, z, 0.04);
     d.push(D(box(0.006, 0.006, 0.72), 'core', [0.07, 0.04, 0], { m: 'glow' }), D(box(0.006, 0.006, 0.72), 'core', [-0.07, 0.04, 0], { m: 'glow' }));
+  } else if (cls === 'frigate') { // slim missile boat with launcher pods on outriggers
+    d.push(D(spindle([[0, -0.5], [0.75, -0.45], [1, -0.15], [0.7, 0.3], [0, 0.5]], 4, 0.06, 0.04), 'core', [0, 0, 0], { core: [0.06, 0.04] }));
+    for (const s of [1, -1]) { const g = s > 0 ? 'mL' : 'mR'; d.push(D(box(0.05, 0.045, 0.34), 'weapon', [s * 0.11, 0, 0.02], { grp: g }), D(box(0.036, 0.004, 0.28), 'weapon', [s * 0.11, 0.024, 0.02], { grp: g, m: 'glow' }), D(box(0.06, 0.01, 0.03), 'plate', [s * 0.065, 0, 0.06], { grp: g })); }
+    const w = [[0.04, -0.25], [0.2, -0.42], [0.19, -0.5], [0.04, -0.42]];
+    d.push(D(blade(w, 0.01), 'wing'), D(blade(mir(w), 0.01), 'wing'));
+    d.push(D(fin([[-0.1, 0.03], [-0.42, 0.03], [-0.36, 0.12]], 0.008), 'wing'));
+    turret(d, 't1', 0.26, 0.04, 0.035, 0.1, false);
+    engine(d, 0.03, 0, -0.48, 0.03); engine(d, -0.03, 0, -0.48, 0.03);
+    d.push(D(box(0.005, 0.005, 0.6), 'core', [0, 0.041, 0], { m: 'glow' }));
+  } else if (cls === 'tender') { // industrial repair ship: gantry arms, fabricator modules, sensor dish
+    d.push(D(spindle([[0, -0.5], [1, -0.45], [1, 0.35], [0.6, 0.5], [0, 0.5]], 4, 0.085, 0.07), 'core', [0, 0, 0], { core: [0.085, 0.07] }));
+    for (const s of [1, -1]) { const g = 'arm' + s; d.push(D(box(0.022, 0.022, 0.5), 'plate', [s * 0.14, 0.03, 0.14], { grp: g }), D(box(0.034, 0.012, 0.034), 'plate', [s * 0.14, 0.03, 0.4], { grp: g, m: 'glow' }), D(box(0.07, 0.012, 0.03), 'plate', [s * 0.1, 0.03, -0.08], { grp: g })); }
+    d.push(D(box(0.3, 0.018, 0.018), 'plate', [0, 0.03, 0.39], { grp: 'gant' }));
+    for (const [x, z] of [[0.11, -0.2], [-0.11, -0.2], [0.11, -0.33], [-0.11, -0.33]]) d.push(D(box(0.07, 0.06, 0.1), 'pod', [x, -0.015, z]));
+    const dish = new THREE.CylinderGeometry(0.065, 0.015, 0.025, 6); d.push(D(dish, 'bridge', [0, 0.1, -0.02], { grp: 'br' }), D(box(0.01, 0.05, 0.01), 'bridge', [0, 0.075, -0.02], { grp: 'br' }));
+    engine(d, 0.045, 0, -0.48, 0.035); engine(d, -0.045, 0, -0.48, 0.035);
+    d.push(D(box(0.006, 0.006, 0.55), 'core', [0, 0.072, 0.05], { m: 'glow' }), D(box(0.2, 0.004, 0.01), 'core', [0, 0.072, -0.3], { m: 'glow' }));
+  } else if (cls === 'bomber') { // flat stealth delta with a glowing ventral bomb bay
+    d.push(D(spindle([[0, -0.5], [0.8, -0.4], [1, 0], [0.6, 0.35], [0, 0.5]], 4, 0.07, 0.035), 'core', [0, 0, 0], { core: [0.07, 0.035] }));
+    const dw = [[0.03, 0.22], [0.34, -0.3], [0.32, -0.42], [0.03, -0.3]];
+    d.push(D(blade(dw, 0.018), 'wing'), D(blade(mir(dw), 0.018), 'wing'));
+    d.push(D(box(0.05, 0.004, 0.32), 'core', [0, -0.037, 0], { m: 'glow' }));
+    for (const s of [1, -1]) d.push(D(box(0.035, 0.03, 0.13), 'weapon', [s * 0.13, -0.025, -0.1]), D(fin([[-0.28, 0.01], [-0.46, 0.11], [-0.42, 0.01]], 0.008), 'wing', [s * 0.22, 0, 0]));
+    for (const x of [-0.045, 0, 0.045]) engine(d, x, 0, -0.47, 0.028);
+    d.push(D(box(0.42, 0.004, 0.008), 'core', [0, 0.012, -0.3], { m: 'glow' }));
+  } else if (cls === 'carrier') { // flight deck with an island bridge and a glowing hangar mouth
+    d.push(D(spindle([[0, -0.5], [0.9, -0.46], [1, -0.1], [0.95, 0.3], [0.5, 0.48], [0, 0.5]], 6, 0.09, 0.05), 'core', [0, 0, 0], { core: [0.09, 0.05] }));
+    for (const [z, g] of [[0.3, 'd1'], [0.02, 'd2'], [-0.26, 'd3']]) d.push(D(box(0.32, 0.02, 0.27), 'plate', [0, 0.06, z], { grp: g }));
+    for (const x of [0.06, -0.06]) d.push(D(box(0.004, 0.002, 0.84), 'core', [x, 0.071, 0.02], { m: 'glow' }));
+    d.push(D(box(0.2, 0.025, 0.004), 'core', [0, 0.045, 0.45], { m: 'glow' }));
+    d.push(D(box(0.05, 0.08, 0.16), 'bridge', [0.13, 0.11, -0.1], { grp: 'br' }), D(box(0.004, 0.09, 0.004), 'bridge', [0.13, 0.18, -0.12], { grp: 'br' }), D(box(0.052, 0.006, 0.002), 'bridge', [0.13, 0.13, -0.019], { grp: 'br', m: 'glow' }));
+    for (const [x, z] of [[0.17, 0.2], [-0.17, 0.2], [-0.17, -0.18]]) d.push(D(box(0.035, 0.03, 0.07), 'weapon', [x, 0.04, z]));
+    for (const [x, z] of [[0.03, -0.48], [-0.03, -0.48], [0.075, -0.46], [-0.075, -0.46]]) engine(d, x, 0, z, 0.04);
+  } else if (cls === 'titan') { // colossal spine around a spinal lance, armour ribs and turret batteries
+    d.push(D(spindle([[0, -0.5], [0.8, -0.47], [1, -0.3], [1, 0.2], [0.75, 0.4], [0.35, 0.5], [0, 0.5]], 8, 0.09, 0.07), 'core', [0, 0, 0], { core: [0.09, 0.07] }));
+    d.push(D(spindle([[0, -0.5], [1, -0.45], [1, 0.45], [0.6, 0.5], [0, 0.5]], 6, 0.032, 0.032, 0.3), 'weapon', [0, 0, 0.5], { grp: 'lance' }), D(new THREE.TorusGeometry(0.04, 0.007, 4, 8), 'weapon', [0, 0, 0.64], { grp: 'lance', m: 'glow' }));
+    d.push(D(box(0.008, 0.008, 0.9), 'core', [0, 0.074, 0.02], { m: 'glow' }));
+    for (const z of [0.3, 0.1, -0.1, -0.3]) { const rib = [[0.085, z + 0.08], [0.16, z + 0.055], [0.16, z - 0.055], [0.085, z - 0.08]]; d.push(D(blade(rib, 0.04), 'plate'), D(blade(mir(rib), 0.04), 'plate')); }
+    d.push(D(fin([[-0.42, 0], [0.38, 0], [0.25, -0.09], [-0.36, -0.08]], 0.014), 'plate', [0, -0.06, 0]));
+    turret(d, 't1', 0.32, 0.075, 0.06, 0.18, true); turret(d, 't2', 0.18, 0.09, 0.06, 0.18, true); turret(d, 't3', -0.24, 0.075, 0.06, 0.18, true, true); turret(d, 't4', -0.36, 0.07, 0.055, 0.16, true, true);
+    d.push(D(box(0.09, 0.07, 0.14), 'bridge', [0, 0.1, -0.05], { grp: 'br' }), D(box(0.06, 0.06, 0.08), 'bridge', [0, 0.16, -0.07], { grp: 'br' }), D(box(0.004, 0.14, 0.004), 'bridge', [0, 0.24, -0.09], { grp: 'br' }), D(box(0.062, 0.006, 0.002), 'bridge', [0, 0.17, -0.029], { grp: 'br', m: 'glow' }));
+    for (const s of [1, -1]) d.push(D(box(0.04, 0.03, 0.1), 'weapon', [s * 0.17, 0.04, 0.22]), D(box(0.04, 0.03, 0.1), 'weapon', [s * 0.17, 0.04, -0.02]));
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; engine(d, Math.cos(a) * 0.055, Math.sin(a) * 0.04, -0.49, 0.035); }
   } else if (cls === 'transport') {
     d.push(D(spindle([[0, -0.5], [1, -0.47], [1, 0.3], [0.6, 0.45], [0, 0.5]], 4, 0.08, 0.06), 'core', [0, 0, 0], { core: [0.08, 0.06] }));
     for (const [x, z] of [[0.12, 0.13], [-0.12, 0.13], [0.12, -0.16], [-0.12, -0.16]]) { const g = 'p' + x + z; d.push(D(spindle([[0, -0.5], [1, -0.3], [1, 0.3], [0, 0.5]], 4, 0.035, 0.03, 0.18), 'pod', [x, 0, z], { grp: g }), D(box(0.004, 0.004, 0.12), 'pod', [x, 0.03, z], { grp: g, m: 'glow' })); }
@@ -3260,19 +3449,24 @@ function humanDefs(cls) {
   return d;
 }
 function alienDefs(cls) {
-  const d = [], big = { corvette: 0.8, destroyer: 0.9, cruiser: 1, battleship: 1.15, transport: 1, colony: 1 }[cls];
-  const coreW = { corvette: 0.08, destroyer: 0.06, cruiser: 0.1, battleship: 0.12, transport: 0.09, colony: 0.1 }[cls];
+  const d = [], big = { corvette: 0.8, frigate: 0.85, destroyer: 0.9, tender: 0.95, bomber: 1.1, cruiser: 1, carrier: 1.1, battleship: 1.15, titan: 1.35, transport: 1, colony: 1 }[cls];
+  const coreW = { corvette: 0.08, frigate: 0.065, destroyer: 0.06, tender: 0.09, bomber: 0.075, cruiser: 0.1, carrier: 0.11, battleship: 0.12, titan: 0.13, transport: 0.09, colony: 0.1 }[cls];
   d.push(D(spindle([[0, -0.5], [0.45, -0.34], [1, -0.05], [0.5, 0.28], [0, 0.42]], 3, coreW, coreW * 0.75, 1, Math.PI / 2), 'core', [0, 0, 0], { core: [coreW, coreW * 0.7] }));
   const prong = spindle([[0, -0.5], [1, -0.25], [0, 0.5]], 3, 0.022 * big, 0.02 * big, 0.48);
-  if (cls !== 'colony' && cls !== 'transport') for (const s of [1, -1]) d.push(D(prong, 'weapon', [s * coreW * 0.7, 0, 0.3], { r: [0, s * 0.13, 0] }));
+  if (!['colony', 'transport', 'tender'].includes(cls)) for (const s of [1, -1]) d.push(D(prong, 'weapon', [s * coreW * 0.7, 0, 0.3], { r: [0, s * 0.13, 0] }));
   const cres = [[coreW * 0.4, -0.02], [coreW + 0.18 * big, -0.2], [coreW + 0.24 * big, -0.48], [coreW + 0.1 * big, -0.3], [coreW * 0.4, -0.3]];
   d.push(D(blade(cres, 0.012), 'wing'), D(blade(mir(cres), 0.012), 'wing'));
-  const nSp = { corvette: 1, destroyer: 2, cruiser: 3, battleship: 5, transport: 1, colony: 2 }[cls];
+  const nSp = { corvette: 1, frigate: 2, destroyer: 2, tender: 1, bomber: 2, cruiser: 3, carrier: 3, battleship: 5, titan: 6, transport: 1, colony: 2 }[cls];
   for (let i = 0; i < nSp; i++) { const cg = new THREE.ConeGeometry(0.022, 0.2 * big, 3); cg.rotateX(-1.1); d.push(D(cg, 'plate', [0, coreW * 0.6, 0.15 - i * 0.14])); }
-  if (cls === 'cruiser' || cls === 'battleship') { const c2 = [[coreW, 0.3], [coreW + 0.14, 0.12], [coreW + 0.1, 0.0], [coreW, 0.06]]; d.push(D(blade(c2, 0.012), 'wing'), D(blade(mir(c2), 0.012), 'wing')); d.push(D(fin([[-0.4, 0], [0.3, 0], [0.1, -0.09]], 0.012), 'plate', [0, -coreW * 0.5, 0])); }
-  if (cls === 'battleship') { const cs = spindle([[0, -0.5], [1, -0.2], [0, 0.5]], 3, 0.03, 0.03, 0.6); d.push(D(cs, 'weapon', [0, 0.02, 0.4])); }
-  if (cls === 'transport' || cls === 'colony') for (const [x, z] of [[0.12, 0.1], [-0.12, 0.1], [0.12, -0.15], [-0.12, -0.15]]) { const o = new THREE.OctahedronGeometry(0.05); o.scale(1, 1, 2); d.push(D(o, 'pod', [x, 0, z])); }
-  const orbs = { corvette: [[0, 0, -0.48]], destroyer: [[0.03, 0, -0.47], [-0.03, 0, -0.47]], cruiser: [[0, 0.02, -0.48], [0.06, 0, -0.44], [-0.06, 0, -0.44]], battleship: [[0, 0.02, -0.5], [0.07, 0, -0.45], [-0.07, 0, -0.45], [0, -0.03, -0.42]], transport: [[0, 0, -0.48]], colony: [[0, 0, -0.48]] }[cls];
+  if (['cruiser', 'battleship', 'carrier', 'titan'].includes(cls)) { const c2 = [[coreW, 0.3], [coreW + 0.14, 0.12], [coreW + 0.1, 0.0], [coreW, 0.06]]; d.push(D(blade(c2, 0.012), 'wing'), D(blade(mir(c2), 0.012), 'wing')); d.push(D(fin([[-0.4, 0], [0.3, 0], [0.1, -0.09]], 0.012), 'plate', [0, -coreW * 0.5, 0])); }
+  if (cls === 'battleship' || cls === 'titan') { const cs = spindle([[0, -0.5], [1, -0.2], [0, 0.5]], 3, 0.03, 0.03, cls === 'titan' ? 0.75 : 0.6); d.push(D(cs, 'weapon', [0, 0.02, cls === 'titan' ? 0.48 : 0.4])); }
+  if (cls === 'titan') { const c3 = [[coreW, 0.2], [coreW + 0.3, -0.05], [coreW + 0.26, -0.12], [coreW, -0.02]]; d.push(D(blade(c3, 0.016), 'wing'), D(blade(mir(c3), 0.016), 'wing'), D(new THREE.TorusGeometry(0.05, 0.008, 3, 6), 'weapon', [0, 0.02, 0.86], { m: 'glow' })); }
+  if (cls === 'frigate') for (const s of [1, -1]) d.push(D(new THREE.OctahedronGeometry(0.035), 'weapon', [s * 0.11, 0, 0.05]));
+  if (cls === 'bomber') { const dw = [[coreW * 0.4, 0.15], [coreW + 0.3, -0.25], [coreW + 0.22, -0.4], [coreW * 0.4, -0.2]]; d.push(D(blade(dw, 0.014), 'wing'), D(blade(mir(dw), 0.014), 'wing'), D(box(0.04, 0.004, 0.24), 'core', [0, -coreW * 0.55, 0], { m: 'glow' })); }
+  if (cls === 'carrier') for (const s of [1, -1]) for (const z of [0.15, -0.1]) { const o = new THREE.OctahedronGeometry(0.045); o.scale(1.4, 0.6, 2); d.push(D(o, 'pod', [s * (coreW + 0.07), 0, z])); }
+  if (cls === 'tender') { for (const s of [1, -1]) d.push(D(spindle([[0, -0.5], [1, -0.2], [0, 0.5]], 3, 0.015, 0.015, 0.5), 'plate', [s * 0.13, 0, 0.2], { r: [0, -s * 0.25, 0] }), D(new THREE.OctahedronGeometry(0.02), 'plate', [s * 0.19, 0, 0.42], { m: 'glow' })); }
+  if (cls === 'transport' || cls === 'colony' || cls === 'tender') for (const [x, z] of [[0.12, 0.1], [-0.12, 0.1], [0.12, -0.15], [-0.12, -0.15]]) { const o = new THREE.OctahedronGeometry(0.05); o.scale(1, 1, 2); d.push(D(o, 'pod', [x, 0, z])); }
+  const orbs = { frigate: [[0.03, 0, -0.47], [-0.03, 0, -0.47]], tender: [[0.04, 0, -0.47], [-0.04, 0, -0.47]], bomber: [[0, 0, -0.48], [0.06, 0, -0.44], [-0.06, 0, -0.44]], carrier: [[0, 0.02, -0.48], [0.07, 0, -0.45], [-0.07, 0, -0.45], [0, -0.03, -0.42]], titan: [[0, 0.03, -0.5], [0.08, 0, -0.46], [-0.08, 0, -0.46], [0.05, -0.04, -0.44], [-0.05, -0.04, -0.44], [0, -0.05, -0.42]], corvette: [[0, 0, -0.48]], destroyer: [[0.03, 0, -0.47], [-0.03, 0, -0.47]], cruiser: [[0, 0.02, -0.48], [0.06, 0, -0.44], [-0.06, 0, -0.44]], battleship: [[0, 0.02, -0.5], [0.07, 0, -0.45], [-0.07, 0, -0.45], [0, -0.03, -0.42]], transport: [[0, 0, -0.48]], colony: [[0, 0, -0.48]] }[cls];
   for (const [x, y, z] of orbs) d.push(D(new THREE.OctahedronGeometry(0.035 * big), 'engine', [x, y, z], { m: 'glow', noz: [x, y, z - 0.05] }));
   d.push(D(box(0.006, 0.006, 0.6), 'core', [0, coreW * 0.55, 0], { m: 'glow' }));
   return d;
@@ -3430,6 +3624,7 @@ function drawGalaxyLabels(time) {
     ctx.fillText((o >= 0 && emp(o).capital === s.id ? '★ ' : '') + s.name, sc.x, sc.y + r * 0.5 + 6);
     if (d < 900) { ctx.font = '10px system-ui'; ctx.fillStyle = 'rgba(160,180,215,0.8)'; ctx.fillText(s.id === 0 ? 'Home' : `${s.ly} ly · ${s.sp.split('+')[0]}`, sc.x, sc.y + r * 0.5 + 20); }
     if (vis[s.id] && (s.inv || G.time - (s._combat || -99) < 0.6)) { ctx.fillStyle = '#ff6a4d'; ctx.font = 'bold 13px system-ui'; ctx.fillText('⚔', sc.x + r * 0.5 + 12, sc.y - r * 0.5 - 14); }
+    if (vis[s.id] && G.time - (s._bomb || -99) < 0.6) { ctx.font = '13px system-ui'; ctx.fillText('💣', sc.x - r * 0.5 - 12, sc.y - r * 0.5 - 14); }
     if (s.colonizing && vis[s.id]) { ctx.strokeStyle = emp(s.colonizing.owner).color; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(sc.x, sc.y, r * 0.5 + 9, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * s.colonizing.p); ctx.stroke(); }
   }
   ctx.globalAlpha = 1;
@@ -3485,7 +3680,7 @@ function buildSystem(s) {
     return { id: l, pos }; });
   const add = new PointPool(5000, true), norm = new PointPool(2500, false), lines = new LinePool(5000);
   sc.add(add.obj, norm.obj, lines.obj);
-  SY = { scene: sc, s, L, planets, exits, add, norm, lines, sun, mainOrbit, ownerShown: null, recs: new Map(), debris: [], wrecks: [], parts: [], lastP: null };
+  SY = { scene: sc, s, L, planets, exits, add, norm, lines, sun, mainOrbit, ownerShown: null, recs: new Map(), debris: [], wrecks: [], parts: [], bombs: [], lastP: null };
 }
 function teardownSystem() { if (!SY) return; SY.scene.remove(sky); disposeScene(SY.scene); SY = null; }
 
@@ -3626,7 +3821,7 @@ function updateShips3D(s, vdt, time) {
   s._seenT = G.time;
   return { PP, PR, combat };
 }
-function projPoint(p, k, info) {
+function projPoint(p, k, info, sub = 0) {
   let a, b;
   if (p.from && p.from.planet) a = info.PP.clone().add(new THREE.Vector3(Math.cos(p.sd * 9), Math.sin(p.sd * 5) * 0.6, Math.sin(p.sd * 9)).normalize().multiplyScalar(info.PR));
   else { const r = SY.recs.get(p.from.id); if (!r) return null; a = r.pos; }
@@ -3637,6 +3832,10 @@ function projPoint(p, k, info) {
   if (!p.hit) b.addScaledVector(side, (p.sd - 0.5) * 50).addScaledVector(dlt, 30 / dl).addScaledVector(UP, (hash(p.sd * 99) - 0.5) * 30);
   const pos = a.clone().lerp(b, k), kind = WEAPONS[p.w].kind;
   if (kind === 'missile' || kind === 'torpedo') { const c = Math.sin(k * Math.PI) * (p.sd - 0.5) * (kind === 'torpedo' ? 40 : 90); pos.addScaledVector(side, c).addScaledVector(UP, Math.sin(k * Math.PI) * (hash(p.sd * 17) - 0.5) * 50); }
+  else if (kind === 'fighter') { // a wing of strike craft swings wide, then weaves in on its target
+    const arc = Math.sin(k * Math.PI), w = Math.sin(k * 18 + sub * 2.1 + p.sd * 9) * 6 * arc;
+    pos.addScaledVector(side, arc * (p.sd - 0.5) * 220 + (sub - 1) * 7 * arc + w).addScaledVector(UP, arc * (hash(p.sd * 17) - 0.5) * 120 + Math.cos(k * 14 + sub) * 4 * arc);
+  } else if (kind === 'bomb') pos.addScaledVector(UP, Math.sin(k * Math.PI) * 25);
   return pos;
 }
 function sysEvents(info) {
@@ -3645,7 +3844,8 @@ function sysEvents(info) {
     if (e.k === 'hit') {
       const r = SY.recs.get(e.sh.id); if (!r) continue;
       const lp = hullPoint(r, Math.floor(e.sd * 1e6)); r.m.group.updateWorldMatrix(true, false);
-      const wp = lp.clone().applyMatrix4(r.m.group.matrixWorld), big = ['torpedo', 'missile', 'heavyrail', 'battery'].includes(e.w);
+      const wp = lp.clone().applyMatrix4(r.m.group.matrixWorld), big = ['torpedo', 'missile', 'heavyrail', 'battery', 'lance'].includes(e.w);
+      if (e.w === 'lance' && e.pen) { P({ x: wp.x, y: wp.y, z: wp.z, vx: 0, vy: 0, vz: 0, life: 0.6, max: 0.6, size: 46, r: 0.85, g: 0.7, b: 1, add: true, grow: 1.5 }); burst(wp, 24, '#c9a6ff', 80, 0.9, 2.4); }
       if (e.pen) {
         if (r.hits.length < 10) r.hits.push(lp);
         P({ x: wp.x, y: wp.y, z: wp.z, vx: 0, vy: 0, vz: 0, life: big ? 0.35 : 0.15, max: big ? 0.35 : 0.15, size: big ? 22 : 8, r: 1, g: 0.85, b: 0.6, add: true, grow: 1 });
@@ -3725,12 +3925,45 @@ function updateSystem(time, vdt) {
       const back = projPoint(p, Math.max(0, k - 0.45), info), bat = p.w === 'battery';
       LP.add(back, pos, bat ? 1 : 0.55, bat ? 0.85 : 0.9, bat ? 0.5 : 1, 0, 1);
       AP.add(pos.x, pos.y, pos.z, 0.8, 0.95, 1, 1, p.w === 'heavyrail' || bat ? 6 : 3.5);
+    } else if (kind === 'fighter') {
+      const [cr, cg, cb] = rgb01(emp(p.o).color);
+      for (let j = 0; j < 3; j++) {
+        const q = projPoint(p, k, info, j), qb = projPoint(p, Math.max(0, k - 0.025), info, j);
+        LP.add(qb, q, cr, cg, cb, 0, 0.8); AP.add(q.x, q.y, q.z, 0.6 + cr * 0.4, 0.6 + cg * 0.4, 0.6 + cb * 0.4, 1, 2.4);
+      }
+    } else if (kind === 'bomb') {
+      for (let i = 1; i <= 5; i++) { const t = projPoint(p, Math.max(0, k - i * 0.04), info); SY.norm.add(t.x, t.y, t.z, 0.25, 0.22, 0.2, 0.4 - i * 0.06, 3 + i); }
+      AP.add(pos.x, pos.y, pos.z, 1, 0.55, 0.18, 1, 7);
+    } else if (kind === 'lance') { // a searing beam from the Titan's bow to the target
+      const a = projPoint(p, 0, info), fade = 1 - Math.max(0, k - 0.7) / 0.3;
+      for (const o of [-0.8, 0, 0.8]) { const a2 = a.clone().add(new THREE.Vector3(o, o * 0.5, 0)), b2 = pos.clone().add(new THREE.Vector3(o, o * 0.5, 0)); LP.add(a2, b2, 0.75, 0.6, 1, fade, fade); }
+      AP.add(a.x, a.y, a.z, 0.85, 0.7, 1, fade, 16); AP.add(pos.x, pos.y, pos.z, 1, 0.9, 1, fade, 10);
     } else {
       const torp = kind === 'torpedo';
       for (let i = 1; i <= 6; i++) { const t = projPoint(p, Math.max(0, k - i * 0.035), info); AP.add(t.x, t.y, t.z, torp ? 0.4 : 1, torp ? 0.75 : 0.55, torp ? 1 : 0.25, 0.55 - i * 0.08, (torp ? 4 : 2.6) * (1 - i * 0.1)); }
       AP.add(pos.x, pos.y, pos.z, 1, torp ? 0.9 : 0.95, torp ? 1 : 0.85, 1, torp ? 7 : 3.5);
     }
   }
+  // orbital bombardment: shells fall from the bombarding fleet onto the main world
+  if (vis[s.id] && G.time - (s._bomb || -99) < 0.4 && vdt > 0) {
+    const src = []; for (const f of fleetsAt(s.id)) if (f.bomb && f.owner === s._bombBy) for (const sh of f.ships) { const r = SY.recs.get(sh.id); if (r && SHIPS[sh.c].weapons.length) src.push(r); }
+    if (src.length && Math.random() < vdt * 16) {
+      const r = src[Math.floor(Math.random() * src.length)], dir = r.pos.clone().sub(info.PP).normalize().add(new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(0.9)).normalize();
+      SY.bombs.push({ a: r.pos.clone(), b: info.PP.clone().addScaledVector(dir, info.PR * 0.98), t: 0, tt: 0.45 + Math.random() * 0.3 });
+    }
+  }
+  for (const b of SY.bombs) {
+    b.t += vdt; const k = Math.min(1, b.t / b.tt), pos = b.a.clone().lerp(b.b, k), back = b.a.clone().lerp(b.b, Math.max(0, k - 0.18));
+    LP.add(back, pos, 1, 0.5, 0.15, 0, 0.9); AP.add(pos.x, pos.y, pos.z, 1, 0.6, 0.2, 1, 4);
+    if (k >= 1) {
+      b.done = 1; const R = info.PR;
+      P({ x: b.b.x, y: b.b.y, z: b.b.z, vx: 0, vy: 0, vz: 0, life: 0.5, max: 0.5, size: R * 0.45, r: 1, g: 0.75, b: 0.35, add: true, grow: 1.4 });
+      burst(b.b, 10, '#ff9a3c', 22, 0.8, 1.8);
+      const up = b.b.clone().sub(info.PP).normalize();
+      P({ x: b.b.x, y: b.b.y, z: b.b.z, vx: up.x * 6, vy: up.y * 6, vz: up.z * 6, life: 2.5, max: 2.5, size: R * 0.25, r: 0.2, g: 0.18, b: 0.17, add: false, drag: 0.5, grow: 2, a0: 0.5 });
+    }
+  }
+  SY.bombs = SY.bombs.filter(b => !b.done);
   // particles
   for (const q of SY.parts) {
     q.life -= vdt; if (q.life <= 0) continue;
@@ -3772,7 +4005,9 @@ function buildPlanetView(s, i) {
   const lights = i === s.pi && shownOwner(s) >= 0 ? clamp(s.pop / 12, 0.15, 1) : 0;
   const pm = planetMesh(p, 100, true, lights, 96); pm.userData.mat.uniforms.sun.value.copy(sunPos); sc.add(pm);
   const moons = []; for (let k = 0; k < (p.moons || 0); k++) { const mm = planetMesh({ seed: p.seed + k + 1, t: 'barren', tex: null }, 12 + k * 3, false, 0, 32); mm.userData.mat.uniforms.sun.value.copy(sunPos); sc.add(mm); moons.push(mm); }
-  PV = { scene: sc, s, i, pm, moons, recs: new Map() };
+  const add = new PointPool(1200, true), norm = new PointPool(600, false), lines = new LinePool(200);
+  sc.add(add.obj, norm.obj, lines.obj);
+  PV = { scene: sc, s, i, pm, moons, recs: new Map(), add, norm, lines, parts: [], bombs: [] };
 }
 function updatePlanetView(time, vdt) {
   const s = PV.s;
@@ -3789,6 +4024,45 @@ function updatePlanetView(time, vdt) {
     applyDamageVisuals(r, time, 0, true);
   }
   for (const [id, r] of PV.recs) if (!seen.has(id)) { PV.scene.remove(r.m.group); disposeModel(r.m); PV.recs.delete(id); }
+  planetWarFx(s, time, vdt);
+}
+// bombs streaking down onto the globe, and cities left burning on bombed worlds
+function planetWarFx(s, time, vdt) {
+  const A = PV.add, N = PV.norm, L = PV.lines, R = 100, pm = PV.pm;
+  pm.updateWorldMatrix(true, false);
+  const camDir = camera.position.clone().normalize(), toWorld = v => v.clone().applyMatrix4(pm.matrixWorld);
+  const main = PV.i === s.pi;
+  if (main && vis[s.id] && G.time - (s._bomb || -99) < 0.4 && vdt > 0 && Math.random() < vdt * 18) {
+    // aim at the side facing the camera so the strikes are visible
+    let d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(); if (d.dot(camDir) < 0.2) d.addScaledVector(camDir, 1.2).normalize();
+    PV.bombs.push({ loc: d.applyQuaternion(pm.quaternion.clone().invert()), t: 0, tt: 0.35 + Math.random() * 0.2 });
+  }
+  for (const b of PV.bombs) {
+    b.t += vdt; const k = Math.min(1, b.t / b.tt), hit = toWorld(b.loc.clone().multiplyScalar(R)), from = toWorld(b.loc.clone().multiplyScalar(R * 1.9));
+    const pos = from.clone().lerp(hit, k), back = from.clone().lerp(hit, Math.max(0, k - 0.25));
+    L.add(back, pos, 1, 0.55, 0.2, 0, 1); A.add(pos.x, pos.y, pos.z, 1, 0.7, 0.3, 1, 3);
+    if (k >= 1) {
+      b.done = 1;
+      PV.parts.push({ p: hit, n: hit.clone().normalize(), t: 0, life: 0.6, kind: 'flash' }, { p: hit.clone(), n: hit.clone().normalize(), t: 0, life: 3, kind: 'smoke' });
+    }
+  }
+  PV.bombs = PV.bombs.filter(b => !b.done);
+  for (const q of PV.parts) {
+    q.t += vdt; const k = q.t / q.life;
+    if (q.kind === 'flash') { A.add(q.p.x, q.p.y, q.p.z, 1, 0.85 - k * 0.4, 0.5 - k * 0.4, 1 - k, 10 + k * 22); A.add(q.p.x, q.p.y, q.p.z, 1, 1, 0.9, Math.max(0, 1 - k * 3), 6); }
+    else { const p = q.p.clone().addScaledVector(q.n, 2 + k * 14); N.add(p.x, p.y, p.z, 0.22, 0.2, 0.19, 0.5 * (1 - k), 6 + k * 16); }
+  }
+  PV.parts = PV.parts.filter(q => q.t < q.life);
+  // burning cities: the more devastated the world, the more fires
+  const nf = main && s.devast ? Math.round(s.devast * 70) : 0;
+  for (let i = 0; i < nf; i++) {
+    const loc = new THREE.Vector3(hash(s.id * 131 + i) - 0.5, (hash(s.id * 17 + i * 3) - 0.5) * 0.8, hash(s.id * 7 + i * 11) - 0.5).normalize();
+    const w = toWorld(loc.clone().multiplyScalar(R * 1.004)); if (w.clone().normalize().dot(camDir) < 0.05) continue;
+    const fl = 0.7 + 0.3 * Math.sin(time / 90 + i * 1.7);
+    A.add(w.x, w.y, w.z, 1, 0.42 * fl, 0.08, 0.85 * fl, 3.2 + hash(i) * 2.5);
+    if (vdt > 0 && Math.random() < vdt * 0.8 && PV.parts.length < 300) PV.parts.push({ p: w, n: w.clone().normalize(), t: 0, life: 2.5, kind: 'smoke' });
+  }
+  A.flush(); N.flush(); L.flush();
 }
 
 // ---------- ground war strip (2D overlay) ----------
@@ -3827,13 +4101,16 @@ function drawGroundStrip(s, y0, h, time, vdt) {
     if (Math.random() < 0.5 && nA && nD) { const a = slot(1, Math.floor(Math.random() * nD)), b = slot(-1, Math.floor(Math.random() * nA)); gs.tracers.push({ x1: a[0] - 9, y1: a[1] - 16, x2: b[0], y2: b[1] - 12, t: 0.12, c: def.isPlayer ? '255,230,140' : '150,255,200' }); }
     if (Math.random() < 0.05) gs.booms.push({ x: W2 * (0.2 + Math.random() * 0.6), y: gy - Math.random() * 10, t: 0.6 });
   }
+  const bombing = G.time - (s._bomb || -99) < 0.5;
+  if (bombing && G.paused === false && Math.random() < 0.25) { const x = W2 * (0.45 + Math.random() * 0.5); gs.tracers.push({ x1: x - 30, y1: y0, x2: x, y2: gy - 4, t: 0.15, c: '255,170,80' }); gs.booms.push({ x, y: gy - Math.random() * 6, t: 0.6 }); }
   for (const t of gs.tracers) { t.t -= vdt; ctx.strokeStyle = `rgba(${t.c},${clamp(t.t * 8, 0, 1)})`; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(t.x1, t.y1); ctx.lineTo(t.x2, t.y2); ctx.stroke(); }
   gs.tracers = gs.tracers.filter(t => t.t > 0);
   for (const b of gs.booms) { b.t -= vdt; const k = 1 - b.t / 0.6; ctx.fillStyle = `rgba(255,${180 - k * 120},60,${1 - k})`; ctx.beginPath(); ctx.arc(b.x, b.y, 4 + k * 22, 0, 7); ctx.fill(); ctx.fillStyle = `rgba(70,65,60,${0.5 * (1 - k)})`; ctx.beginPath(); ctx.arc(b.x, b.y - k * 20, 8 + k * 18, 0, 7); ctx.fill(); }
   gs.booms = gs.booms.filter(b => b.t > 0);
   ctx.font = 'bold 13px system-ui'; ctx.textBaseline = 'top';
   if (inv) { ctx.textAlign = 'left'; ctx.fillStyle = att.color; ctx.fillText(`${att.name}: ${Math.ceil(inv.tr)} soldiers`, 12, y0 + h * 0.3); }
-  ctx.textAlign = 'right'; ctx.fillStyle = def.color; ctx.fillText(`${inv ? 'Garrison' : 'Garrison standing guard'}: ${Math.ceil(s.garrison)} soldiers`, W2 - 12, y0 + h * 0.3);
+  ctx.textAlign = 'right'; ctx.fillStyle = def.color; ctx.fillText(`${inv ? 'Garrison' : bombing ? 'Garrison under bombardment' : 'Garrison standing guard'}: ${Math.ceil(s.garrison)} soldiers`, W2 - 12, y0 + h * 0.3);
+  if (bombing) { ctx.textAlign = 'center'; ctx.fillStyle = '#ff7043'; ctx.fillText('💣 ORBITAL BOMBARDMENT', W2 / 2, y0 + h * 0.12); }
   ctx.textAlign = 'center';
 }
 
@@ -3924,6 +4201,7 @@ function exitToGalaxy() {
   teardownSystem(); if (PV) { PV.scene.remove(sky); disposeScene(PV.scene); PV = null; }
   setupCameraForView(); controls.target.set(s.x, s.y, s.z); camera.position.set(s.x + 120, s.y + 170, s.z + 230);
   sel.planet = null; trans = { t: 0 };
+  if (window.innerWidth <= 760) panelCollapsed = true;
   refreshUI(true);
 }
 function enterPlanet(i) {
@@ -4029,7 +4307,7 @@ function commandMove(f, s) {
   } else toast('No route to that system', '#ef5350');
   refreshUI(true);
 }
-function selectFleet(f) { panelCollapsed = false; sel.fleet = f; if (view.mode === 'galaxy') sel.star = null; sel.planet = null; refreshUI(true); }
+function selectFleet(f) { panelCollapsed = window.innerWidth <= 760 && f.owner === PLAYER; sel.fleet = f; if (view.mode === 'galaxy') sel.star = null; sel.planet = null; refreshUI(true); }
 function selectStar(id) { sel.star = id; sel.fleet = null; sel.planet = null; refreshUI(true); }
 function centerOn(id) { const s = G.stars[id]; focusPoint(new THREE.Vector3(s.x, s.y, s.z), Math.min(camera.position.distanceTo(controls.target), 700)); }
 
@@ -4065,8 +4343,17 @@ document.addEventListener('keydown', e => {
 // =====================================================================
 // UI PANELS
 // =====================================================================
+// A tap is lost if the button under the finger is rebuilt before the finger lifts, so panels
+// hold still while touched (the click handler releases the hold as soon as the tap lands).
+let uiHoldUntil = 0, uiHoldEl = null;
+for (const id of ['#panel', '#modal-body', '#tut']) {
+  const el = $(id);
+  el.addEventListener('pointerdown', () => { uiHoldEl = el; uiHoldUntil = performance.now() + 1500; });
+  el.addEventListener('pointerup', () => { uiHoldUntil = performance.now() + 350; });
+  el.addEventListener('pointercancel', () => { uiHoldUntil = 0; });
+}
 function applyView(el, v) {
-  if (el._html !== v.html) { el.innerHTML = v.html; el._html = v.html; }
+  if (el._html !== v.html && !(el === uiHoldEl && performance.now() < uiHoldUntil)) { el.innerHTML = v.html; el._html = v.html; }
   if (v.live) for (const k in v.live) { const n = el.querySelector(`[data-live="${k}"]`); if (n && n.textContent !== v.live[k]) n.textContent = v.live[k]; }
   if (v.w) for (const k in v.w) { const n = el.querySelector(`[data-w="${k}"]`); if (n) n.style.width = clamp(v.w[k], 0, 100).toFixed(1) + '%'; }
   if (v.lh) for (const k in v.lh) { const n = el.querySelector(`[data-lh="${k}"]`); if (n && n._h !== v.lh[k]) { n.innerHTML = v.lh[k]; n._h = v.lh[k]; } }
@@ -4109,8 +4396,12 @@ function fleetPanel(f) {
   if (f.at !== null && !f.path.length) { const s = G.stars[f.at]; status = G.time - (s._combat || -99) < 0.5 ? `⚔ In combat at ${s.name}` : `Holding at ${s.name}`; }
   else status = `→ ${G.stars[fleetDest(f)].name} · ETA ${Math.ceil(fleetEta(f))} days`;
   live.fst = status; live.fpow = Math.round(fleetPower(f)).toString(); live.fspd = (fleetSpeed(f) / LY).toFixed(2) + ' ly/day';
+  if (f.bomb && f.at !== null && canBombard(f)) {
+    const bs = bombardState(f), t = G.stars[f.at];
+    live.fbomb = bs === 'firing' ? `💣 Bombarding ${prim(t).n}: ${Math.ceil(t.garrison)} soldiers left · ${Math.round((t.devast || 0) * 100)}% devastated` : bs === 'waiting' ? `💣 Bombardment ordered: firing on the orbital defenses until they fall` : `💣 Bombardment ordered: enemy warships still hold the orbit`;
+  }
   const cc = classCounts(f), tr = troopsIn(f);
-  h += `<div class="sub" data-live="fst"></div><div class="kv"><span>Strength <b data-live="fpow"></b></span><span>Speed <b data-live="fspd"></b></span></div>`;
+  h += `<div class="sub" data-live="fst"></div>${live.fbomb ? '<div class="sub bombline" data-live="fbomb"></div>' : ''}<div class="kv"><span>Strength <b data-live="fpow"></b></span><span>Speed <b data-live="fspd"></b></span></div>`;
   h += `<div class="chips">`;
   for (const c of CLASS_ORDER) if (cc[c]) h += `<span class="chip">${cc[c]} × ${SHIPS[c].name}${own && f.at !== null && Object.keys(cc).length > 1 ? `<button data-act="splitClass" data-arg="${c}" title="Split into its own fleet">split</button>` : ''}</span>`;
   h += `</div>`;
@@ -4121,7 +4412,9 @@ function fleetPanel(f) {
     if (f.at !== null && fleetsAt(f.at).some(g => g !== f && g.owner === PLAYER && !g.path.length)) h += `<button data-act="merge">Merge fleets here</button>`;
     if (f.at === null || f.path.length) h += `<button data-act="stop">Stop</button>`;
     if (f.at !== null && hasClass(f, 'colony') && G.stars[f.at].owner < 0 && !G.stars[f.at].colonizing) h += `<button class="good" data-act="colonize">Colonize ${esc(prim(G.stars[f.at]).n)}</button>`;
+    if (canBombard(f)) h += f.bomb ? `<button data-act="bombard">Stop bombardment</button>` : `<button class="danger" data-act="bombard">💣 Bombard ${esc(prim(G.stars[f.at]).n)}</button>`;
     h += `</div>`;
+    if (canBombard(f) && !f.bomb) h += `<div class="sub">Bombardment kills the garrison and population and wrecks buildings once the orbital defenses are down. Every empire will think less of you.</div>`;
     if (tr) h += `<div class="sub">🪖 ${Math.round(tr)} soldiers aboard. They land automatically once an enemy world's orbital defenses are destroyed and no enemy warships remain.</div>`;
   }
   // individual ships: condition words, no health bars
@@ -4146,7 +4439,7 @@ function colonyBlock(s, live, w) {
   live.out = `⚡${out.en.toFixed(1)}  ◆${out.mi.toFixed(1)}  🔬${out.re.toFixed(1)}`; live.up = `−⚡${out.up.toFixed(1)}`;
   const [dw, dc] = defWord(s); live.def = `${dw} (${Math.round(s.defense / Math.max(1, defMax(s)) * 100)}% of platforms)`;
   live.gar = `${Math.ceil(s.garrison)} / ${Math.round(garrisonMax(s))} soldiers`;
-  let h = `<div class="kv"><span>Population</span><span><b data-live="pop"></b> · <span data-live="jobs"></span></span></div>
+  let h = devastHtml(s, live) + `<div class="kv"><span>Population</span><span><b data-live="pop"></b> · <span data-live="jobs"></span></span></div>
     <div class="kv"><span>Output</span><b data-live="out"></b></div><div class="kv"><span>Upkeep</span><span data-live="up"></span></div>
     <div class="kv"><span>Orbital defenses</span><span class="${dc}" data-live="def"></span></div>
     <div class="kv"><span>Garrison</span><span data-live="gar"></span></div>`;
@@ -4176,12 +4469,18 @@ function colonyBlock(s, live, w) {
     s.sq.forEach((q, i) => { w['sq' + i] = q.p / q.t * 100; h += `<div class="row">${shipSVG(q.k, false, pe.color, 20)}<div class="grow">${SHIPS[q.k].name}${i ? ' <small>(queued)</small>' : ''}${bar('sq' + i)}</div><button data-act="cancelS" data-arg="${i}" title="Cancel (full refund)">✕</button></div>`; });
     h += `<div class="grid2">`;
     for (const c in SHIPS) {
-      const S = SHIPS[c], locked = S.tech && !pe.techs[S.tech];
-      const dis = locked || s.sq.length >= 8 || !canAfford(pe, S.cost);
-      h += `<button class="opt" data-act="ship" data-arg="${c}" ${dis ? 'disabled' : ''}><b>${S.name}</b><small>${locked ? 'Requires ' + TECHS[S.tech].name : costStr(S.cost) + ' · ' + S.time + 'd · size ' + S.size}</small><small>${S.desc}</small></button>`;
+      const S = SHIPS[c], locked = S.tech && !pe.techs[S.tech], taken = S.unique && hasUnique(pe, c);
+      const dis = locked || taken || s.sq.length >= 8 || !canAfford(pe, S.cost);
+      h += `<button class="opt" data-act="ship" data-arg="${c}" ${dis ? 'disabled' : ''}><b>${shipSVG(c, false, pe.color, 16)} ${S.name}</b><small>${locked ? 'Requires ' + TECHS[S.tech].name : taken ? 'Already have one (one per empire)' : costStr(S.cost) + ' · ' + S.time + 'd · size ' + S.size}</small><small>${S.desc}</small></button>`;
     }
     h += `</div>`;
   }
+  return h;
+}
+function devastHtml(s, live) {
+  let h = '';
+  if (G.time - (s._bomb || -99) < 1) h += `<div class="ground">💣 <b>Orbital bombardment!</b> ${s.owner === PLAYER ? 'Drive off the enemy fleet to stop it.' : ''}</div>`;
+  if (s.devast > 0.01) { live.dev = `${Math.round(s.devast * 100)}% (output −${Math.round(s.devast * 60)}%)`; h += `<div class="kv"><span>Devastation</span><span class="c-bad" data-live="dev"></span></div>`; }
   return h;
 }
 function planetsList(s) {
@@ -4204,12 +4503,16 @@ function starPanel(s) {
   if (mine) h += colonyBlock(s, live, w);
   else if (owner) {
     if (seen) { const [dw, dc] = defWord(s); live.def = dw; live.pop = s.pop.toFixed(1); live.gar = `${Math.ceil(s.garrison)} soldiers`;
-      h += `<div class="kv"><span>Population</span><b data-live="pop"></b></div><div class="kv"><span>Orbital defenses</span><span class="${dc}" data-live="def"></span></div><div class="kv"><span>Garrison</span><span data-live="gar"></span></div>`;
+      h += devastHtml(s, live) + `<div class="kv"><span>Population</span><b data-live="pop"></b></div><div class="kv"><span>Orbital defenses</span><span class="${dc}" data-live="def"></span></div><div class="kv"><span>Garrison</span><span data-live="gar"></span></div>`;
       if (s.inv) { live.inv = `${Math.ceil(s.inv.tr)} invaders vs ${Math.ceil(s.garrison)} defenders`; h += `<div class="ground">⚔ Ground battle: <span data-live="inv"></span><div class="btns"><button data-act="landPlanet" data-arg="${s.pi}">Watch ⤢</button></div></div>`; }
     } else h += `<p class="muted">No current intel. Move a fleet nearby for live information.</p>`;
     const rs = relS(PLAYER, o);
     h += `<div class="kv"><span>Relation</span><span class="badge ${rs}">${rs}</span></div><div class="btns"><button data-act="openDiplo">Diplomacy</button></div>`;
-    if (rs === 'war') h += `<div class="hint">To capture: destroy the orbital defenses and enemy warships here, then bring Troop Transports to land soldiers.</div>`;
+    if (rs === 'war') {
+      const mine = fleetsAt(s.id).filter(f => f.owner === PLAYER && canBombard(f));
+      if (mine.length) h += `<div class="btns">${mine.some(f => !f.bomb) ? `<button class="danger" data-act="bombardAll" data-arg="${s.id}">💣 Bombard with all fleets here</button>` : `<button data-act="bombardAll" data-arg="${s.id}">Stop bombardment</button>`}</div>`;
+      h += `<div class="hint">To capture: destroy the orbital defenses and enemy warships here, then bring Troop Transports to land soldiers. Bombarding first wipes out the garrison but wrecks the world.</div>`;
+    }
   } else {
     if (s.colonizing) { const ce = emp(s.colonizing.owner); w.col = s.colonizing.p * 100; h += `<div class="sub">Being colonized by <b style="color:${ce.color}">${esc(ce.name)}</b></div>${bar('col', 'col')}`; }
     else {
@@ -4242,7 +4545,8 @@ function planetPanel(s, i) {
   if (primary) {
     h += `<div class="sub">Main world of the system${owner ? `, held by <b style="color:${owner.color}">${esc(owner.name)}</b>` : ''}.</div>`;
     if (s.owner === PLAYER) h += colonyBlock(s, live, w);
-    else if (owner && vis[s.id]) { live.gar = `${Math.ceil(s.garrison)} soldiers`; h += `<div class="kv"><span>Garrison</span><span data-live="gar"></span></div>`; if (s.inv) { live.inv = `${Math.ceil(s.inv.tr)} invaders vs ${Math.ceil(s.garrison)} defenders`; h += `<div class="ground">⚔ <span data-live="inv"></span></div>`; } }
+    else if (owner && vis[s.id]) { live.gar = `${Math.ceil(s.garrison)} soldiers`; h += devastHtml(s, live) + `<div class="kv"><span>Garrison</span><span data-live="gar"></span></div>`;
+      if (atWar(PLAYER, s.owner)) { const mine = fleetsAt(s.id).filter(f => f.owner === PLAYER && canBombard(f)); if (mine.length) h += `<div class="btns">${mine.some(f => !f.bomb) ? `<button class="danger" data-act="bombardAll" data-arg="${s.id}">💣 Bombard ${esc(p.n)}</button>` : `<button data-act="bombardAll" data-arg="${s.id}">Stop bombardment</button>`}</div>`; } if (s.inv) { live.inv = `${Math.ceil(s.inv.tr)} invaders vs ${Math.ceil(s.garrison)} defenders`; h += `<div class="ground">⚔ <span data-live="inv"></span></div>`; } }
   } else {
     const y = outpostYield(p, emp(PLAYER));
     h += `<div class="sub">Secondary planet. An outpost here yields ${y.mi ? '◆' + y.mi.toFixed(1) : ''}${y.en ? ' ⚡' + y.en.toFixed(1) : ''}/day.</div>`;
@@ -4270,10 +4574,13 @@ function refreshUI(force) {
   if (v) {
     v.html = v.html.replace('<button class="x"', `<button class="pcol" data-act="togglePanel" title="Collapse / expand">${panelCollapsed ? '▴' : '▾'}</button><button class="x"`);
     panel.classList.remove('hidden'); panel.classList.toggle('collapsed', panelCollapsed && window.innerWidth <= 760);
+    const key = sel.fleet ? 'f' + sel.fleet.id : sel.planet != null && view.mode !== 'galaxy' ? 'p' + view.star + ':' + sel.planet : 's' + (view.mode === 'system' ? view.star : sel.star);
+    if (panel._key !== key) { panel._key = key; panel.scrollTop = 0; force = true; } // a new selection starts at the top
     if (force) panel._html = null; applyView(panel, v); $('#mapctl').classList.toggle('up', !(panelCollapsed && window.innerWidth <= 760)); $('#mapctl').classList.toggle('upc', panelCollapsed && window.innerWidth <= 760);
   }
   else { panel.classList.add('hidden'); panel._html = null; $('#mapctl').classList.remove('up', 'upc'); }
   if (modalKind && ['tech', 'diplo', 'empire'].includes(modalKind)) renderModal();
+  tutTick();
 }
 
 // =====================================================================
@@ -4281,7 +4588,7 @@ function refreshUI(force) {
 // =====================================================================
 function openModal(kind, arg) { modalKind = kind; modalArg = arg; $('#modal-body')._html = null; $('#modal').classList.remove('hidden'); renderModal(); }
 function toggleModal(kind) { if (modalKind === kind) actions.closeModal(); else if (!modalKind || ['tech', 'diplo', 'empire'].includes(modalKind)) openModal(kind); }
-function modalPauses() { return modalKind && ['menu', 'dialog', 'gameover', 'help', 'load', 'save'].includes(modalKind); }
+function modalPauses() { return modalKind && ['menu', 'dialog', 'gameover', 'help', 'load', 'save', 'savetext', 'import'].includes(modalKind); }
 function showNextDialog() {
   while (dialogQueue.length) {
     const d = dialogQueue.shift(); const e = emp(d.from);
@@ -4301,6 +4608,8 @@ function renderModal() {
   else if (modalKind === 'save') { title = 'Save Game'; small = true; v = { html: slotsView('save') }; }
   else if (modalKind === 'load') { title = 'Load Game'; small = true; v = { html: slotsView('load') }; }
   else if (modalKind === 'help') { title = 'How to Play'; v = { html: helpHtml() }; }
+  else if (modalKind === 'savetext') { title = 'Export Save'; small = true; v = { html: `<p class="muted" style="margin-top:0">This copy of the game can't save files directly. Copy the text below and keep it somewhere safe (Notes, a message to yourself). Paste it into <b>Import save</b> to restore it.</p><textarea class="savebox" id="savetext" readonly>${esc(modalArg)}</textarea><div class="btns"><button class="primary" data-act="copySave">Copy</button><button data-act="closeModal">Done</button></div>` }; }
+  else if (modalKind === 'import') { title = 'Import Save'; small = true; v = { html: `<div class="btns" style="margin-top:0"><button class="primary" data-act="pickSaveFile">Choose a save file…</button></div><p class="muted">…or paste exported save text:</p><textarea class="savebox" id="importtext" placeholder="Paste save text here"></textarea><div class="btns"><button data-act="importPasted">Load pasted save</button><button data-act="closeModal">Cancel</button></div>` }; }
   else if (modalKind === 'dialog') {
     const d = modalArg, e = emp(d.from); small = true; closable = false;
     title = d.kind === 'peace' ? 'Peace Proposal' : 'Alliance Proposal';
@@ -4403,7 +4712,7 @@ function menuView() {
   return `<div class="menu-btns" style="display:flex;flex-direction:column;gap:8px">
     <button class="primary" data-act="closeModal">Resume</button><button data-act="openSave">Save game</button><button data-act="openLoad">Load game</button>
     <button data-act="exportSave">Export save to file</button><button data-act="importSave">Import save from file</button>
-    <button data-act="openHelp">How to play</button><button data-act="title">Quit to title (autosaves)</button>
+    <button data-act="openHelp">How to play</button><button data-act="tutRestart">${G && G.tut != null ? 'Restart tutorial' : 'Tutorial'}</button><button data-act="title">Quit to title (autosaves)</button>
   </div><p class="muted" style="font-size:12px;margin-bottom:0">Autosaves every 2 minutes and when you leave the page. Saves are stored in this browser; use Export to move a save to another device.</p>`;
 }
 
@@ -4487,17 +4796,26 @@ function slotsView(mode) {
   if (mode === 'load') h += `<div class="btns"><button data-act="importSave">Import from file…</button></div>`;
   return h;
 }
-function exportSave() {
-  const blob = new Blob([serialize()], { type: 'application/json' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = `stellar-dominion-${dateStr(G.time)}.json`; document.body.appendChild(a); a.click();
+// iPhone home-screen apps can't download files: use the share sheet ("Save to Files"), or fall back to copyable text
+const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+async function exportSave() {
+  const text = serialize(), name = `stellar-dominion-${dateStr(G.time)}.json`;
+  try {
+    const file = new File([text], name, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Stellar Dominion save' }); return; }
+  } catch (e) { if (e && e.name === 'AbortError') return; }
+  if (standalone() || /iPhone|iPad|iPod/.test(navigator.userAgent)) { openModal('savetext', text); return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  a.download = name; document.body.appendChild(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 }
-function importSave() {
-  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json';
-  inp.onchange = () => { const f = inp.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { try { loadData(JSON.parse(rd.result)); } catch (e) { toast('Import failed: ' + e.message, '#ef5350'); } }; rd.readAsText(f); };
+function pickSaveFile() {
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json,text/plain';
+  inp.onchange = () => { const f = inp.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => importText(rd.result); rd.readAsText(f); };
   inp.click();
 }
+function importText(t) { try { loadData(JSON.parse(String(t).trim())); } catch (e) { toast('Import failed: ' + e.message, '#ef5350'); } }
+function importSave() { openModal('import'); }
 const playing = () => G && $('#screen').style.display === 'none';
 setInterval(() => { if (playing() && !G.over) saveTo('auto'); }, 120000);
 document.addEventListener('visibilitychange', () => { if (document.hidden && playing()) saveTo('auto'); });
@@ -4507,7 +4825,7 @@ window.addEventListener('pagehide', () => { if (playing()) saveTo('auto'); });
 // SCREENS
 // =====================================================================
 let ngColor = COLORS[0];
-function showScreen(html) { const s = $('#screen'); s.innerHTML = html; s.style.display = 'flex'; for (const id of ['#topbar', '#panel', '#mapctl', '#viewnav']) $(id).classList.add('hidden'); }
+function showScreen(html) { const s = $('#screen'); s.innerHTML = html; s.style.display = 'flex'; for (const id of ['#topbar', '#panel', '#mapctl', '#viewnav', '#tut']) $(id).classList.add('hidden'); }
 function titleScreen() {
   const hasAuto = !!slotMeta('auto'), anySave = anySaves();
   showScreen(`<div class="scr"><h1>STELLAR DOMINION</h1><div class="tag">Real-time grand strategy across the real stars near Earth · plays fully offline</div>
@@ -4526,6 +4844,7 @@ function newGameScreen() {
     <label>Map<select id="ng-size">${Object.entries(SIZES).map(([k, v]) => `<option value="${k}" ${k === 'medium' ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label>
     <label>Alien rivals: <b id="ng-ai-v">4</b><input type="range" id="ng-ai" min="1" max="7" value="4" oninput="document.getElementById('ng-ai-v').textContent=this.value"></label>
     <label>Difficulty<select id="ng-diff">${Object.entries(DIFF).map(([k, v]) => `<option value="${k}" ${k === 'normal' ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label>
+    <label class="check"><input type="checkbox" id="ng-tut" ${anySaves() ? '' : 'checked'}> Guided tutorial (recommended for your first game)</label>
     <div class="btns" style="justify-content:space-between"><button data-act="title">Back</button><button class="primary" data-act="startGame">Launch ▶</button></div>
   </div></div>`);
 }
@@ -4538,34 +4857,69 @@ function startPlaying() {
   refreshUI(true);
 }
 function helpHtml() {
+  const sec = (title, body, open) => `<details${open ? ' open' : ''}><summary>${title}</summary><div>${body}</div></details>`;
+  const shipRows = CLASS_ORDER.map(c => `<tr><td>${shipSVG(c, false, '#4fc3f7', 18)} ${SHIPS[c].name}</td><td>${SHIPS[c].desc}${SHIPS[c].tech ? ` <small>(${TECHS[SHIPS[c].tech].name})</small>` : ''}</td></tr>`).join('');
   return `<div class="help">
-  <h3>Goal</h3>Lead humanity from Earth into the real stars around the Sun. Win by destroying every alien empire <b>or</b> holding 60% of all systems. You lose if your last world falls.
-  <h3>The map is real</h3>Every star is a real star at its true 3D position around the Sun (from its right ascension, declination and distance), with its real spectral type. Many real exoplanets are included: Proxima b, the TRAPPIST-1 worlds, Tau Ceti e and f, Teegarden b and more. The Solar System has all eight planets.
-  <h3>Three levels of zoom</h3><ul>
-   <li><b>Galaxy (3D):</b> stars sit at their true 3D positions; faint lines drop each star to the galactic plane, with rings every 10 ly around Sol. <b>Double-tap a star</b> (or zoom right into it) to enter it.</li>
-   <li><b>Star system:</b> planets orbit their star and battles play out ship by ship. Double-tap a planet to view its surface; zoom out to return.</li>
-   <li><b>Planet:</b> a rotating globe (Earth has real continents, clouds and city lights). Drag to orbit around it. If soldiers are fighting there, you watch the ground battle.</li></ul>
-  <h3>Camera</h3><ul>
-   <li><b>Drag</b> to rotate and tilt, <b>pinch / wheel</b> to zoom, <b>two fingers / right-drag</b> to pan. The ⟲/✋ button swaps one-finger drag between rotate and pan.</li>
-   <li>View buttons: <b>⤒</b> top-down, <b>◢</b> angled, <b>▭</b> side-on (cinematic), <b>⟳</b> slow auto-orbit, <b>◎</b> focus on your selection. Keys: V cycles views, O orbit, F focus, R drag mode.</li>
-   <li>Double-tap a ship in a battle to fly the camera to it.</li></ul>
-  <h3>Orders</h3>Select one of your fleets, then tap a star (galaxy), or a planet or hyperlane exit (system view), to send it. Right-click works on desktop. Space pauses; 1–4 set speed.
-  <h3>Combat: no health bars</h3>Every ship is simulated individually. Weapons have <b>damage</b> and <b>armour penetration</b>:
-  <table><tr><th>Weapon</th><th>Effect</th></tr>
-  <tr><td>Autocannon / flak</td><td>Rapid, accurate, low penetration. Shreds small ships; just scratches heavy armour.</td></tr>
-  <tr><td>Railgun / mass driver</td><td>High penetration, poor tracking vs nimble Corvettes.</td></tr>
-  <tr><td>Missile</td><td>Heavy impact that often <b>breaches the hull</b> and starts fires. Can be shot down by point defense.</td></tr>
-  <tr><td>Torpedo</td><td>Huge damage: one can doom a Battleship. Slow, so flak can intercept it.</td></tr></table>
-  A penetrating hit can cause <b>hull breaches</b> (the ship vents air; when the air runs out the crew suffocates), <b>fires</b>, crew casualties, and damaged engines or weapons. Damage-control crews seal breaches and fight fires, so a crippled ship may survive, or slowly die. A ship with no crew left becomes a drifting hulk. <b>Damage is physical:</b> wings, armour plates, turrets and engines are torn off and tumble away as debris; hits leave glowing gashes; hulls scorch and glow red-hot; neon lights flicker and die with the crew. Fleets repair in friendly systems, fully at a shipyard.
-  <table><tr><th>Ship</th><th>Strong vs</th><th>Weak vs</th></tr>
-  <tr><td>Corvette</td><td>Battleship (torpedoes)</td><td>Destroyer</td></tr><tr><td>Destroyer</td><td>Corvette, missiles</td><td>Cruiser</td></tr>
-  <tr><td>Cruiser</td><td>Destroyer</td><td>Battleship</td></tr><tr><td>Battleship</td><td>Cruiser</td><td>Corvette swarms</td></tr></table>
-  <h3>Conquest needs soldiers</h3>Warships destroy a world's <b>orbital defenses</b>. Then <b>Troop Transports</b> (40 soldiers each) in orbit land automatically and fight the garrison. Defenders fight from fortifications (+40%), and orbital support helps the attackers. When the garrison falls, the world is yours.
-  <h3>Economy</h3><ul><li>⚡ Energy pays upkeep; ◆ Minerals build; 🔬 Research unlocks tech.</li><li>Each building needs a worker (population). Other planets in your systems can host <b>outposts</b> (mining or gas harvesting).</li><li><b>⚓ Fleet capacity</b> grows with your systems and shipyards; going over it raises upkeep sharply.</li></ul>
-  <h3>Diplomacy</h3>Peace, war or defensive alliance with each empire. Gifts raise opinion; borders and wars lower it. Peace brings a 150-day truce.
-  <h3>Saving</h3>Autosave every 2 minutes and on exit; three manual slots; Export/Import to move saves between devices.
+  ${sec('Goal', `<p>Lead humanity from Earth into the real stars around the Sun. Win by destroying every alien empire <b>or</b> holding 60% of all systems. You lose if your last world falls.</p><p>New to the game? Open <b>☰ Menu → Tutorial</b> for a guided start.</p>`, true)}
+  ${sec('Getting started', `<ol style="padding-left:18px;margin:4px 0"><li>On Earth, build a <b>Research Lab</b> and pick a technology under <b>Tech</b>.</li><li>Build a <b>Colony Ship</b> at Earth's Shipyard and send it to an unclaimed star (Alpha Centauri is close).</li><li>Add <b>Mining Complexes</b> and <b>Power Plants</b>; give colonies Shipyards; build outposts on other planets.</li><li>Build warships before your neighbours notice you. Speed time up with 2×/4×/8×.</li></ol>`)}
+  ${sec('Moving around', `<ul><li><b>Galaxy:</b> every star is a real star at its true 3D position, with its real spectral type and many real exoplanets. <b>Double-tap a star</b> (or zoom right in) to enter it.</li><li><b>Star system:</b> planets orbit and battles play out ship by ship. Double-tap a planet to see its surface; zoom out to go back.</li><li><b>Planet:</b> a rotating globe. Watch ground battles and bombardments here.</li><li><b>Drag</b> to rotate, <b>pinch / wheel</b> to zoom, <b>two fingers / right-drag</b> to pan. Bottom buttons: + − zoom, ⌂ home, ◎ focus, ⤒ top, ◢ angled, ▭ side, ⟳ auto-orbit, ⟲/✋ swap drag between rotate and pan.</li></ul>`)}
+  ${sec('Orders', `<p>Select one of your fleets, then tap a star (galaxy), or a planet or hyperlane exit (system view), to send it. Right-click also works on a computer. Space pauses; keys 1–4 set speed.</p><p>Fleet panel buttons: <b>Split</b> / <b>Merge</b>, <b>Stop</b>, <b>Colonize</b>, and <b>💣 Bombard</b> over an enemy world.</p>`)}
+  ${sec('Ships', `<table><tr><th style="width:38%">Ship</th><th>Role</th></tr>${shipRows}</table><p>Rough counters: Destroyers (flak) beat Corvettes, Frigates and strike craft; Cruisers beat Destroyers; Battleships beat Cruisers; Corvette torpedoes and Titan lances beat Battleships.</p>`)}
+  ${sec('Combat: no health bars', `<p>Every ship is simulated individually. Weapons have <b>damage</b> and <b>armour penetration</b>. Autocannons and flak shred small ships; railguns punch armour; missiles and torpedoes <b>breach hulls</b> and start fires (point defense can shoot them down); carrier strike craft hunt nimble ships; a Titan's lance can split a Battleship.</p><p>A breached ship vents air until the crew suffocates; fires spread; damage-control crews fight back. Parts tear off and tumble away, hulls scorch and glow. A ship with no crew left becomes a drifting hulk. Fleets repair in friendly systems, fully at a shipyard, or anywhere with a <b>Repair Tender</b>.</p>`)}
+  ${sec('Conquest and bombardment', `<p>Warships destroy a world's <b>orbital defenses</b> (Siege Bombers are best at it). Then <b>Troop Transports</b> in orbit land automatically and fight the garrison. When the garrison falls, the world is yours.</p><p><b>💣 Bombard</b>: once the defenses are down, a fleet ordered to bombard kills soldiers and civilians, flattens buildings and leaves the world <b>devastated</b> (lower output, slowly recovering). It makes invasions easy, but the victim and every other empire will hate you.</p>`)}
+  ${sec('Economy', `<ul><li>⚡ Energy pays upkeep; ◆ Minerals build; 🔬 Research unlocks technology. Storage is limited, so spend or trade surpluses (Empire screen).</li><li>Each building needs a worker. Other planets in your systems can host <b>outposts</b>.</li><li><b>⚓ Fleet capacity</b> grows with systems, shipyards, Naval Yards and Starbases; going over it makes upkeep soar.</li></ul>`)}
+  ${sec('Diplomacy', `<p>Peace, war or a defensive alliance with each empire. Gifts raise opinion; shared borders, wars and bombardment lower it. Peace brings a 150-day truce.</p>`)}
+  ${sec('Saving', `<p>The game autosaves every 2 minutes and when you leave. There are three manual slots. <b>Export</b> gives you a file (or copyable text on an iPhone home-screen app) and <b>Import</b> restores it on any device.</p>`)}
   </div>`;
 }
+
+// =====================================================================
+// TUTORIAL: short guided steps that advance when you do the thing they ask
+// =====================================================================
+const phone = () => window.innerWidth <= 760;
+const earth = () => G.stars[0];
+function focusEarthPanel() { if (view.mode === 'system' && view.star === 0 && !modalKind) { sel.fleet = null; sel.planet = earth().pi; panelCollapsed = false; refreshUI(true); } }
+const TUT = [
+  { t: 'Welcome, Commander', b: () => `This is the <b>Sol system</b>: the real Solar System. <b>Drag</b> to turn the camera and <b>${phone() ? 'pinch' : 'scroll'}</b> to zoom. Time is paused while you read; it starts when you continue.`, next: 'Start', go: () => { G.paused = false; } },
+  { t: 'Grow your capital', b: () => `Earth's panel${phone() ? ' at the bottom' : ''} lists its buildings. Under <i>Construct</i>, tap <b>◆ Mining Complex</b> for more minerals (any building will do).`, hl: '[data-act="build"][data-arg="mine"]', show: focusEarthPanel,
+    done: () => earth().bq.some(q => BUILDINGS[q.k]) || earth().buildings.length > 4 },
+  { t: 'Pick a technology', b: () => `Tap <b>Tech</b> at the top and choose any technology. Research points pile up until you pick one.`, hl: '#topbar [data-act="openTech"]',
+    done: () => !!emp(PLAYER).researching || Object.keys(emp(PLAYER).techs).length > 0 },
+  { t: 'Control time', b: () => `The clock runs in real time. Tap <b>2×</b> or <b>4×</b> to speed it up (⏸ pauses).`, hl: '#sp2, #sp4',
+    done: () => !G.paused && G.speed >= 2 },
+  { t: 'The local stars', b: () => `Tap <b>◀ Galaxy</b> (top left) to zoom out to the real stars around the Sun.`, hl: '[data-act="toGalaxy"]',
+    done: () => view.mode === 'galaxy' },
+  { t: 'Settle a new world', b: () => `You start with a <b>Colony Ship</b> at Sol. Tap its icon beside Sol (tap again to cycle through ships there), then tap an unclaimed star such as <b>Alpha Centauri</b>. It settles on arrival.`,
+    done: () => G.stars.some(s => s.id !== 0 && (s.owner === PLAYER || (s.colonizing && s.colonizing.owner === PLAYER))) || G.fleets.some(f => f.owner === PLAYER && colonyOnly(f) && f.autoCol && (f.at === null || f.path.length)) },
+  { t: 'Explore', b: () => `Now select your <b>1st Fleet</b> (the warships beside Sol) and tap another nearby star to scout it. Fleets fly along the hyperlanes. (Lost? <b>⌂</b> flies home.)`, hl: '[data-act="home"]',
+    done: () => G.fleets.some(f => f.owner === PLAYER && isArmed(f) && (f.at === null || f.path.length)) },
+  { t: 'Build up', b: () => `Back at Earth, use the <b>Shipyard</b> for more Colony Ships and warships. Add <b>Power Plants</b> ⚡ and <b>Research Labs</b> 🔬, give colonies a Shipyard, and build <b>outposts</b> on other planets. Watch ⚓ fleet capacity: going over makes upkeep soar.`, next: 'Next' },
+  { t: 'War and conquest', b: () => `Warships knock out a world's <b>orbital defenses</b>. Then land <b>Troop Transports</b>, or select your fleet over the world and tap <b>💣 Bombard</b> to wipe out the garrison first (Siege Bombers do it best, but every empire will hate you). <b>Diplo</b> handles peace, war and alliances.`, next: 'Next' },
+  { t: "You're ready", b: () => `Win by destroying every rival or holding 60% of the stars. <b>☰ → How to play</b> explains everything else. Good luck, Commander!`, next: 'Finish' },
+];
+let tutShown = -1, tutDoneT = 0;
+function tutTick() {
+  const el = $('#tut');
+  if (!G || G.tut == null || G.over || !playing()) { el.classList.add('hidden'); $('#toasts').style.top = ''; document.querySelectorAll('.tut-hl').forEach(n => n.classList.remove('tut-hl')); return; }
+  const st = TUT[G.tut];
+  if (!st) { G.tut = null; return tutTick(); }
+  if (st.done && st.done() && performance.now() > tutDoneT) { tutDoneT = performance.now() + 900; el.classList.add('done'); setTimeout(() => { if (G && G.tut != null && TUT[G.tut] === st) tutAdvance(); }, 700); }
+  if (tutShown !== G.tut) {
+    tutShown = G.tut; el.classList.remove('done', 'min');
+    if (st.show) st.show();
+    const html = `<div class="th"><b>${st.t}</b><small>${G.tut + 1}/${TUT.length}</small><button class="x" data-act="tutMin" title="Minimise">–</button></div><div class="tb">${st.b()}</div>
+      <div class="btns"><button class="link" data-act="tutEnd">End tutorial</button>${st.next ? `<button class="primary" data-act="tutNext">${st.next}</button>` : '<button data-act="tutNext">Skip step</button>'}</div>`;
+    el.innerHTML = html;
+  }
+  el.classList.toggle('hidden', !!modalKind);
+  // keep the card under the breadcrumb and push messages below it
+  const nav = $('#viewnav'), top = (nav.offsetTop || 60) + (nav.offsetHeight || 0) + 6;
+  el.style.top = top + 'px';
+  $('#toasts').style.top = (modalKind ? top : top + el.offsetHeight + 6) + 'px';
+  document.querySelectorAll('.tut-hl').forEach(n => n.classList.remove('tut-hl'));
+  if (st.hl && !modalKind) document.querySelectorAll(st.hl).forEach(n => n.classList.add('tut-hl'));
+}
+function tutAdvance() { const st = TUT[G.tut]; if (st && st.go) st.go(); G.tut++; if (G.tut >= TUT.length) { G.tut = null; toast('Tutorial complete. Have fun!', '#66bb6a'); } tutShown = -1; tutTick(); }
 
 // =====================================================================
 // ACTIONS
@@ -4574,11 +4928,15 @@ const curStar = () => G.stars[view.mode !== 'galaxy' ? view.star : sel.star];
 const actions = {
   closeModal() {
     if (modalKind === 'dialog') return;
-    modalKind = null; $('#modal').classList.add('hidden');
+    modalKind = null; $('#modal').classList.add('hidden'); $('#modal-body')._html = null;
     if (G && G.over) computeVis();
     if (dialogQueue.length) showNextDialog();
   },
   togglePanel() { panelCollapsed = !panelCollapsed; refreshUI(true); },
+  tutNext() { if (G && G.tut != null) tutAdvance(); },
+  tutEnd() { if (!G) return; const st = TUT[G.tut]; if (st && st.go) st.go(); G.tut = null; tutTick(); toast('Tutorial closed. Restart it any time from ☰ Menu.', '#4fc3f7'); },
+  tutMin() { $('#tut').classList.toggle('min'); tutTick(); },
+  tutRestart() { if (!G) return; G.tut = 0; tutShown = -1; G.paused = true; actions.closeModal(); if (view.mode !== 'system' || view.star !== 0) { if (view.mode === 'planet') backToSystem(); if (view.mode !== 'system' || view.star !== 0) enterSystem(0); } tutTick(); },
   deselect() { sel.fleet = null; sel.planet = null; if (view.mode === 'galaxy') sel.star = null; refreshUI(true); },
   selFleet(id) { const f = G.fleets.find(x => x.id === +id); if (f) selectFleet(f); },
   selPlanet(i) { if (view.mode === 'galaxy') { enterSystem(sel.star); } sel.planet = +i; sel.fleet = null; refreshUI(true); },
@@ -4607,6 +4965,18 @@ const actions = {
   merge() { const n = mergeHere(sel.fleet); if (n) toast(`Merged ${n} fleet${n > 1 ? 's' : ''} into ${sel.fleet.name}`, '#4fc3f7'); refreshUI(true); },
   stop() { const f = sel.fleet; f.path = []; f.autoCol = false; refreshUI(true); },
   colonize() { startColonize(sel.fleet); refreshUI(true); },
+  bombard() {
+    const f = sel.fleet; if (!f || f.owner !== PLAYER) return;
+    if (f.bomb) { f.bomb = false; toast(`${f.name} ceased bombardment`, '#4fc3f7'); }
+    else if (canBombard(f)) { f.bomb = true; const s = G.stars[f.at]; toast(s.defense > 0.5 ? `${f.name} will bombard ${prim(s).n} once its orbital defenses fall` : `${f.name} is bombarding ${prim(s).n}`, '#ffca28'); }
+    refreshUI(true);
+  },
+  bombardAll(id) {
+    const fl = fleetsAt(+id).filter(f => f.owner === PLAYER && canBombard(f)); if (!fl.length) return;
+    const on = fl.some(f => !f.bomb); for (const f of fl) f.bomb = on;
+    toast(on ? `💣 ${fl.length} fleet${fl.length > 1 ? 's' : ''} ordered to bombard ${prim(G.stars[+id]).n}` : 'Bombardment stopped', on ? '#ffca28' : '#4fc3f7');
+    refreshUI(true);
+  },
   sendColony(id) {
     id = +id; const cols = G.fleets.filter(f => f.owner === PLAYER && colonyOnly(f));
     let best = null, bd = Infinity; const d = dij(id).dist;
@@ -4638,19 +5008,23 @@ const actions = {
   saveSlot(k) { if (saveTo(k)) toast(`Saved to slot ${k}`, '#66bb6a'); else toast('Save failed (storage unavailable?). Try Export instead.', '#ef5350'); renderModal(); },
   loadSlot(k) { loadFrom(k); },
   delSlot(k) { lsDel(k.startsWith('v1:') ? V1_PREFIX + k.slice(3) : SAVE_PREFIX + k); if ($('#screen').style.display === 'none') renderModal(); else { anySaves() ? loadScreen() : titleScreen(); } },
-  exportSave() { if (G) exportSave(); }, importSave() { importSave(); },
+  exportSave() { if (G) exportSave(); }, importSave() { importSave(); }, pickSaveFile() { pickSaveFile(); },
+  importPasted() { const t = $('#importtext').value; if (!t.trim()) { toast('Paste the save text first', '#ffca28'); return; } importText(t); },
+  copySave() { const ta = $('#savetext'); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e) { } if (navigator.clipboard) navigator.clipboard.writeText(ta.value).then(() => toast('Save copied', '#66bb6a'), () => { if (!ok) toast('Select the text and copy it manually', '#ffca28'); }); else toast(ok ? 'Save copied' : 'Select the text and copy it manually', ok ? '#66bb6a' : '#ffca28'); },
   continue() { loadFrom('auto'); },
   newGameScreen() { if (playing() && !G.over) saveTo('auto'); modalKind = null; $('#modal').classList.add('hidden'); newGameScreen(); },
   loadScreen() { loadScreen(); }, helpScreen() { helpScreen(); },
   title() { if (playing() && !G.over) saveTo('auto'); modalKind = null; $('#modal').classList.add('hidden'); G = null; titleScreen(); },
   ngColor(c, el) { ngColor = c; document.querySelectorAll('.swatch').forEach(s => s.classList.toggle('on', s === el)); },
   startGame() {
-    const opts = { name: $('#ng-name').value.trim() || 'United Earth', color: ngColor, size: $('#ng-size').value, ais: +$('#ng-ai').value, diff: $('#ng-diff').value };
+    const opts = { name: $('#ng-name').value.trim() || 'United Earth', color: ngColor, size: $('#ng-size').value, ais: +$('#ng-ai').value, diff: $('#ng-diff').value }, tut = $('#ng-tut').checked;
     const maxAI = Math.floor(SIZES[opts.size].n / 7) - 1; const clamped = opts.ais > maxAI; if (clamped) opts.ais = maxAI;
     newGame(opts); startPlaying();
-    enterSystem(0, true); sel.planet = G.stars[0].pi; panelCollapsed = window.innerWidth <= 760; refreshUI(true);
+    enterSystem(0, true); sel.planet = G.stars[0].pi; panelCollapsed = window.innerWidth <= 760;
+    if (tut) { G.tut = 0; G.paused = true; tutShown = -1; }
+    refreshUI(true);
     if (clamped) toast(`This map has room for at most ${maxAI} rivals, so the game started with ${maxAI}.`, '#ffca28');
-    setTimeout(() => toast('Tip: Earth is selected. Build here, double-tap Earth to see it, or zoom out to the local stars.', '#4fc3f7'), 1200);
+    if (!tut) setTimeout(() => toast('Tip: Earth is selected. Build here, double-tap Earth to see it, or zoom out to the local stars.', '#4fc3f7'), 1200);
   },
   zoomIn() { zoomBy(1.4); },
   zoomOut() { zoomBy(1 / 1.4); },
@@ -4664,7 +5038,11 @@ const actions = {
   home() { if (!G || emp(PLAYER).capital < 0) return; if (view.mode !== 'galaxy') exitToGalaxy(); centerOn(emp(PLAYER).capital); refreshUI(true); },
 };
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-act]'); if (!t || t.disabled) return;
+  uiHoldUntil = 0;
+  const t = e.target.closest('[data-act]');
+  // on phones, tapping the panel's title bar opens or folds the panel
+  if (!t && window.innerWidth <= 760 && e.target.closest('#panel .ph')) { actions.togglePanel(); return; }
+  if (!t || t.disabled) return;
   const fn = actions[t.dataset.act]; if (fn) fn(t.dataset.arg, t);
 });
 

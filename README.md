@@ -27,10 +27,13 @@ Saves are stored in the browser on each device. Saves from earlier versions of t
 - **Cyberpunk ships:** long, angular, faceted 3D hulls with neon edge lighting and engine glow. Humans fly gunmetal blades with cyan trim; aliens fly crystalline, forked hulls in their empire colours.
 - **Physical damage:** ships are built from parts. Wings, armour plates, turrets, bridges and engines are torn off and tumble away as debris; hits leave glowing gashes; hulls scorch and glow red-hot; neon lights flicker and die with the crew. Destroyed ships break apart, and dead hulks drift.
 - **Damage without health bars:** weapons have damage and armour penetration. Autocannons barely scratch heavy armour. Missiles and torpedoes breach hulls, so ships vent air, catch fire, lose crew and suffer engine or weapon damage, and can die slowly if damage control can't keep up. Ships report conditions like "3 hull breaches: venting atmosphere · Air 41% · Crew 212/750".
+- **11 ship classes:** Corvette, Missile Frigate, Destroyer, Cruiser, Carrier (launches strike-craft swarms), Battleship, Titan (one per empire, with a spinal lance), Siege Bomber, Repair Tender (repairs its fleet anywhere), Troop Transport and Colony Ship.
 - **Ground war:** destroy a world's orbital defences, then land Troop Transports. You watch soldiers fight the garrison on the surface.
+- **Orbital bombardment:** order a fleet to 💣 bombard an enemy world. Bombs rain down on the globe, the garrison and population die, buildings are flattened and the world is left devastated and burning. Every empire remembers it.
+- **Guided tutorial** for the first game (or any time from ☰ Menu), and a fold-out How to Play guide.
 - **Economy:** energy, minerals and research. Buildings need workers, other planets in a system can host outposts, and fleet capacity limits your navy. Storage silos cap stockpiles (2,000 + 300 per system), so surpluses should be spent on **major projects** (Terraform, Orbital Habitat, Starbase, Naval Yards) or traded on the galactic market.
-- **Tech tree:** 27 technologies that get pricier the more you know, plus endless repeatable research for the late game. **Diplomacy:** war, peace, defensive alliances, opinion and gifts. **AI rivals:** 1–7 alien empires with personalities, on 4 difficulty levels.
-- **Real time:** pause and 1×/2×/4×/8× speed. Autosave, 3 save slots, and export/import of save files. Touch and mouse controls.
+- **Tech tree:** 30 technologies that get pricier the more you know, plus endless repeatable research for the late game. **Diplomacy:** war, peace, defensive alliances, opinion and gifts. **AI rivals:** 1–7 alien empires with personalities, on 4 difficulty levels.
+- **Real time:** pause and 1×/2×/4×/8× speed. Autosave, 3 save slots, and export/import of save files (share sheet or copyable text on iPhone home-screen apps). Touch and mouse controls, laid out for phones including notched screens.
 
 ## Controls
 
