@@ -1547,6 +1547,7 @@ const PLANETS = {
   barren: { name: 'Barren', color: '#9e9488', hab: 0.15, min: 1.6, en: 0.8 },
   molten: { name: 'Molten', color: '#e0521f', hab: 0.1, min: 1.8, en: 1.2 },
   gas: { name: 'Gas Giant', color: '#c9a77d', hab: 0.1, min: 0.6, en: 1.8 },
+  shattered: { name: 'Shattered World', color: '#8a7466', hab: 0, min: 2.2, en: 0.4 },
 };
 const ROCKY_HZ = [['terran', 2], ['ocean', 2], ['jungle', 1], ['desert', 3], ['tundra', 2], ['toxic', 2], ['barren', 2]];
 
@@ -1558,7 +1559,30 @@ const BUILDINGS = {
   defense: { name: 'Defense Grid', icon: '🛡', cost: { minerals: 100 }, time: 16, jobs: 1, upkeep: 0.5, desc: 'Orbital batteries + point defense, +20 garrison' },
   habitat: { name: 'Habitat Dome', icon: '⌂', cost: { minerals: 80 }, time: 14, jobs: 0, upkeep: 0.5, desc: '+3 pop capacity (no worker needed)' },
 };
-const OUTPOST = { cost: { minerals: 80 }, time: 15, upkeep: 0.3 };
+const OUTPOST = { cost: { minerals: 80 }, time: 15, upkeep: 0.3 }; // legacy saves only
+// settlements: one per secondary planet, each suited to the kind of world it stands on
+const SETTLE = {
+  skimmer: { name: 'Helium-3 Skimmers', icon: '🛸', on: ['gas'], cost: { minerals: 120 }, time: 18, up: 0.3, y: { en: 4 }, desc: 'Scoop-ships dive through the cloud tops for fusion fuel.' },
+  cloudcity: { name: 'Cloud City', icon: '☁', on: ['gas'], cost: { minerals: 240, energy: 90 }, time: 30, up: 0.6, y: { en: 1.5, re: 2 }, pop: 2, desc: 'Floating arcologies riding the calm layer of the atmosphere.' },
+  oceancol: { name: 'Sub-Ice Ocean Colony', icon: '❄', on: ['ice'], cost: { minerals: 200, energy: 60 }, time: 28, up: 0.5, y: { re: 2, en: 1 }, pop: 1.5, desc: 'Pressure habitats in the liquid ocean beneath the ice shell.' },
+  cryo: { name: 'Cryo-Refinery', icon: '◆', on: ['ice'], cost: { minerals: 100 }, time: 16, up: 0.3, y: { mi: 1.5, en: 1.5 }, desc: 'Cracks ice into fuel and volatiles.' },
+  foundry: { name: 'Magma Foundry', icon: '🔥', on: ['molten'], cost: { minerals: 150, energy: 30 }, time: 20, up: 0.4, y: { mi: 5 }, desc: 'Refines metals straight from the lava seas.' },
+  deepmine: { name: 'Deep-Core Mine', icon: '⛏', on: ['barren', 'desert', 'tundra', 'toxic', 'molten'], cost: { minerals: 100 }, time: 15, up: 0.3, y: { mi: 3 }, desc: 'Automated bore-mines chewing through the crust.' },
+  domes: { name: 'Dome Colony', icon: '◓', on: ['barren', 'desert', 'tundra', 'toxic', 'ice'], cost: { minerals: 180, energy: 50 }, time: 26, up: 0.5, y: { re: 1, mi: 1 }, pop: 1.5, desc: 'Pressurised domes linked by maglev tunnels.' },
+  refinery: { name: 'Atmospheric Refinery', icon: '⚗', on: ['toxic'], cost: { minerals: 130 }, time: 18, up: 0.4, y: { en: 2.5, mi: 1.5 }, desc: 'Cracks the poisonous air into fuel and polymers.' },
+  arcology: { name: 'Arcology City', icon: '🏙', on: ['terran', 'ocean', 'jungle', 'desert', 'tundra'], cost: { minerals: 260, energy: 100 }, time: 32, up: 0.7, y: { en: 1.5, re: 1.5, mi: 1 }, pop: 3, desc: 'Kilometre-high tower cities for millions.' },
+  seacity: { name: 'Floating Sea City', icon: '🌊', on: ['ocean'], cost: { minerals: 200, energy: 70 }, time: 28, up: 0.5, y: { en: 2.5, re: 1 }, pop: 2.5, desc: 'Tidal-powered cities drifting on the open ocean.' },
+  swarm: { name: 'Asteroid Mining Swarm', icon: '☄', on: ['shattered'], cost: { minerals: 120 }, time: 15, up: 0.3, y: { mi: 6 }, desc: 'Drone swarms strip the debris of a shattered world.' },
+};
+// orbital stations: built around any planet of a system you hold (3 around the main world, 2 elsewhere)
+const STATIONS = {
+  defense: { name: 'Defense Platform', icon: '🛡', cost: { minerals: 150 }, time: 18, up: 0.4, desc: '+120 orbital defense, +1 battery, point defense' },
+  yard: { name: 'Orbital Shipyard', icon: '⚓', cost: { minerals: 220, energy: 40 }, time: 24, up: 0.8, max: 1, desc: 'Builds and repairs ships here, +3 fleet capacity' },
+  science: { name: 'Research Station', icon: '🔬', cost: { minerals: 160, energy: 40 }, time: 20, up: 0.5, y: { re: 3 }, desc: '+3 research' },
+  solar: { name: 'Orbital Collector', icon: '⚡', cost: { minerals: 140 }, time: 16, up: 0, y: { en: 3 }, desc: '+3 energy (+50% around gas giants)' },
+  habitat: { name: 'Ring Habitat', icon: '◎', cost: { minerals: 260, energy: 80 }, time: 30, up: 0.6, pop: 2, desc: '+2 population capacity' },
+  trade: { name: 'Trade Hub', icon: '⇄', cost: { minerals: 180, energy: 60 }, time: 22, up: 0.2, y: { en: 1.5, mi: 1.5 }, desc: '+1.5 energy and minerals' },
+};
 
 // weapons: damage, armour penetration, reload (days), tracking vs evasive targets, flight time (days), kind, breach/fire chance on penetration
 const WEAPONS = {
@@ -1588,10 +1612,11 @@ const SHIPS = {
   bomber: { name: 'Siege Bomber', size: 3, crew: 90, st: 280, armor: 7, ev: 0.15, speed: 28, pd: 0.2, vent: 0.05, len: 24, weapons: ['siegebomb', 'siegebomb', 'autocannon'], bomb: 6, cost: { minerals: 150, energy: 40 }, time: 20, upkeep: 0.7, tech: 'siege', desc: 'Smashes orbital defenses and bombards planets. Weak against warships.' },
   carrier: { name: 'Carrier', size: 6, crew: 520, st: 820, armor: 10, ev: 0.05, speed: 26, pd: 1.2, vent: 0.025, len: 38, weapons: ['fighters', 'fighters', 'fighters', 'fighters', 'flak', 'flak'], cost: { minerals: 320, energy: 80 }, time: 34, upkeep: 1.3, tech: 'carriers', desc: 'Launches strike-craft wings that hunt small, nimble ships.' },
   titan: { name: 'Titan', size: 16, crew: 2400, st: 3800, armor: 24, ev: 0.02, speed: 19, pd: 2, vent: 0.01, len: 72, weapons: ['lance', 'heavyrail', 'heavyrail', 'heavyrail', 'heavyrail', 'missile', 'missile', 'missile', 'flak', 'flak', 'flak'], bomb: 4, unique: 1, cost: { minerals: 1100, energy: 300 }, time: 80, upkeep: 4, tech: 'titans', desc: 'Flagship colossus. Its spinal lance can split a Battleship. One per empire.' },
+  worldbreaker: { name: 'World Breaker', size: 20, crew: 3000, st: 4200, armor: 22, ev: 0.01, speed: 16, pd: 1.5, vent: 0.008, len: 90, weapons: ['flak', 'flak', 'flak', 'heavyrail', 'heavyrail'], cracker: 1, unique: 1, cost: { minerals: 1800, energy: 700 }, time: 100, upkeep: 6, tech: 'cracker', desc: 'Carries a graviton planet cracker: charges for 8 days, then shatters a world. One per empire.' },
   colony: { name: 'Colony Ship', size: 1, crew: 40, st: 120, armor: 2, ev: 0.1, speed: 28, pd: 0, vent: 0.1, len: 20, weapons: [], cost: { minerals: 90, energy: 40 }, time: 16, upkeep: 0.3, tech: null, desc: 'Settles an unclaimed world.' },
 };
 const WAR_CLASSES = ['corvette', 'frigate', 'destroyer', 'cruiser', 'carrier', 'battleship', 'titan'];
-const CLASS_ORDER = ['titan', 'battleship', 'carrier', 'cruiser', 'bomber', 'tender', 'frigate', 'destroyer', 'corvette', 'transport', 'colony'];
+const CLASS_ORDER = ['worldbreaker', 'titan', 'battleship', 'carrier', 'cruiser', 'bomber', 'tender', 'frigate', 'destroyer', 'corvette', 'transport', 'colony'];
 
 const TECHS = {
   weapons1: { name: 'Coilgun Accelerators', cat: 'Military', cost: 400, req: [], desc: '+15% weapon damage, +1 penetration' },
@@ -1609,6 +1634,7 @@ const TECHS = {
   battleships: { name: 'Battleship Hulls', cat: 'Engineering', cost: 1760, req: ['cruisers'], desc: 'Unlocks Battleships' },
   carriers: { name: 'Flight Decks', cat: 'Engineering', cost: 1200, req: ['cruisers'], desc: 'Unlocks Carriers' },
   titans: { name: 'Titan Keel', cat: 'Engineering', cost: 3200, req: ['battleships'], desc: 'Unlocks the Titan (one per empire)' },
+  cracker: { name: 'Graviton Planet Cracker', cat: 'Engineering', cost: 4400, req: ['titans'], desc: 'Unlocks the World Breaker, which can destroy planets' },
   engines1: { name: 'Fusion Torches', cat: 'Engineering', cost: 480, req: [], desc: '+20% fleet speed' },
   engines2: { name: 'Alcubierre Drive', cat: 'Engineering', cost: 1440, req: ['engines1'], desc: '+25% fleet speed' },
   logistics: { name: 'Fleet Logistics', cat: 'Engineering', cost: 800, req: [], desc: '+30% fleet capacity, −25% upkeep, 2× repairs' },
@@ -1661,6 +1687,7 @@ const AI_NAMES = ['Varn Hegemony', 'Quell Collective', 'Ossari Dominion', 'Thala
 const AI_HOMES = { 'Varn Hegemony': 'Varnis', 'Quell Collective': 'Quellar', 'Ossari Dominion': 'Ossar', 'Thalan Republic': 'Thala', 'Krynn Swarm': 'Krynnhive', 'Eidolon Union': 'Eidos', 'Sareth Imperium': 'Sareth Prime', 'Nova Concord': 'Novara', 'Draxis Pact': 'Draxis', 'Myrr Theocracy': 'Myrrhal' };
 const HUMAN_SHIP_NAMES = ['Valiant', 'Resolute', 'Endeavour', 'Intrepid', 'Vigilant', 'Defiant', 'Orion', 'Tempest', 'Aurora', 'Hyperion', 'Odyssey', 'Pathfinder', 'Sentinel', 'Dauntless', 'Constellation', 'Enterprise', 'Discovery', 'Challenger', 'Atlantis', 'Columbia', 'Galileo', 'Kepler', 'Copernicus', 'Magellan', 'Armstrong', 'Gagarin', 'Tereshkova', 'Halley', 'Hubble', 'Sagan', 'Vanguard', 'Ranger', 'Mariner', 'Pioneer', 'Voyager', 'Cassini', 'Juno', 'Artemis', 'Apollo', 'Gemini', 'Liberty', 'Fortitude', 'Tenacity', 'Indomitable', 'Invincible', 'Relentless', 'Steadfast', 'Audacious', 'Courageous', 'Victory', 'Thunderer', 'Warspite', 'Nautilus', 'Leviathan', 'Typhoon', 'Cyclone', 'Avalanche', 'Yamato', 'Bismarck', 'Hood', 'Nimitz', 'Ark Royal', 'Shenzhou', 'Chandrayaan', 'Tiangong'];
 const CORVETTE_NAMES = ['Hornet', 'Wasp', 'Viper', 'Dart', 'Kestrel', 'Falcon', 'Swift', 'Lancer', 'Raptor', 'Sparrow', 'Stinger', 'Javelin'];
+const BREAKER_NAMES = ['Ragnarok', 'Oblivion', 'Worldender', 'Cataclysm', 'Apocalypse', 'Annihilator'];
 const TITAN_NAMES = ['Leviathan', 'Colossus', 'Behemoth', 'Juggernaut', 'Sovereign', 'Goliath', 'Imperator', 'Titanomachy'];
 const COLONY_NAMES = ['Hope', 'New Dawn', 'Promise', 'Ark', 'Genesis', 'Exodus', 'Mayflower', 'Horizon', 'Providence', 'Endurance'];
 const ALIEN_SYL = ["Kra", "Vex", "Zhul", "Ith", "Mor", "Xa", "Quo", "Thel", "Ska", "Ny", "Orr", "Vass", "Ul", "Kesh", "Tyr", "Aeth", "Gor", "Sil", "Ra", "Phy"];
@@ -1737,13 +1764,20 @@ function costValue(cost) { return (cost.minerals || 0) + (cost.energy || 0) * 1.
 // stars & planets
 const prim = s => s.planets[s.pi];
 function countB(s, k) { let n = 0; for (const b of s.buildings) if (b === k) n++; return n; }
+// orbital stations and settlements on a system's planets
+function countSta(s, k) { let n = 0; for (const p of s.planets) if (p.sta) for (const x of p.sta) if (x === k) n++; return n; }
+function staSlots(s, i) { const p = s.planets[i]; return !p || p.dead ? 0 : i === s.pi ? 3 : 2; }
+function hasYard(s) { return s.buildings.includes('shipyard') || countSta(s, 'yard') > 0; }
+function settleOptions(p) { return Object.keys(SETTLE).filter(k => SETTLE[k].on.includes(p.t)); }
+function settlePop(s) { let n = 0; s.planets.forEach((p, i) => { if (i !== s.pi && p.st && SETTLE[p.st].pop) n += SETTLE[p.st].pop; }); return n + countSta(s, 'habitat') * STATIONS.habitat.pop; }
+function defaultSettle(t) { return t === 'gas' ? 'skimmer' : t === 'ice' ? 'cryo' : t === 'molten' ? 'foundry' : t === 'shattered' ? 'swarm' : 'deepmine'; }
 function jobs(s) { let j = 0; for (const b of s.buildings) j += BUILDINGS[b].jobs; return j; }
 function isCapital(s) { return s.owner >= 0 && emp(s.owner).capital === s.id; }
 function starHab(s, eid = s.owner) { const e = eid >= 0 ? emp(eid) : null; return clamp(PLANETS[s.type].hab + (e ? mods(e).hab : 0) + 0.25 * pj(s, 'terraform'), 0.05, 1); }
 function slots(s) { return s.size + (s.owner >= 0 ? mods(emp(s.owner)).slots : 0) + 2 * pj(s, 'orbital'); }
-function popCap(s) { const m = mods(emp(s.owner)); return Math.max(1, s.size * 1.5 * starHab(s) + countB(s, 'habitat') * 3 + m.capBonus + (isCapital(s) ? 3 : 0)); }
-function defMax(s) { if (s.owner < 0) return 0; const m = mods(emp(s.owner)); return (60 + s.size * 15 + countB(s, 'defense') * 100 + (isCapital(s) ? 250 : 0) + 150 * pj(s, 'starbase')) * m.def; }
-function batteries(s) { return s.owner < 0 ? 0 : 1 + countB(s, 'defense') * 2 + (isCapital(s) ? 3 : 0) + 2 * pj(s, 'starbase'); }
+function popCap(s) { const m = mods(emp(s.owner)); return Math.max(1, s.size * 1.5 * starHab(s) + countB(s, 'habitat') * 3 + m.capBonus + (isCapital(s) ? 3 : 0) + settlePop(s)); }
+function defMax(s) { if (s.owner < 0) return 0; const m = mods(emp(s.owner)); return (60 + s.size * 15 + countB(s, 'defense') * 100 + countSta(s, 'defense') * 120 + (isCapital(s) ? 250 : 0) + 150 * pj(s, 'starbase')) * m.def; }
+function batteries(s) { return s.owner < 0 ? 0 : 1 + countB(s, 'defense') * 2 + countSta(s, 'defense') + (isCapital(s) ? 3 : 0) + 2 * pj(s, 'starbase'); }
 function planetPower(s) { return s.owner < 0 ? 0 : Math.sqrt(batteries(s) * 25 * Math.max(0, s.defense)) * 0.9; }
 function garrisonMax(s) { if (s.owner < 0) return 0; return (10 + s.pop * 3 + countB(s, 'defense') * 20 + (isCapital(s) ? 40 : 0)) * mods(emp(s.owner)).garrison; }
 function outpostYield(p, e) {
@@ -1762,7 +1796,10 @@ function starOutput(s) {
   const ruin = 1 - 0.6 * (s.devast || 0); // bombed-out cities produce less
   en *= m.en * e.mult * ruin; mi *= m.min * e.mult * ruin; re *= m.res * e.mult * ruin;
   let up = 0; for (const b of s.buildings) up += BUILDINGS[b].upkeep;
-  s.planets.forEach((p, i) => { if (i !== s.pi && p.out) { const y = outpostYield(p, e); en += y.en; mi += y.mi; up += OUTPOST.upkeep; } });
+  s.planets.forEach((p, i) => {
+    if (i !== s.pi && p.st) { const Y = SETTLE[p.st]; en += (Y.y.en || 0) * m.en * e.mult; mi += (Y.y.mi || 0) * m.min * e.mult; re += (Y.y.re || 0) * m.res * e.mult; up += Y.up; }
+    if (p.sta) for (const k of p.sta) { const T = STATIONS[k]; up += T.up; if (!T.y) continue; const g = k === 'solar' && p.t === 'gas' ? 1.5 : 1; en += (T.y.en || 0) * g * m.en * e.mult; mi += (T.y.mi || 0) * m.min * e.mult; re += (T.y.re || 0) * m.res * e.mult; }
+  });
   return { en, mi, re, up };
 }
 function defWord(s) {
@@ -1784,6 +1821,7 @@ function shipName(e, c) {
     if (c === 'transport') return `Dropship T-${k}`;
     if (c === 'colony') return `${COLONY_NAMES[k % COLONY_NAMES.length]} ${Math.floor(k / COLONY_NAMES.length) + 1}`;
     if (c === 'titan') return `${pre} ${TITAN_NAMES[k % TITAN_NAMES.length]}`;
+    if (c === 'worldbreaker') return `${pre} ${BREAKER_NAMES[k % BREAKER_NAMES.length]}`;
     const n = HUMAN_SHIP_NAMES[(k * 7 + e.id) % HUMAN_SHIP_NAMES.length];
     return `${pre} ${n}`;
   }
@@ -1826,7 +1864,7 @@ function hostilePower(starId, eid) { let p = 0; for (const f of fleetsAt(starId)
 function friendlyPower(starId, eid) { let p = 0; for (const f of fleetsAt(starId)) if (allied(f.owner, eid)) p += fleetPower(f); return p; }
 function hostileArmedAt(starId, eid) { for (const f of fleetsAt(starId)) if (atWar(f.owner, eid) && isArmed(f)) return true; return false; }
 function fleetUsage(e) { let u = 0; for (const f of G.fleets) if (f.owner === e.id) for (const sh of f.ships) u += SHIPS[sh.c].size; return u; }
-function fleetCap(e) { let c = 10; for (const s of G.stars) if (s.owner === e.id) c += 3 + (s.buildings.includes('shipyard') ? 2 : 0) + 6 * pj(s, 'starbase') + 4 * pj(s, 'navalyards'); return Math.round(c * mods(e).cap); }
+function fleetCap(e) { let c = 10; for (const s of G.stars) if (s.owner === e.id) c += 3 + (s.buildings.includes('shipyard') ? 2 : 0) + 3 * countSta(s, 'yard') + 6 * pj(s, 'starbase') + 4 * pj(s, 'navalyards'); return Math.round(c * mods(e).cap); }
 
 // ship condition: words instead of health bars
 function shipCondition(sh, owner) {
@@ -1907,12 +1945,12 @@ function genPlanets(st, r) {
     }
   }
   out.sort((a, b) => a.au - b.au);
-  out.forEach(p => { p.seed = Math.floor(r() * 1e9); p.ph = r() * Math.PI * 2; p.out = 0; });
+  out.forEach(p => { p.seed = Math.floor(r() * 1e9); p.ph = r() * Math.PI * 2; p.st = null; });
   return out;
 }
 function choosePrimary(s) {
   let bi = 0, bs = -1;
-  s.planets.forEach((p, i) => { const sc = PLANETS[p.t].hab * p.sz + (p.t !== 'gas' ? 0.3 : 0) + p.sz * 0.01; if (sc > bs) { bs = sc; bi = i; } });
+  s.planets.forEach((p, i) => { const sc = p.dead ? -1 + p.sz * 0.001 : PLANETS[p.t].hab * p.sz + (p.t !== 'gas' ? 0.3 : 0) + p.sz * 0.01; if (sc > bs) { bs = sc; bi = i; } });
   s.pi = bi; s.type = s.planets[bi].t; s.size = Math.min(7, s.planets[bi].sz);
 }
 function starXYZ(raH, decD, ly) {
@@ -2030,6 +2068,11 @@ function afterLoad() {
   distCache = new Map(); fx = []; projs = []; events = []; sel = { star: null, fleet: null, planet: null };
   view = { mode: 'galaxy', star: null, planet: null };
   for (const e of G.empires) e._m = null;
+  // older saves: outposts become the matching settlement
+  for (const s of G.stars) {
+    s.planets.forEach(p => { if (p.out) { p.st = defaultSettle(p.t); delete p.out; } });
+    for (const q of s.bq) if (q.k === 'outpost') { q.k = 'settle'; q.sk = defaultSettle(s.planets[q.pl].t); }
+  }
   rebuildIndex(); computeVis(); updateBorders(); updatePower();
   resetGalaxyCamera();
 }
@@ -2072,6 +2115,7 @@ function step(dt) {
   rebuildIndex();
   invasions(dt);
   bombardment(dt);
+  planetCrackers(dt);
   colonization(dt);
   upkeepStars(dt);
   const dec = Math.pow(0.99, dt);
@@ -2148,11 +2192,12 @@ function upkeepStars(dt) {
       if (q.p >= q.t) {
         s.bq.shift();
         if (q.k === 'proj') { s.proj = s.proj || {}; s.proj[q.pj] = (s.proj[q.pj] || 0) + 1; if (e.isPlayer) notify(`${PROJECTS[q.pj].name} completed at ${prim(s).n}!`, { color: '#66bb6a', star: s.id }); }
-        else if (q.k === 'outpost') { if (s.planets[q.pl]) s.planets[q.pl].out = 1; if (e.isPlayer) notify(`Outpost established on ${s.planets[q.pl].n}`, { color: '#66bb6a', star: s.id, silent: true }); }
+        else if (q.k === 'settle') { const p = s.planets[q.pl]; if (p && !p.dead && SETTLE[q.sk].on.includes(p.t)) { p.st = q.sk; if (e.isPlayer) notify(`${SETTLE[q.sk].icon} ${SETTLE[q.sk].name} established on ${p.n}`, { color: '#66bb6a', star: s.id }); } }
+        else if (q.k === 'sta') { const p = s.planets[q.pl]; if (p && !p.dead) { (p.sta = p.sta || []).push(q.sk); if (e.isPlayer) notify(`${STATIONS[q.sk].icon} ${STATIONS[q.sk].name} online above ${p.n}`, { color: '#66bb6a', star: s.id, silent: true }); } }
         else if (s.buildings.length < slots(s)) { s.buildings.push(q.k); if (e.isPlayer) notify(`${BUILDINGS[q.k].name} completed at ${prim(s).n}`, { color: '#66bb6a', star: s.id, silent: true }); }
       }
     }
-    if (s.sq.length && s.buildings.includes('shipyard')) {
+    if (s.sq.length && hasYard(s)) {
       const q = s.sq[0]; q.p += dt;
       if (q.p >= q.t) { s.sq.shift(); spawnShip(s, q.k); }
     }
@@ -2201,7 +2246,7 @@ function orderMove(f, target) {
     else f.path = target === f.to ? [] : pathTo(ra, f.to, target);
   }
   f.autoCol = colonyOnly(f) && G.stars[target].owner < 0;
-  if (target !== f.at) f.bomb = false;
+  if (target !== f.at) { f.bomb = false; f.crack = null; }
   return true;
 }
 function fleetEta(f) {
@@ -2342,7 +2387,7 @@ function shipEffects(dt) {
     const s = f.at !== null ? G.stars[f.at] : null;
     const calm = s && G.time - (s._combat || -99) > 1;
     const port = calm && s.owner >= 0 && allied(s.owner, f.owner);
-    const yard = port && s.owner === f.owner && s.buildings.includes('shipyard');
+    const yard = port && s.owner === f.owner && hasYard(s);
     let lost = 0, tend = 0;
     for (const sh of f.ships) if (SHIPS[sh.c].repair && sh.wp > 0.2) tend += clamp(sh.cr / SHIPS[sh.c].crew, 0, 1);
     tend = Math.min(2, tend);
@@ -2463,6 +2508,64 @@ function bombardment(dt) {
   }
 }
 
+// ---------- the planet cracker ----------
+// A World Breaker in orbit charges its graviton cannon for 8 days, then splits the target world apart.
+const CRACK_DAYS = 8;
+function breakerOf(f) { return f.ships.find(sh => SHIPS[sh.c].cracker && sh.wp > 0.3 && sh.cr > SHIPS[sh.c].crew * 0.4); }
+// why this fleet can't crack planet i right now (null if it can)
+function crackBlock(f, i) {
+  if (f.at === null || f.path.length) return 'The fleet must be holding in the system';
+  if (!breakerOf(f)) return 'Needs a working World Breaker';
+  const s = G.stars[f.at], p = s.planets[i];
+  if (!p || p.dead) return 'Already destroyed';
+  if (s.owner >= 0 && s.owner !== f.owner && !atWar(f.owner, s.owner)) return `You are not at war with the ${emp(s.owner).name}`;
+  if (s.owner === f.owner && i === s.pi) return "You can't destroy your own main world";
+  if (s.owner >= 0 && s.owner !== f.owner && s.defense > 0.5) return 'Destroy the orbital defenses first';
+  if (hostileArmedAt(s.id, f.owner)) return 'Enemy warships are still in orbit';
+  return null;
+}
+function planetCrackers(dt) {
+  for (const f of G.fleets) {
+    if (!f.crack) continue;
+    const s = f.at !== null ? G.stars[f.at] : null, why = s ? crackBlock(f, f.crack.pl) : 'moved';
+    if (why) {
+      if (f.owner === PLAYER) notify(`Planet cracker charge lost: ${why === 'moved' ? 'the fleet left the system' : why}.`, { color: '#ffca28', star: s ? s.id : null });
+      f.crack = null; continue;
+    }
+    const was = f.crack.p; f.crack.p += dt / CRACK_DAYS;
+    s._crack = { pl: f.crack.pl, p: f.crack.p, o: f.owner, f: f.id, t: G.time };
+    const p = s.planets[f.crack.pl];
+    if (was === 0) {
+      if (s.owner === PLAYER && f.owner !== PLAYER) notify(`☄ A World Breaker is charging its cannon at ${p.n}! Destroy it within ${CRACK_DAYS} days!`, { color: '#ef5350', star: s.id });
+      else if (f.owner !== PLAYER && vis[s.id]) notify(`☄ The ${emp(f.owner).name} is charging a planet cracker at ${p.n}.`, { color: '#ff7043', star: s.id });
+    }
+    if (f.crack.p >= 1) { f.crack = null; destroyPlanet(s, s.planets.indexOf(p), f.owner); }
+  }
+}
+function destroyPlanet(s, i, by) {
+  const p = s.planets[i], wasMain = i === s.pi, old = s.owner, name = p.n, pop = wasMain && old >= 0 ? s.pop : 0;
+  p.dead = 1; p.was = p.t; p.t = 'shattered'; p.tex = null; p.st = null; p.sta = []; p.ring = 0; p.moons = 0; p.real = 0;
+  s.bq = s.bq.filter(q => q.pl !== i);
+  evt(s, { k: 'shatter', pl: i }); s._shatter = { pl: i, t: G.time };
+  if (vis[s.id] && fx.length < 60) fx.push({ s: s.id, id: p.seed, t: 0, c: '#ffb04a', big: true });
+  if (wasMain && old >= 0) {
+    // the world and everyone on it are gone; the system falls silent
+    const oe = emp(old);
+    for (const q of s.planets) { q.st = null; q.sta = []; }
+    Object.assign(s, { owner: -1, pop: 0, buildings: [], bq: [], sq: [], garrison: 0, defense: 0, inv: null, proj: {}, devast: 0, colonizing: null });
+    if (oe.capital === s.id) { const rest = G.stars.filter(t => t.owner === old); oe.capital = rest.length ? rest.sort((a, b) => b.pop - a.pop)[0].id : -1; }
+    if (!G.stars.some(t => t.owner === old)) eliminate(old, by);
+  }
+  if (wasMain) choosePrimary(s);
+  // the galaxy is horrified
+  for (const o of G.empires) if (o.alive && o.id !== by) G.op[o.id + '>' + by] = (G.op[o.id + '>' + by] || 0) - (o.id === old ? 100 : old >= 0 && wasMain ? 40 : 12);
+  const msg = `${name} in the ${s.name} system has been destroyed${pop > 1 ? ` with ${Math.round(pop * 10) / 10} billion people` : ''}`;
+  if (by === PLAYER) notify(`☄ ${msg}. The galaxy will not forget.`, { color: '#ff7043', star: s.id });
+  else if (old === PLAYER) notify(`☄ ${msg} by the ${emp(by).name}!`, { color: '#ef5350', star: s.id });
+  else notify(`☄ The ${emp(by).name} destroyed ${name} (${s.name}).`, { color: '#ff7043', star: s.id, silent: !vis[s.id] });
+  computeVis();
+}
+
 function capture(s, newOwner) {
   const old = s.owner, oe = emp(old), ne = emp(newOwner);
   const wasCap = oe.capital === s.id;
@@ -2489,7 +2592,7 @@ function eliminate(id, by) {
 function startColonize(f) {
   const s = G.stars[f.at];
   const sh = f.ships.find(x => x.c === 'colony');
-  if (s.owner >= 0 || s.colonizing || !sh) return false;
+  if (s.owner >= 0 || s.colonizing || !sh || PLANETS[s.type].hab <= 0) return false;
   f.ships.splice(f.ships.indexOf(sh), 1);
   if (!f.ships.length) { G.fleets = G.fleets.filter(g => g !== f); if (sel.fleet === f) sel.fleet = null; }
   s.colonizing = { owner: f.owner, p: 0 };
@@ -2617,12 +2720,22 @@ function queueBuilding(e, s, k) {
   if (!canAfford(e, B.cost)) return 'Not enough resources';
   pay(e, B.cost); s.bq.push({ k, p: 0, t: B.time }); return null;
 }
-function queueOutpost(e, s, i) {
-  const p = s.planets[i];
-  if (s.owner !== e.id || i === s.pi || !p) return 'Not possible';
-  if (p.out || s.bq.some(q => q.k === 'outpost' && q.pl === i)) return 'Already has an outpost';
-  if (!canAfford(e, OUTPOST.cost)) return 'Not enough resources';
-  pay(e, OUTPOST.cost); s.bq.push({ k: 'outpost', pl: i, p: 0, t: OUTPOST.time }); return null;
+function queueSettle(e, s, i, k) {
+  const p = s.planets[i], T = SETTLE[k];
+  if (s.owner !== e.id || i === s.pi || !p || !T) return 'Not possible';
+  if (!T.on.includes(p.t)) return `A ${T.name} can't be built on this world`;
+  if (p.st || s.bq.some(q => q.k === 'settle' && q.pl === i)) return 'This planet already has a settlement';
+  if (!canAfford(e, T.cost)) return 'Not enough resources';
+  pay(e, T.cost); s.bq.push({ k: 'settle', pl: i, sk: k, p: 0, t: T.time }); return null;
+}
+function queueStation(e, s, i, k) {
+  const p = s.planets[i], T = STATIONS[k];
+  if (s.owner !== e.id || !p || !T) return 'Not possible';
+  const here = (p.sta || []).length + s.bq.filter(q => q.k === 'sta' && q.pl === i).length;
+  if (here >= staSlots(s, i)) return 'No free orbital slots around this planet';
+  if (T.max && countSta(s, k) + s.bq.filter(q => q.k === 'sta' && q.sk === k).length >= T.max) return `Only one ${T.name} per system`;
+  if (!canAfford(e, T.cost)) return 'Not enough resources';
+  pay(e, T.cost); s.bq.push({ k: 'sta', pl: i, sk: k, p: 0, t: T.time }); return null;
 }
 function queueProject(e, s, k) {
   const P = PROJECTS[k];
@@ -2638,11 +2751,11 @@ function trade(e, dir) {
   if (e.res[from] < TRADE.give) return 'Not enough ' + from;
   e.res[from] -= TRADE.give; e.res[to] += TRADE.get; return null;
 }
-function queueCost(q) { return q.k === 'outpost' ? OUTPOST.cost : q.k === 'proj' ? (q.c || PROJECTS[q.pj].cost) : BUILDINGS[q.k].cost; }
-function queueName(s, q) { return q.k === 'outpost' ? `Outpost on ${s.planets[q.pl].n}` : q.k === 'proj' ? `${PROJECTS[q.pj].icon} ${PROJECTS[q.pj].name}` : `${BUILDINGS[q.k].icon} ${BUILDINGS[q.k].name}`; }
+function queueCost(q) { return q.k === 'settle' ? SETTLE[q.sk].cost : q.k === 'sta' ? STATIONS[q.sk].cost : q.k === 'proj' ? (q.c || PROJECTS[q.pj].cost) : BUILDINGS[q.k].cost; }
+function queueName(s, q) { return q.k === 'settle' ? `${SETTLE[q.sk].icon} ${SETTLE[q.sk].name} on ${s.planets[q.pl].n}` : q.k === 'sta' ? `${STATIONS[q.sk].icon} ${STATIONS[q.sk].name} above ${s.planets[q.pl].n}` : q.k === 'proj' ? `${PROJECTS[q.pj].icon} ${PROJECTS[q.pj].name}` : `${BUILDINGS[q.k].icon} ${BUILDINGS[q.k].name}`; }
 function queueShip(e, s, c) {
   const S = SHIPS[c];
-  if (s.owner !== e.id || !s.buildings.includes('shipyard')) return 'Needs a shipyard';
+  if (s.owner !== e.id || !hasYard(s)) return 'Needs a shipyard';
   if (S.tech && !e.techs[S.tech]) return 'Requires ' + TECHS[S.tech].name;
   if (S.unique && hasUnique(e, c)) return `Only one ${S.name} per empire`;
   if (s.sq.length >= 8) return 'Queue full';
@@ -2704,13 +2817,13 @@ function aiTrimFleet(e) {
 }
 function aiEconomy(e, stars, wars) {
   const P = PERS[e.pers];
-  let yards = stars.filter(s => s.buildings.includes('shipyard') || s.bq.some(q => q.k === 'shipyard')).length;
+  let yards = stars.filter(s => hasYard(s) || s.bq.some(q => q.k === 'shipyard')).length;
   for (const s of stars.slice().sort((a, b) => b.pop - a.pop)) {
     if (s.bq.length || hostileArmedAt(s.id, e.id)) continue;
     const free = slots(s) - s.buildings.length;
     let k = null;
     if (free > 0) {
-      if (!s.buildings.includes('shipyard') && (yards === 0 || (stars.length >= yards * 5 && s.size >= 4 && s.pop >= 3) || (e.res.minerals > 1500 && s.size >= 3 && s.pop >= 2))) k = 'shipyard';
+      if (!hasYard(s) && (yards === 0 || (stars.length >= yards * 5 && s.size >= 4 && s.pop >= 3) || (e.res.minerals > 1500 && s.size >= 3 && s.pop >= 2))) k = 'shipyard';
       else {
         const j = jobs(s), cap = popCap(s);
         if (j >= cap - 0.5 && countB(s, 'habitat') < 2 && free > 1) k = 'habitat';
@@ -2727,10 +2840,24 @@ function aiEconomy(e, stars, wars) {
       }
     }
     if (k && canAfford(e, BUILDINGS[k].cost)) { queueBuilding(e, s, k); if (k === 'shipyard') yards++; continue; }
-    // outposts on other planets of the system
+    // settle the other planets of the system, picking the best kind of settlement for each world
     if (!k && e.res.minerals > 150) {
-      const i = s.planets.findIndex((p, i) => i !== s.pi && !p.out);
-      if (i >= 0) { queueOutpost(e, s, i); continue; }
+      let best = null, bv = 0;
+      s.planets.forEach((p, i) => {
+        if (i === s.pi || p.st || p.dead && p.t !== 'shattered') return;
+        for (const sk of settleOptions(p)) {
+          const T = SETTLE[sk], v = ((T.y.en || 0) * (e.inc.en < 3 ? 1.6 : 1) + (T.y.mi || 0) + (T.y.re || 0) * 1.2 * P.sci + (T.pop || 0) * 1.5) / costValue(T.cost);
+          if (v > bv && canAfford(e, T.cost)) { bv = v; best = [i, sk]; }
+        }
+      });
+      if (best) { queueSettle(e, s, best[0], best[1]); continue; }
+    }
+    // orbital stations once the economy can carry them
+    if (!k && e.res.minerals > 500) {
+      const front = wars.some(o => s.lanes.some(l => G.stars[l].owner === o.id));
+      const sk = front && countSta(s, 'defense') < 3 ? 'defense' : !hasYard(s) && s.pop >= 3 ? 'yard' : wpick([['science', 1.2 * P.sci], ['solar', e.inc.en < 4 ? 3 : 1], ['trade', 1], ['habitat', s.pop >= popCap(s) - 1 ? 2 : 0.3], ['defense', 0.5]]);
+      const i = s.planets.findIndex((p, i) => (p.sta || []).length < staSlots(s, i));
+      if (i >= 0 && canAfford(e, STATIONS[sk].cost) && !queueStation(e, s, i, sk)) continue;
     }
     // spend surpluses on major projects
     if (!k && e.res.minerals > 700 && e.res.energy > 350) {
@@ -2759,6 +2886,7 @@ function aiResearch(e, wars) {
     if (T.cat === 'Military') w = (wars.length ? 1.6 : 0.9) * P.mil;
     if (k === 'cruisers' || k === 'battleships' || k === 'carriers' || k === 'titans') w = 2.2 * P.mil;
     if (k === 'siege') w = (wars.length ? 2 : 1) * P.aggr;
+    if (k === 'cracker') w = 0.8 * P.aggr * P.mil;
     if (k === 'hab1' || k === 'genetics' || k === 'admin') w = 1.3 * P.expand;
     if (k === 'diplomacy') w = 0.4;
     return [k, w / Math.sqrt(techCost(e, k) / 400)];
@@ -2766,12 +2894,12 @@ function aiResearch(e, wars) {
 }
 function aiShipyards(e, stars, fleets, wars) {
   const P = PERS[e.pers], D = DIFF[G.diff], m = mods(e);
-  const yards = stars.filter(s => s.buildings.includes('shipyard'));
+  const yards = stars.filter(hasYard);
   if (!yards.length) return;
   let cols = fleets.reduce((a, f) => a + f.ships.filter(s => s.c === 'colony').length, 0) + yards.reduce((a, s) => a + s.sq.filter(q => q.k === 'colony').length, 0);
   const cap = G.stars[e.capital] || stars[0], d = dij(cap.id).dist;
   const reach = 650 + stars.length * 45;
-  const targets = G.stars.filter(s => s.owner < 0 && !s.colonizing && d[s.id] < reach).length;
+  const targets = G.stars.filter(s => s.owner < 0 && !s.colonizing && PLANETS[s.type].hab > 0 && d[s.id] < reach).length;
   let wantCol = targets > 0 && cols < Math.round(1 + P.expand * 0.7 + stars.length / 10);
   let troops = fleets.reduce((a, f) => a + troopsIn(f), 0) + yards.reduce((a, s) => a + s.sq.filter(q => q.k === 'transport').length * 40, 0);
   const wantTroops = wars.length ? 80 + 50 * wars.length : 40;
@@ -2779,6 +2907,7 @@ function aiShipyards(e, stars, fleets, wars) {
   for (const s of yards) for (const q of s.sq) mil += shipPowerBase(q.k, m);
   let room = (e.cap || fleetCap(e)) - (e.used || fleetUsage(e)) - yards.reduce((a, s) => a + s.sq.reduce((b, q) => b + SHIPS[q.k].size, 0), 0);
   const wantMil = (20 + stars.length * 12 + G.time * 0.08) * D.mil * P.mil * (wars.length ? 1.6 : 1);
+  if (wars.length && e.techs.cracker && !hasUnique(e, 'worldbreaker') && e.res.minerals > 2200 && e.res.energy > 800 && yards.length && Math.random() < 0.2 * P.aggr) queueShip(e, yards[0], 'worldbreaker');
   for (const s of yards) {
     if (s.sq.length >= (e.res.minerals > 1500 ? 4 : 2)) continue;
     if (wantCol && canAfford(e, SHIPS.colony.cost) && !wars.some(o => o.power > e.power)) { queueShip(e, s, 'colony'); wantCol = false; room--; continue; }
@@ -2818,10 +2947,10 @@ function aiColonize(e, fleets) {
   for (const f of cols) {
     if (f.at === null || f.path.length) continue;
     const s = G.stars[f.at];
-    if (s.owner < 0 && !s.colonizing && !hostileArmedAt(s.id, e.id) && (f.target === s.id || f.target == null)) { startColonize(f); continue; }
+    if (s.owner < 0 && !s.colonizing && PLANETS[s.type].hab > 0 && !hostileArmedAt(s.id, e.id) && (f.target === s.id || f.target == null)) { startColonize(f); continue; }
     const d = dij(f.at).dist; let best = null, bs = -1;
     for (const t of G.stars) {
-      if (t.owner >= 0 || t.colonizing || (claimed.has(t.id) && t.id !== f.target)) continue;
+      if (t.owner >= 0 || t.colonizing || PLANETS[t.type].hab <= 0 || (claimed.has(t.id) && t.id !== f.target)) continue;
       if (!isFinite(d[t.id]) || d[t.id] > 1000 || hostileArmedAt(t.id, e.id)) continue;
       const P = PLANETS[t.type], hab = clamp(P.hab + m.hab, 0.05, 1);
       let sc = (hab * t.size + 1.2) * (P.min + P.en + t.planets.length * 0.2) / (1 + d[t.id] / 150);
@@ -2845,9 +2974,15 @@ function aiMilitary(e, stars, fleets, wars) {
     if (hp <= 0) continue;
     if (friendlyPower(f.at, e.id) < hp * 0.35) { const h = nearestSafe(e, f.at); if (h != null && h !== f.at) orderMove(f, h); }
   }
+  // a World Breaker over a broken enemy world fires; militarists prefer the main world, others settle for a lesser planet
+  for (const f of armed) if (f.at !== null && !f.crack && breakerOf(f)) {
+    const s = G.stars[f.at]; if (s.owner < 0 || !atWar(e.id, s.owner)) continue;
+    const tgt = PERS[e.pers].aggr >= 1.2 || isCapital(s) ? s.pi : s.planets.findIndex((p, i) => i !== s.pi && !p.dead);
+    if (tgt >= 0 && !crackBlock(f, tgt) && Math.random() < 0.5) f.crack = { pl: tgt, p: 0 };
+  }
   // fleets sitting over an enemy world keep bombarding it if it is still well defended on the ground
   for (const f of armed) if (f.at !== null && !f.path.length && canBombard(f) && !f.bomb && G.stars[f.at].garrison > 40 && Math.random() < 0.3 * PERS[e.pers].aggr) f.bomb = true;
-  const busy = f => f.at === null || f.path.length || hostilePower(f.at, e.id) > 0 || (G.stars[f.at].owner >= 0 && atWar(e.id, G.stars[f.at].owner));
+  const busy = f => f.at === null || f.path.length || f.crack || hostilePower(f.at, e.id) > 0 || (G.stars[f.at].owner >= 0 && atWar(e.id, G.stars[f.at].owner));
   const seen = new Map();
   for (const f of armed) { if (busy(f)) continue; const o = seen.get(f.at); if (o) mergeHere(o, g => isArmed(g) || transportOnly(g)); else seen.set(f.at, f); }
   armed = G.fleets.filter(f => f.owner === e.id && isArmed(f));
@@ -3131,6 +3266,7 @@ const ATMO = { earth: [110, 170, 255], terran: [110, 170, 255], ocean: [100, 160
 
 // --- panel icons: top-down silhouettes of the angular cyberpunk hulls ---
 const SVG_SHAPES = {
+  worldbreaker: { h: 'M10 0 L12 9 L13 6 L15 10 L17 6 L18 9 L20 0 L22 8 L19 13 L20 27 L17 30 L13 30 L10 27 L11 13 L8 8 Z', a: 'M8 0 L13 10 L15 4 L17 10 L22 0 L24 9 L19 15 L25 22 L17 22 L15 30 L13 22 L5 22 L11 15 L6 9 Z' },
   frigate: { h: 'M15 0 L16.5 8 L16.8 27 L15.6 29 L14.4 29 L13.2 27 L13.5 8 Z M9 9 L12 9 L12 22 L9 22 Z M18 9 L21 9 L21 22 L18 22 Z', a: 'M15 0 L17 9 L23 12 L21 17 L17 16 L16 29 L14 29 L13 16 L9 17 L7 12 L13 9 Z' },
   tender: { h: 'M15 1 L19 6 L19 26 L17 29 L13 29 L11 26 L11 6 Z M7 3 L9 3 L9 18 L7 18 Z M21 3 L23 3 L23 18 L21 18 Z M7 3 L23 3 L23 5 L7 5 Z', a: 'M15 1 L19 7 L24 9 L22 15 L19 13 L18 28 L12 28 L11 13 L8 15 L6 9 L11 7 Z' },
   bomber: { h: 'M15 2 L17 9 L28 24 L27 27 L18 23 L16 28 L14 28 L12 23 L3 27 L2 24 L13 9 Z', a: 'M15 2 L18 10 L29 18 L26 27 L18 21 L15 28 L12 21 L4 27 L1 18 L12 10 Z' },
@@ -3297,7 +3433,7 @@ const sky = makeSky();
 // ---------- planets (shader with day/night, city lights, clouds and atmosphere rim) ----------
 const PLANET_VS = `varying vec3 vN; varying vec3 vW; varying vec2 vUv;
 void main(){ vUv = uv; vN = normalize(mat3(modelMatrix) * normal); vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`;
-const PLANET_FS = `uniform sampler2D map; uniform sampler2D aux; uniform vec3 sun; uniform float lights; uniform float glow; uniform vec3 atm; uniform float cloudOff;
+const PLANET_FS = `uniform sampler2D map; uniform sampler2D aux; uniform vec3 sun; uniform float lights; uniform float glow; uniform vec3 atm; uniform float cloudOff; uniform float crack;
 varying vec3 vN; varying vec3 vW; varying vec2 vUv;
 void main(){ vec3 N = normalize(vN); vec3 L = normalize(sun - vW); float d = dot(N, L); float lit = max(d, 0.0);
  vec3 base = texture2D(map, vUv).rgb; vec4 ax = texture2D(aux, vUv); float cl = texture2D(aux, vUv + vec2(cloudOff, 0.0)).g;
@@ -3308,16 +3444,36 @@ void main(){ vec3 N = normalize(vN); vec3 L = normalize(sun - vW); float d = dot
  col += vec3(1.0, 0.33, 0.06) * ax.r * glow * (0.4 + night);
  vec3 V = normalize(cameraPosition - vW); float rim = pow(1.0 - max(dot(N, V), 0.0), 3.0);
  col += atm * rim * (0.1 + 0.9 * clamp(d + 0.35, 0.0, 1.0));
+ float ck = smoothstep(1.0 - crack * 1.15, 1.0, ax.b) * crack;
+ col = mix(col, vec3(1.0, 0.45, 0.1) * (1.0 + crack * 1.5), clamp(ck * 1.6, 0.0, 1.0));
+ col += vec3(1.0, 0.25, 0.05) * crack * crack * 0.35;
  gl_FragColor = vec4(col, 1.0); }`;
 const ATM_FS = `uniform vec3 atm; uniform vec3 sun; varying vec3 vN; varying vec3 vW; varying vec2 vUv;
 void main(){ vec3 N = normalize(vN); vec3 V = normalize(cameraPosition - vW); float f = pow(1.0 - abs(dot(N, V)), 3.0);
  float lit = clamp(dot(N, normalize(sun - vW)) + 0.4, 0.0, 1.0); gl_FragColor = vec4(atm * f * lit * 0.9, f * lit * 0.8); }`;
 const texGL = new Map();
+// fault lines for a cracking planet: bright along the borders between 3D Voronoi cells
+function crackField(w, h, seed) {
+  const out = new Uint8Array(w * h), F = 3.2, pts = new Map();
+  const feat = (x, y, z) => { const k = x + ',' + y + ',' + z; let v = pts.get(k); if (!v) { const b = hash((x * 73856093) ^ (y * 19349663) ^ (z * 83492791) ^ seed); v = [x + b, y + hash(b * 1e9 | 0), z + hash((b * 7e8 | 0) ^ 99)]; pts.set(k, v); } return v; };
+  for (let y = 0; y < h; y++) {
+    const lat = Math.PI / 2 - (y + 0.5) / h * Math.PI, cl = Math.cos(lat), sl = Math.sin(lat);
+    for (let x = 0; x < w; x++) {
+      const lon = (x + 0.5) / w * Math.PI * 2 - Math.PI, px = cl * Math.cos(lon) * F, py = sl * F, pz = cl * Math.sin(lon) * F;
+      const cx = Math.floor(px), cy = Math.floor(py), cz = Math.floor(pz); let d1 = 9, d2 = 9;
+      for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) for (let k = -1; k <= 1; k++) { const f = feat(cx + i, cy + j, cz + k), dd = (f[0] - px) ** 2 + (f[1] - py) ** 2 + (f[2] - pz) ** 2; if (dd < d1) { d2 = d1; d1 = dd; } else if (dd < d2) d2 = dd; }
+      const edge = Math.sqrt(d2) - Math.sqrt(d1);
+      out[y * w + x] = Math.round(255 * clamp(1 - edge / 0.12, 0, 1));
+    }
+  }
+  return out;
+}
 function glTex(p, hi) {
   const key = p.seed + p.t + (p.tex || '') + (hi ? 'H' : '');
   let o = texGL.get(key); if (o) return o;
   const T = texFor(p, hi), w = T.w, h = T.h, d = new Uint8Array(w * h * 4), a = new Uint8Array(w * h * 4);
-  for (let y = 0; y < h; y++) { const sy = h - 1 - y; for (let x = 0; x < w; x++) { const i = (y * w + x) * 4, k = sy * w + x, j = k * 4; d[i] = T.data[j]; d[i + 1] = T.data[j + 1]; d[i + 2] = T.data[j + 2]; d[i + 3] = 255; a[i] = T.lights[k]; a[i + 1] = T.clouds ? T.clouds[k] : 0; a[i + 3] = 255; } }
+  const ck = crackField(w, h, p.seed | 0);
+  for (let y = 0; y < h; y++) { const sy = h - 1 - y; for (let x = 0; x < w; x++) { const i = (y * w + x) * 4, k = sy * w + x, j = k * 4; d[i] = T.data[j]; d[i + 1] = T.data[j + 1]; d[i + 2] = T.data[j + 2]; d[i + 3] = 255; a[i] = T.lights[k]; a[i + 1] = T.clouds ? T.clouds[k] : 0; a[i + 2] = ck[k]; a[i + 3] = 255; } }
   const mk = arr => { const t = new THREE.DataTexture(arr, w, h, THREE.RGBAFormat); t.wrapS = THREE.RepeatWrapping; t.magFilter = t.minFilter = THREE.LinearFilter; t.needsUpdate = true; t.userData.shared = 1; return t; };
   o = { map: mk(d), aux: mk(a), glow: T.glow };
   texGL.set(key, o); return o;
@@ -3325,7 +3481,7 @@ function glTex(p, hi) {
 function atmColor(p) { const a = ATMO[p.tex || p.t]; return a ? new THREE.Color(a[0] / 255, a[1] / 255, a[2] / 255) : new THREE.Color(0, 0, 0); }
 function planetMesh(p, R, hi, lights, segs = 48) {
   const t = glTex(p, hi);
-  const mat = new THREE.ShaderMaterial({ uniforms: { map: { value: t.map }, aux: { value: t.aux }, sun: { value: new THREE.Vector3() }, lights: { value: lights }, glow: { value: t.glow ? 1 : 0 }, atm: { value: atmColor(p) }, cloudOff: { value: 0 } }, vertexShader: PLANET_VS, fragmentShader: PLANET_FS });
+  const mat = new THREE.ShaderMaterial({ uniforms: { map: { value: t.map }, aux: { value: t.aux }, sun: { value: new THREE.Vector3() }, lights: { value: lights }, glow: { value: t.glow ? 1 : 0 }, atm: { value: atmColor(p) }, cloudOff: { value: 0 }, crack: { value: 0 } }, vertexShader: PLANET_VS, fragmentShader: PLANET_FS });
   const m = new THREE.Mesh(new THREE.SphereGeometry(R, segs, Math.round(segs * 0.66)), mat);
   if (ATMO[p.tex || p.t]) {
     const am = new THREE.ShaderMaterial({ uniforms: { atm: { value: atmColor(p) }, sun: mat.uniforms.sun }, vertexShader: PLANET_VS, fragmentShader: ATM_FS, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.BackSide });
@@ -3340,6 +3496,40 @@ function planetMesh(p, R, hi, lights, segs = 48) {
   }
   m.userData.mat = mat;
   return m;
+}
+
+// ---------- a shattered world: tumbling continent-sized chunks, a molten afterglow and a debris ring ----------
+function makeRubble(R, color, seed, fresh) {
+  const g = new THREE.Group(), r = mulberry32(seed), chunks = [];
+  const base = new THREE.Color(color).lerp(new THREE.Color('#3a302a'), 0.5);
+  for (let i = 0; i < 28; i++) {
+    const sz = R * (0.07 + Math.pow(r(), 2) * 0.26), geo = (i % 3 ? new THREE.DodecahedronGeometry(sz, 0) : new THREE.IcosahedronGeometry(sz, 0));
+    geo.scale(1, 0.6 + r() * 0.6, 0.7 + r() * 0.5);
+    const mat = new THREE.MeshStandardMaterial({ color: base.clone().offsetHSL(0, 0, (r() - 0.5) * 0.12), roughness: 0.9, metalness: 0.05, flatShading: true, emissive: new THREE.Color(1, 0.35, 0.05), emissiveIntensity: fresh ? 1 : 0.06 });
+    const m = new THREE.Mesh(geo, mat), dir = new THREE.Vector3(r() - 0.5, (r() - 0.5) * 0.35, r() - 0.5).normalize();
+    const c = { m, dir, r0: R * 0.25 * r(), r1: R * (0.5 + r() * 1.4), spin: new THREE.Vector3(r() - 0.5, r() - 0.5, r() - 0.5).multiplyScalar(0.6) };
+    m.position.copy(dir).multiplyScalar(fresh ? c.r0 : c.r1); g.add(m); chunks.push(c);
+  }
+  const pts = []; for (let i = 0; i < 700; i++) { const a = r() * Math.PI * 2, rr = R * (0.6 + r() * 1.9); pts.push(new THREE.Vector3(Math.cos(a) * rr, (r() - 0.5) * R * 0.15, Math.sin(a) * rr)); }
+  const dust = new THREE.Points(new THREE.BufferGeometry().setFromPoints(pts), new THREE.PointsMaterial({ color: base.clone().lerp(new THREE.Color('#ffffff'), 0.25), size: Math.max(0.6, R * 0.025), transparent: true, opacity: fresh ? 0 : 0.7, depthWrite: false }));
+  g.add(dust);
+  const core = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: new THREE.Color('#ff8a30'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: fresh ? 1 : 0.12 }));
+  core.scale.setScalar(R * (fresh ? 5 : 1.2)); g.add(core);
+  const wave = new THREE.Mesh(new THREE.RingGeometry(0.85, 1, 64), new THREE.MeshBasicMaterial({ color: 0xffc080, transparent: true, opacity: fresh ? 0.9 : 0, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }));
+  wave.rotation.x = -Math.PI / 2; wave.scale.setScalar(R); g.add(wave);
+  return { g, chunks, dust, core, wave, R, t: fresh ? 0 : 99 };
+}
+function updateRubble(rb, vdt) {
+  rb.t += vdt; const k = 1 - Math.pow(1 - Math.min(1, rb.t / 5), 3);
+  for (const c of rb.chunks) {
+    c.m.position.copy(c.dir).multiplyScalar(c.r0 + (c.r1 - c.r0) * k);
+    c.m.rotation.x += c.spin.x * vdt; c.m.rotation.y += c.spin.y * vdt; c.m.rotation.z += c.spin.z * vdt;
+    c.m.material.emissiveIntensity = Math.max(0.06, 1 - rb.t / 6);
+  }
+  rb.g.rotation.y += vdt * 0.02;
+  rb.dust.material.opacity = Math.min(0.7, rb.t / 4);
+  rb.core.material.opacity = Math.max(0.12, 1 - rb.t / 3); rb.core.scale.setScalar(rb.R * Math.max(1.2, 5 - rb.t * 1.3));
+  rb.wave.scale.setScalar(rb.R * (1 + rb.t * 5)); rb.wave.material.opacity = Math.max(0, 0.9 - rb.t / 2.5);
 }
 
 // ---------- cyberpunk ship models: long, angular, faceted, neon-edged, built from detachable parts ----------
@@ -3433,6 +3623,47 @@ function humanDefs(cls) {
     d.push(D(box(0.09, 0.07, 0.14), 'bridge', [0, 0.1, -0.05], { grp: 'br' }), D(box(0.06, 0.06, 0.08), 'bridge', [0, 0.16, -0.07], { grp: 'br' }), D(box(0.004, 0.14, 0.004), 'bridge', [0, 0.24, -0.09], { grp: 'br' }), D(box(0.062, 0.006, 0.002), 'bridge', [0, 0.17, -0.029], { grp: 'br', m: 'glow' }));
     for (const s of [1, -1]) d.push(D(box(0.04, 0.03, 0.1), 'weapon', [s * 0.17, 0.04, 0.22]), D(box(0.04, 0.03, 0.1), 'weapon', [s * 0.17, 0.04, -0.02]));
     for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; engine(d, Math.cos(a) * 0.055, Math.sin(a) * 0.04, -0.49, 0.035); }
+  } else if (cls === 'worldbreaker') { // a spine of reactors feeding a three-pronged graviton emitter
+    d.push(D(spindle([[0, -0.5], [0.85, -0.46], [1, -0.25], [1, 0.15], [0.7, 0.3], [0.4, 0.36], [0, 0.37]], 8, 0.085, 0.085), 'core', [0, 0, -0.05], { core: [0.085, 0.085] }));
+    for (let i = 0; i < 3; i++) {
+      const a = i / 3 * Math.PI * 2 + Math.PI / 2, x = Math.cos(a), y = Math.sin(a), r = [y * 0.24, -x * 0.24, 0];
+      d.push(D(spindle([[0, -0.5], [1, -0.4], [0.8, 0.3], [0, 0.5]], 4, 0.032, 0.032, 0.42), 'weapon', [x * 0.11, y * 0.11, 0.3], { grp: 'pr' + i, r }), D(box(0.012, 0.012, 0.34), 'weapon', [x * 0.11, y * 0.11, 0.3], { grp: 'pr' + i, m: 'glow', r }));
+    }
+    d.push(D(new THREE.TorusGeometry(0.14, 0.016, 6, 18), 'weapon', [0, 0, 0.4], { grp: 'ring' }), D(new THREE.TorusGeometry(0.1, 0.006, 4, 18), 'weapon', [0, 0, 0.46], { grp: 'ring', m: 'glow' }));
+    d.push(D(new THREE.OctahedronGeometry(0.04), 'core', [0, 0, 0.36], { m: 'glow' }));
+    for (const z of [-0.05, -0.2, -0.35]) d.push(D(new THREE.TorusGeometry(0.1, 0.014, 4, 12), 'plate', [0, 0, z]), D(box(0.23, 0.006, 0.006), 'core', [0, 0, z], { m: 'glow' }));
+    const fp = [[0.08, 0.12], [0.21, 0.0], [0.21, -0.3], [0.08, -0.44]]; d.push(D(blade(fp, 0.03), 'plate'), D(blade(mir(fp), 0.03), 'plate'));
+    d.push(D(fin([[-0.45, 0.08], [0.05, 0.08], [-0.08, 0.2], [-0.4, 0.19]], 0.02), 'plate'), D(fin([[-0.45, -0.08], [0.05, -0.08], [-0.08, -0.2], [-0.4, -0.19]], 0.02), 'plate'));
+    d.push(D(box(0.07, 0.06, 0.12), 'bridge', [0, 0.11, -0.22], { grp: 'br' }), D(box(0.05, 0.004, 0.002), 'bridge', [0, 0.12, -0.159], { grp: 'br', m: 'glow' }));
+    for (const [x, z] of [[0.12, -0.12], [-0.12, -0.12]]) d.push(D(box(0.04, 0.03, 0.08), 'weapon', [x, 0.06, z]));
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; engine(d, Math.cos(a) * 0.055, Math.sin(a) * 0.055, -0.55, 0.035); }
+  } else if (cls.startsWith('st_')) { // orbital stations
+    const k = cls.slice(3);
+    if (k === 'defense') {
+      d.push(D(new THREE.CylinderGeometry(0.42, 0.42, 0.07, 6), 'plate', [0, 0, 0], { core: [0.3, 0.05] }), D(new THREE.CylinderGeometry(0.2, 0.28, 0.12, 6), 'core', [0, -0.08, 0]));
+      for (let i = 0; i < 3; i++) { const a = i / 3 * Math.PI * 2, x = Math.cos(a) * 0.25, z = Math.sin(a) * 0.25; d.push(D(box(0.12, 0.07, 0.12), 'weapon', [x, 0.07, z], { grp: 't' + i }), D(box(0.025, 0.025, 0.22), 'weapon', [x, 0.09, z + 0.12], { grp: 't' + i })); }
+      d.push(D(new THREE.TorusGeometry(0.43, 0.008, 3, 6).rotateX(Math.PI / 2), 'core', [0, 0.04, 0], { m: 'glow' }));
+    } else if (k === 'yard') {
+      for (const [x, y] of [[0.22, 0.16], [-0.22, 0.16], [0.22, -0.16], [-0.22, -0.16]]) d.push(D(box(0.035, 0.035, 1), 'plate', [x, y, 0]));
+      for (const z of [-0.45, -0.15, 0.15, 0.45]) d.push(D(box(0.48, 0.03, 0.03), 'plate', [0, 0.16, z]), D(box(0.48, 0.03, 0.03), 'plate', [0, -0.16, z]), D(box(0.03, 0.35, 0.03), 'plate', [0.22, 0, z]), D(box(0.03, 0.35, 0.03), 'plate', [-0.22, 0, z]));
+      d.push(D(spindle([[0, -0.5], [0.9, -0.4], [1, 0.1], [0.5, 0.4], [0, 0.5]], 6, 0.11, 0.07, 0.7), 'core', [0, 0, 0], { core: [0.11, 0.07] }));
+      for (const [x, y, z] of [[0.2, 0.14, 0.3], [-0.2, -0.14, -0.1], [0.2, -0.14, -0.35]]) d.push(D(box(0.025, 0.025, 0.025), 'core', [x, y, z], { m: 'glow' }));
+    } else if (k === 'science') {
+      d.push(D(spindle([[0, -0.5], [1, -0.4], [1, 0.3], [0.5, 0.5], [0, 0.5]], 6, 0.09, 0.09, 0.8), 'core', [0, 0, 0], { core: [0.09, 0.09] }));
+      d.push(D(new THREE.CylinderGeometry(0.22, 0.05, 0.06, 10).rotateX(Math.PI / 2), 'bridge', [0, 0, 0.42], { grp: 'dish' }), D(box(0.01, 0.01, 0.16), 'bridge', [0, 0, 0.5], { grp: 'dish', m: 'glow' }));
+      for (const s of [1, -1]) d.push(D(box(0.62, 0.012, 0.2), 'wing', [s * 0.42, 0, -0.1]), D(box(0.6, 0.004, 0.006), 'wing', [s * 0.42, 0.008, -0.1], { m: 'glow' }));
+    } else if (k === 'solar') {
+      d.push(D(box(0.05, 0.05, 1.1), 'core', [0, 0, 0], { core: [0.04, 0.04] }));
+      for (const [x, z] of [[0.28, 0.32], [-0.28, 0.32], [0.28, -0.05], [-0.28, -0.05], [0.28, -0.42], [-0.28, -0.42]]) d.push(D(box(0.46, 0.012, 0.32), 'wing', [x, 0, z]), D(box(0.44, 0.004, 0.005), 'wing', [x, 0.008, z], { m: 'glow' }));
+    } else if (k === 'habitat') {
+      d.push(D(new THREE.TorusGeometry(0.42, 0.06, 6, 24), 'plate', [0, 0, 0], { core: [0.1, 0.1] }), D(new THREE.TorusGeometry(0.42, 0.012, 3, 24), 'core', [0, 0, 0.065], { m: 'glow' }));
+      for (let i = 0; i < 4; i++) { const a = i / 4 * Math.PI; d.push(D(box(0.84, 0.03, 0.03).rotateZ(a), 'plate', [0, 0, 0])); }
+      d.push(D(spindle([[0, -0.5], [1, -0.3], [1, 0.3], [0, 0.5]], 6, 0.1, 0.1, 0.4).rotateX(Math.PI / 2), 'core', [0, 0, 0]));
+    } else { // trade hub
+      d.push(D(spindle([[0, -0.5], [1, -0.35], [1, 0.35], [0, 0.5]], 8, 0.16, 0.16, 0.6), 'core', [0, 0, 0], { core: [0.16, 0.16] }));
+      for (let i = 0; i < 4; i++) { const a = i / 4 * Math.PI * 2, x = Math.cos(a), y = Math.sin(a); d.push(D(box(0.04, 0.04, 0.04).scale(Math.abs(x) > 0.5 ? 9 : 1, Math.abs(y) > 0.5 ? 9 : 1, 1), 'plate', [x * 0.3, y * 0.3, 0]), D(box(0.07, 0.05, 0.14), 'pod', [x * 0.5, y * 0.5, 0.05]), D(box(0.02, 0.02, 0.02), 'core', [x * 0.5, y * 0.5, 0.13], { m: 'glow' })); }
+      d.push(D(new THREE.TorusGeometry(0.18, 0.01, 3, 16), 'core', [0, 0, 0.3], { m: 'glow' }));
+    }
   } else if (cls === 'transport') {
     d.push(D(spindle([[0, -0.5], [1, -0.47], [1, 0.3], [0.6, 0.45], [0, 0.5]], 4, 0.08, 0.06), 'core', [0, 0, 0], { core: [0.08, 0.06] }));
     for (const [x, z] of [[0.12, 0.13], [-0.12, 0.13], [0.12, -0.16], [-0.12, -0.16]]) { const g = 'p' + x + z; d.push(D(spindle([[0, -0.5], [1, -0.3], [1, 0.3], [0, 0.5]], 4, 0.035, 0.03, 0.18), 'pod', [x, 0, z], { grp: g }), D(box(0.004, 0.004, 0.12), 'pod', [x, 0.03, z], { grp: g, m: 'glow' })); }
@@ -3449,30 +3680,35 @@ function humanDefs(cls) {
   return d;
 }
 function alienDefs(cls) {
-  const d = [], big = { corvette: 0.8, frigate: 0.85, destroyer: 0.9, tender: 0.95, bomber: 1.1, cruiser: 1, carrier: 1.1, battleship: 1.15, titan: 1.35, transport: 1, colony: 1 }[cls];
-  const coreW = { corvette: 0.08, frigate: 0.065, destroyer: 0.06, tender: 0.09, bomber: 0.075, cruiser: 0.1, carrier: 0.11, battleship: 0.12, titan: 0.13, transport: 0.09, colony: 0.1 }[cls];
+  const d = [], big = { worldbreaker: 1.5, corvette: 0.8, frigate: 0.85, destroyer: 0.9, tender: 0.95, bomber: 1.1, cruiser: 1, carrier: 1.1, battleship: 1.15, titan: 1.35, transport: 1, colony: 1 }[cls];
+  const coreW = { worldbreaker: 0.13, corvette: 0.08, frigate: 0.065, destroyer: 0.06, tender: 0.09, bomber: 0.075, cruiser: 0.1, carrier: 0.11, battleship: 0.12, titan: 0.13, transport: 0.09, colony: 0.1 }[cls];
   d.push(D(spindle([[0, -0.5], [0.45, -0.34], [1, -0.05], [0.5, 0.28], [0, 0.42]], 3, coreW, coreW * 0.75, 1, Math.PI / 2), 'core', [0, 0, 0], { core: [coreW, coreW * 0.7] }));
   const prong = spindle([[0, -0.5], [1, -0.25], [0, 0.5]], 3, 0.022 * big, 0.02 * big, 0.48);
   if (!['colony', 'transport', 'tender'].includes(cls)) for (const s of [1, -1]) d.push(D(prong, 'weapon', [s * coreW * 0.7, 0, 0.3], { r: [0, s * 0.13, 0] }));
   const cres = [[coreW * 0.4, -0.02], [coreW + 0.18 * big, -0.2], [coreW + 0.24 * big, -0.48], [coreW + 0.1 * big, -0.3], [coreW * 0.4, -0.3]];
   d.push(D(blade(cres, 0.012), 'wing'), D(blade(mir(cres), 0.012), 'wing'));
-  const nSp = { corvette: 1, frigate: 2, destroyer: 2, tender: 1, bomber: 2, cruiser: 3, carrier: 3, battleship: 5, titan: 6, transport: 1, colony: 2 }[cls];
+  const nSp = { worldbreaker: 6, corvette: 1, frigate: 2, destroyer: 2, tender: 1, bomber: 2, cruiser: 3, carrier: 3, battleship: 5, titan: 6, transport: 1, colony: 2 }[cls];
   for (let i = 0; i < nSp; i++) { const cg = new THREE.ConeGeometry(0.022, 0.2 * big, 3); cg.rotateX(-1.1); d.push(D(cg, 'plate', [0, coreW * 0.6, 0.15 - i * 0.14])); }
-  if (['cruiser', 'battleship', 'carrier', 'titan'].includes(cls)) { const c2 = [[coreW, 0.3], [coreW + 0.14, 0.12], [coreW + 0.1, 0.0], [coreW, 0.06]]; d.push(D(blade(c2, 0.012), 'wing'), D(blade(mir(c2), 0.012), 'wing')); d.push(D(fin([[-0.4, 0], [0.3, 0], [0.1, -0.09]], 0.012), 'plate', [0, -coreW * 0.5, 0])); }
+  if (['cruiser', 'battleship', 'carrier', 'titan', 'worldbreaker'].includes(cls)) { const c2 = [[coreW, 0.3], [coreW + 0.14, 0.12], [coreW + 0.1, 0.0], [coreW, 0.06]]; d.push(D(blade(c2, 0.012), 'wing'), D(blade(mir(c2), 0.012), 'wing')); d.push(D(fin([[-0.4, 0], [0.3, 0], [0.1, -0.09]], 0.012), 'plate', [0, -coreW * 0.5, 0])); }
   if (cls === 'battleship' || cls === 'titan') { const cs = spindle([[0, -0.5], [1, -0.2], [0, 0.5]], 3, 0.03, 0.03, cls === 'titan' ? 0.75 : 0.6); d.push(D(cs, 'weapon', [0, 0.02, cls === 'titan' ? 0.48 : 0.4])); }
   if (cls === 'titan') { const c3 = [[coreW, 0.2], [coreW + 0.3, -0.05], [coreW + 0.26, -0.12], [coreW, -0.02]]; d.push(D(blade(c3, 0.016), 'wing'), D(blade(mir(c3), 0.016), 'wing'), D(new THREE.TorusGeometry(0.05, 0.008, 3, 6), 'weapon', [0, 0.02, 0.86], { m: 'glow' })); }
+  if (cls === 'worldbreaker') {
+    d.push(D(new THREE.TorusGeometry(0.17, 0.02, 4, 9), 'weapon', [0, 0, 0.5], { grp: 'ring' }), D(new THREE.TorusGeometry(0.11, 0.008, 3, 9), 'weapon', [0, 0, 0.56], { grp: 'ring', m: 'glow' }), D(new THREE.OctahedronGeometry(0.05), 'core', [0, 0, 0.45], { m: 'glow' }));
+    for (const s of [1, -1]) { const c3 = [[coreW, 0.4], [coreW + 0.22, 0.25], [coreW + 0.34, -0.2], [coreW + 0.2, -0.05], [coreW, 0.0]]; d.push(D(blade(s > 0 ? c3 : mir(c3), 0.02), 'wing')); }
+  }
   if (cls === 'frigate') for (const s of [1, -1]) d.push(D(new THREE.OctahedronGeometry(0.035), 'weapon', [s * 0.11, 0, 0.05]));
   if (cls === 'bomber') { const dw = [[coreW * 0.4, 0.15], [coreW + 0.3, -0.25], [coreW + 0.22, -0.4], [coreW * 0.4, -0.2]]; d.push(D(blade(dw, 0.014), 'wing'), D(blade(mir(dw), 0.014), 'wing'), D(box(0.04, 0.004, 0.24), 'core', [0, -coreW * 0.55, 0], { m: 'glow' })); }
   if (cls === 'carrier') for (const s of [1, -1]) for (const z of [0.15, -0.1]) { const o = new THREE.OctahedronGeometry(0.045); o.scale(1.4, 0.6, 2); d.push(D(o, 'pod', [s * (coreW + 0.07), 0, z])); }
   if (cls === 'tender') { for (const s of [1, -1]) d.push(D(spindle([[0, -0.5], [1, -0.2], [0, 0.5]], 3, 0.015, 0.015, 0.5), 'plate', [s * 0.13, 0, 0.2], { r: [0, -s * 0.25, 0] }), D(new THREE.OctahedronGeometry(0.02), 'plate', [s * 0.19, 0, 0.42], { m: 'glow' })); }
   if (cls === 'transport' || cls === 'colony' || cls === 'tender') for (const [x, z] of [[0.12, 0.1], [-0.12, 0.1], [0.12, -0.15], [-0.12, -0.15]]) { const o = new THREE.OctahedronGeometry(0.05); o.scale(1, 1, 2); d.push(D(o, 'pod', [x, 0, z])); }
-  const orbs = { frigate: [[0.03, 0, -0.47], [-0.03, 0, -0.47]], tender: [[0.04, 0, -0.47], [-0.04, 0, -0.47]], bomber: [[0, 0, -0.48], [0.06, 0, -0.44], [-0.06, 0, -0.44]], carrier: [[0, 0.02, -0.48], [0.07, 0, -0.45], [-0.07, 0, -0.45], [0, -0.03, -0.42]], titan: [[0, 0.03, -0.5], [0.08, 0, -0.46], [-0.08, 0, -0.46], [0.05, -0.04, -0.44], [-0.05, -0.04, -0.44], [0, -0.05, -0.42]], corvette: [[0, 0, -0.48]], destroyer: [[0.03, 0, -0.47], [-0.03, 0, -0.47]], cruiser: [[0, 0.02, -0.48], [0.06, 0, -0.44], [-0.06, 0, -0.44]], battleship: [[0, 0.02, -0.5], [0.07, 0, -0.45], [-0.07, 0, -0.45], [0, -0.03, -0.42]], transport: [[0, 0, -0.48]], colony: [[0, 0, -0.48]] }[cls];
+  const orbs = { worldbreaker: [[0, 0.03, -0.5], [0.09, 0, -0.46], [-0.09, 0, -0.46], [0.05, -0.05, -0.44], [-0.05, -0.05, -0.44], [0, -0.06, -0.42]], frigate: [[0.03, 0, -0.47], [-0.03, 0, -0.47]], tender: [[0.04, 0, -0.47], [-0.04, 0, -0.47]], bomber: [[0, 0, -0.48], [0.06, 0, -0.44], [-0.06, 0, -0.44]], carrier: [[0, 0.02, -0.48], [0.07, 0, -0.45], [-0.07, 0, -0.45], [0, -0.03, -0.42]], titan: [[0, 0.03, -0.5], [0.08, 0, -0.46], [-0.08, 0, -0.46], [0.05, -0.04, -0.44], [-0.05, -0.04, -0.44], [0, -0.05, -0.42]], corvette: [[0, 0, -0.48]], destroyer: [[0.03, 0, -0.47], [-0.03, 0, -0.47]], cruiser: [[0, 0.02, -0.48], [0.06, 0, -0.44], [-0.06, 0, -0.44]], battleship: [[0, 0.02, -0.5], [0.07, 0, -0.45], [-0.07, 0, -0.45], [0, -0.03, -0.42]], transport: [[0, 0, -0.48]], colony: [[0, 0, -0.48]] }[cls];
   for (const [x, y, z] of orbs) d.push(D(new THREE.OctahedronGeometry(0.035 * big), 'engine', [x, y, z], { m: 'glow', noz: [x, y, z - 0.05] }));
   d.push(D(box(0.006, 0.006, 0.6), 'core', [0, coreW * 0.55, 0], { m: 'glow' }));
   return d;
 }
 const DEF_CACHE = new Map();
 function shipDefs(cls, alien) {
+  if (cls.startsWith('st_')) alien = false; // stations share one style, coloured by owner
   const k = cls + (alien ? 'A' : 'H'); let d = DEF_CACHE.get(k); if (d) return d;
   d = alien ? alienDefs(cls) : humanDefs(cls);
   for (const p of d) { p.g.userData.shared = 1; if (p.m !== 'glow') { p.edges = new THREE.EdgesGeometry(p.g, 25); p.edges.userData.shared = 1; } }
@@ -3669,6 +3905,7 @@ function buildSystem(s) {
   // planets
   const planets = s.planets.map((p, i) => {
     const R = planetDrawR(s, i), lights = i === s.pi && shownOwner(s) >= 0 ? 0.9 : 0;
+    if (p.dead) { const rb = makeRubble(R, PLANETS[p.was || 'barren'].color, p.seed, false); sc.add(rb.g); return { m: rb.g, R, moons: [], rb }; }
     const m = planetMesh(p, R, false, lights, i === s.pi ? 48 : 32); sc.add(m);
     const moons = [];
     for (let k = 0; k < (p.moons || 0); k++) { const mm = planetMesh({ seed: p.seed + k + 1, t: 'barren', tex: null }, Math.max(1.2, R * 0.16), false, 0, 16); sc.add(mm); moons.push(mm); }
@@ -3873,10 +4110,21 @@ let shipHits = [], sysExits = [], sysPlanetPos = [], sysStarScreen = null;
 function updateSystem(time, vdt) {
   const s = SY.s, L = SY.L;
   // planets
+  const crk = s._crack && G.time - s._crack.t < 0.3 ? s._crack : null;
   s.planets.forEach((p, i) => {
-    const [x, y, z] = planetPosSys(s, i), pl = SY.planets[i];
-    pl.m.position.set(x, y, z); pl.m.rotation.y = G.time * 0.08 + p.seed % 7;
+    const [x, y, z] = planetPosSys(s, i); let pl = SY.planets[i];
+    if (p.dead && !pl.rb) { // the planet has just been destroyed: swap the globe for its wreckage
+      SY.scene.remove(pl.m); for (const mm of pl.moons) SY.scene.remove(mm);
+      const fresh = s._shatter && s._shatter.pl === i && G.time - s._shatter.t < 3;
+      const rb = makeRubble(pl.R, PLANETS[p.was || 'barren'].color, p.seed, fresh); SY.scene.add(rb.g);
+      pl = SY.planets[i] = { m: rb.g, R: pl.R, moons: [], rb };
+      if (fresh) { const c = new THREE.Vector3(x, y, z); P({ x, y, z, vx: 0, vy: 0, vz: 0, life: 1.2, max: 1.2, size: pl.R * 9, r: 1, g: 0.9, b: 0.75, add: true, grow: 1.5 }); burst(c, 90, '#ffb04a', pl.R * 6, 2.5, 3); burst(c, 40, '#ff3cc8', pl.R * 4, 1.5, 2.4); }
+    }
+    pl.m.position.set(x, y, z);
+    if (pl.rb) { updateRubble(pl.rb, vdt); return; }
+    pl.m.rotation.y = G.time * 0.08 + p.seed % 7;
     pl.m.userData.mat.uniforms.sun.value.set(0, 0, 0); pl.m.userData.mat.uniforms.cloudOff.value = G.time * 0.002;
+    pl.m.userData.mat.uniforms.crack.value = crk && crk.pl === i ? Math.min(1, crk.p) : 0;
     pl.moons.forEach((mm, k) => { const a = G.time * (0.4 / (k + 1)) + k * 2.1, mr = pl.R * (1.8 + k * 0.5); mm.position.set(x + Math.cos(a) * mr, y + Math.sin(a * 0.7) * mr * 0.15, z + Math.sin(a) * mr); mm.userData.mat.uniforms.sun.value.set(0, 0, 0); });
   });
   const so = shownOwner(s);
@@ -3884,7 +4132,7 @@ function updateSystem(time, vdt) {
     SY.ownerShown = so;
     const mat = SY.mainOrbit.material;
     if (so >= 0) { mat.color.set(emp(so).color); mat.opacity = 0.5; } else { mat.color.set(0x4a6aa8); mat.opacity = 0.28; }
-    SY.planets[s.pi].m.userData.mat.uniforms.lights.value = so >= 0 ? 0.9 : 0;
+    if (!SY.planets[s.pi].rb) SY.planets[s.pi].m.userData.mat.uniforms.lights.value = so >= 0 ? 0.9 : 0;
   }
   // keep the camera riding along with the main world while it orbits
   const [px, py, pz] = planetPosSys(s, s.pi), PP = new THREE.Vector3(px, py, pz);
@@ -3944,6 +4192,24 @@ function updateSystem(time, vdt) {
       AP.add(pos.x, pos.y, pos.z, 1, torp ? 0.9 : 0.95, torp ? 1 : 0.85, 1, torp ? 7 : 3.5);
     }
   }
+  // stations glint in orbit; settled worlds show their lights
+  if (vis[s.id] || shownOwner(s) === PLAYER) s.planets.forEach((p, i) => {
+    if (p.dead && !p.st) return;
+    const [x, y, z] = planetPosSys(s, i), R = SY.planets[i].R;
+    (p.sta || []).forEach((k, j) => { const a = G.time * 0.6 + j * 2.1 + i, rr = R * 1.7 + j * 2; AP.add(x + Math.cos(a) * rr, y + Math.sin(a * 0.7) * R * 0.3, z + Math.sin(a) * rr, 0.7, 0.95, 1, 1, 2.6); });
+    if (p.st && i !== s.pi) for (let j = 0; j < 3; j++) { const a = j * 2.1 + p.seed % 6, b = (hash(p.seed + j) - 0.5) * 1.6; AP.add(x + Math.cos(a) * Math.cos(b) * R * 1.02, y + Math.sin(b) * R * 1.02, z + Math.sin(a) * Math.cos(b) * R * 1.02, 1, 0.8, 0.45, 0.8, 2); }
+  });
+  if (crk) {
+    const f = G.fleets.find(g => g.id === crk.f), sh = f && breakerOf(f), r = sh && SY.recs.get(sh.id);
+    if (r) {
+      const [x, y, z] = planetPosSys(s, crk.pl), T = new THREE.Vector3(x, y, z), R = SY.planets[crk.pl].R, k = Math.min(1, crk.p);
+      const bow = r.pos.clone().addScaledVector(r.dir, SHIPS[sh.c].len * 0.48), hit = T.clone().addScaledVector(bow.clone().sub(T).normalize(), R);
+      AP.add(bow.x, bow.y, bow.z, 1, 0.55 + k * 0.4, 0.3 + k * 0.6, 0.6 + 0.4 * Math.sin(time / 60), 10 + k * 40);
+      const n = 1 + Math.floor(k * 5);
+      for (let i = 0; i < n; i++) { const j = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(2 + k * 4); LP.add(bow, hit.clone().add(j), 1, 0.5 + k * 0.4, 0.2 + k * 0.6, 0.5 * k + 0.1, 0.7 * k + 0.2); }
+      AP.add(hit.x, hit.y, hit.z, 1, 0.6, 0.3, 0.5 + k * 0.5, 6 + k * 26);
+    }
+  }
   // orbital bombardment: shells fall from the bombarding fleet onto the main world
   if (vis[s.id] && G.time - (s._bomb || -99) < 0.4 && vdt > 0) {
     const src = []; for (const f of fleetsAt(s.id)) if (f.bomb && f.owner === s._bombBy) for (const sh of f.ships) { const r = SY.recs.get(sh.id); if (r && SHIPS[sh.c].weapons.length) src.push(r); }
@@ -3987,7 +4253,7 @@ function drawSystemLabels() {
     if (sel.planet === i) { ctx.strokeStyle = '#fff'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, R + 9, 0, 7); ctx.stroke(); ctx.setLineDash([]); }
     ctx.font = `${i === s.pi ? 'bold ' : ''}11px system-ui`;
     ctx.fillStyle = i === s.pi && s.owner >= 0 ? emp(s.owner).color : 'rgba(215,225,240,0.85)';
-    ctx.fillText((i === s.pi && isCapital(s) ? '★ ' : '') + p.n + (p.out ? ' ◆' : ''), x, y + R + 6);
+    ctx.fillText((i === s.pi && isCapital(s) ? '★ ' : '') + p.n + (p.dead ? ' (shattered)' : '') + (p.st && i !== s.pi ? ' ' + SETTLE[p.st].icon : '') + (p.sta && p.sta.length ? ' ⛯' + p.sta.length : ''), x, y + R + 6);
   });
   ctx.font = '11px system-ui';
   for (const ex of sysExits) { if (ex.x < -100) continue; const o = G.stars[ex.id]; ctx.fillStyle = 'rgba(170,200,255,0.9)'; ctx.fillText(`→ ${o.name} (${(laneLen(s.id, ex.id) / LY).toFixed(1)} ly)`, ex.x, ex.y + 12); }
@@ -4003,15 +4269,30 @@ function buildPlanetView(s, i) {
   const dl = new THREE.DirectionalLight(new THREE.Color(s.col), 1.6); dl.position.copy(sunDir); sc.add(dl); sc.add(new THREE.AmbientLight(0x8090b0, 0.25));
   const glare = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: new THREE.Color(s.col), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); glare.position.copy(sunDir.clone().multiplyScalar(9000)); glare.scale.setScalar(2600); sc.add(glare);
   const lights = i === s.pi && shownOwner(s) >= 0 ? clamp(s.pop / 12, 0.15, 1) : 0;
-  const pm = planetMesh(p, 100, true, lights, 96); pm.userData.mat.uniforms.sun.value.copy(sunPos); sc.add(pm);
+  let pm, rb = null;
+  if (p.dead) { rb = makeRubble(100, PLANETS[p.was || 'barren'].color, p.seed, false); sc.add(rb.g); pm = new THREE.Group(); sc.add(pm); }
+  else { pm = planetMesh(p, 100, true, lights, 96); pm.userData.mat.uniforms.sun.value.copy(sunPos); sc.add(pm); }
+  const owner = shownOwner(s), sites = p.st && i !== s.pi && !p.dead ? buildSettlement3D(pm, p, 100, owner >= 0 ? emp(owner).color : '#4fc3f7') : [];
   const moons = []; for (let k = 0; k < (p.moons || 0); k++) { const mm = planetMesh({ seed: p.seed + k + 1, t: 'barren', tex: null }, 12 + k * 3, false, 0, 32); mm.userData.mat.uniforms.sun.value.copy(sunPos); sc.add(mm); moons.push(mm); }
   const add = new PointPool(1200, true), norm = new PointPool(600, false), lines = new LinePool(200);
   sc.add(add.obj, norm.obj, lines.obj);
-  PV = { scene: sc, s, i, pm, moons, recs: new Map(), add, norm, lines, parts: [], bombs: [] };
+  PV = { scene: sc, s, i, pm, rb, moons, recs: new Map(), add, norm, lines, parts: [], bombs: [], sites, st: p.st, sunDir, sta: new Map(), staKey: '' };
 }
 function updatePlanetView(time, vdt) {
-  const s = PV.s;
-  PV.pm.rotation.y += vdt * 0.05; PV.pm.userData.mat.uniforms.cloudOff.value = time / 1000 * 0.004;
+  const s = PV.s, p = s.planets[PV.i];
+  if (p.st !== PV.st && !p.dead) { buildPlanetView(s, PV.i); return updatePlanetView(time, vdt); } // a settlement was completed or lost
+  if (p.dead && !PV.rb) { // destroyed while we watch
+    PV.pm.visible = false; PV.moons.forEach(mm => mm.visible = false);
+    PV.rb = makeRubble(100, PLANETS[p.was || 'barren'].color, p.seed, true); PV.scene.add(PV.rb.g);
+    for (let k = 0; k < 40; k++) { const d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().multiplyScalar(60 + Math.random() * 60); PV.parts.push({ p: d, n: d.clone().normalize(), t: 0, life: 0.8 + Math.random(), kind: 'flash' }); }
+  }
+  if (PV.rb) updateRubble(PV.rb, vdt);
+  else {
+    PV.pm.rotation.y += vdt * 0.05; PV.pm.userData.mat.uniforms.cloudOff.value = time / 1000 * 0.004;
+    const crk = s._crack && G.time - s._crack.t < 0.3 && s._crack.pl === PV.i ? s._crack : null;
+    PV.pm.userData.mat.uniforms.crack.value = crk ? Math.min(1, crk.p) : 0;
+  }
+  syncStations3D(s, p, time);
   PV.moons.forEach((mm, k) => { const a = time / 1000 * (0.08 / (k + 1)) + k * 2.4, r = 260 + k * 70; mm.position.set(Math.cos(a) * r, Math.sin(a * 0.5) * 30, Math.sin(a) * r); });
   // ships in orbit
   const seen = new Set();
@@ -4026,12 +4307,68 @@ function updatePlanetView(time, vdt) {
   for (const [id, r] of PV.recs) if (!seen.has(id)) { PV.scene.remove(r.m.group); disposeModel(r.m); PV.recs.delete(id); }
   planetWarFx(s, time, vdt);
 }
+// futuristic settlements built onto the globe (children of the planet mesh, so they turn with it)
+function settlementSites(p, n) { return Array.from({ length: n }, (_, j) => { const a = hash(p.seed * 3 + j * 17) * Math.PI * 2, b = (hash(p.seed * 7 + j * 5) - 0.5) * 1.8; return new THREE.Vector3(Math.cos(b) * Math.cos(a), Math.sin(b), Math.cos(b) * Math.sin(a)).normalize(); }); }
+function buildSettlement3D(pm, p, R, color) {
+  const k = p.st, neon = neonOf(color, false), sites = settlementSites(p, ['arcology', 'domes', 'oceancol'].includes(k) ? 7 : 5);
+  const hull = new THREE.MeshStandardMaterial({ color: 0x8a93a3, metalness: 0.4, roughness: 0.4, flatShading: true });
+  const glass = new THREE.MeshStandardMaterial({ color: k === 'oceancol' ? 0x7fd6ff : 0xb9e6ff, transparent: true, opacity: 0.6, emissive: neon, emissiveIntensity: 0.45, roughness: 0.1 });
+  const glow = new THREE.MeshBasicMaterial({ color: neon }), hot = new THREE.MeshBasicMaterial({ color: 0xff7a2a });
+  const cyl = (rt, rb, h, seg) => new THREE.CylinderGeometry(rt, rb, h, seg).rotateX(Math.PI / 2); // axis along +z = "up"
+  const dome = r => new THREE.SphereGeometry(r, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2).rotateX(Math.PI / 2);
+  const put = (g, geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); g.add(m); return m; };
+  for (const [j, n] of sites.entries()) {
+    const g = new THREE.Group(); g.position.copy(n).multiplyScalar(R * (k === 'cloudcity' ? 1.1 : 0.995)); g.lookAt(n.clone().multiplyScalar(R * 3)); g.scale.setScalar(2.3);
+    const r = mulberry32(p.seed + j * 101);
+    if (k === 'cloudcity') { put(g, cyl(3.4, 2.2, 0.9, 10), hull, 0, 0, 0); put(g, dome(2.4), glass, 0, 0, 0.45); put(g, new THREE.TorusGeometry(3.4, 0.16, 3, 20), glow, 0, 0, 0.1); put(g, cyl(0.25, 0.25, 3, 4), hull, 0, 0, -1.8); }
+    else if (k === 'domes' || k === 'oceancol') { for (let q = 0; q < 3; q++) { const x = (r() - 0.5) * 5, y = (r() - 0.5) * 5; put(g, dome(1.2 + r() * 1.2), glass, x, y, 0); put(g, new THREE.TorusGeometry(1.4, 0.1, 3, 14), glow, x, y, 0.05); } put(g, new THREE.BoxGeometry(5, 0.35, 0.35), hull, 0, 0, 0.1); }
+    else if (k === 'arcology') { for (let q = 0; q < 5; q++) { const hgt = 3 + r() * 6, x = (r() - 0.5) * 4, y = (r() - 0.5) * 4; put(g, cyl(0.25, 0.7, hgt, 4), hull, x, y, hgt / 2); put(g, new THREE.BoxGeometry(0.3, 0.3, 0.3), glow, x, y, hgt + 0.1); } }
+    else if (k === 'seacity') { put(g, cyl(3, 3, 0.4, 6), hull, 0, 0, 0.1); put(g, new THREE.TorusGeometry(3, 0.12, 3, 6), glow, 0, 0, 0.3); for (let q = 0; q < 3; q++) put(g, cyl(0.3, 0.5, 2 + r() * 2, 4), hull, (r() - 0.5) * 3, (r() - 0.5) * 3, 1.2); }
+    else if (k === 'skimmer') { put(g, cyl(1.6, 1.6, 0.5, 8), hull, 0, 0, 1.4); put(g, new THREE.TorusGeometry(1.7, 0.12, 3, 12), glow, 0, 0, 1.6); }
+    else { // industry: foundries, mines, refineries, mining swarms
+      for (let q = 0; q < 3; q++) put(g, new THREE.BoxGeometry(1.5 + r() * 1.5, 1.2 + r(), 1 + r() * 1.5), hull, (r() - 0.5) * 4, (r() - 0.5) * 4, 0.6);
+      for (let q = 0; q < 2; q++) { const x = (r() - 0.5) * 3, y = (r() - 0.5) * 3; put(g, cyl(0.3, 0.45, 3.5, 6), hull, x, y, 1.75); put(g, new THREE.BoxGeometry(0.5, 0.5, 0.3), k === 'cryo' ? glow : hot, x, y, 3.5); }
+    }
+    pm.add(g);
+  }
+  return sites;
+}
+// orbital stations around the planet in the close-up view
+function syncStations3D(s, p, time) {
+  const list = p.sta || [], key = list.join(','), o = shownOwner(s), color = o >= 0 ? emp(o).color : '#4fc3f7';
+  if (PV.staKey !== key) {
+    for (const m of PV.sta.values()) { PV.scene.remove(m.group); disposeModel(m); }
+    PV.sta = new Map(); PV.staKey = key;
+    list.forEach((k, j) => { const m = shipModel('st_' + k, false, color, false); m.group.scale.setScalar(k === 'habitat' || k === 'yard' ? 40 : 32); PV.scene.add(m.group); PV.sta.set(j, m); });
+  }
+  for (const [j, m] of PV.sta) {
+    const n = Math.max(1, list.length), a = time / 1000 * 0.05 + j * Math.PI * 2 / n, rr = 165 + j * 22, tilt = 0.25 + j * 0.1;
+    const pos = new THREE.Vector3(Math.cos(a) * rr, Math.sin(a) * rr * tilt * 0.4, Math.sin(a) * rr);
+    m.group.position.copy(pos); m.group.lookAt(new THREE.Vector3(Math.cos(a + 0.05) * rr, Math.sin(a + 0.05) * rr * tilt * 0.4, Math.sin(a + 0.05) * rr));
+    if (list[j] === 'habitat') m.group.rotateZ(time / 1000 * 0.4);
+    if (list[j] === 'science') m.group.rotateZ(Math.sin(time / 3000) * 0.3);
+  }
+}
 // bombs streaking down onto the globe, and cities left burning on bombed worlds
 function planetWarFx(s, time, vdt) {
   const A = PV.add, N = PV.norm, L = PV.lines, R = 100, pm = PV.pm;
   pm.updateWorldMatrix(true, false);
+  // settlement lights, brightest on the night side; Helium-3 skimmers dive through the clouds; drones swarm the rubble
+  if (!PV.rb) for (const n of PV.sites) {
+    const w = n.clone().multiplyScalar(R * 1.012).applyMatrix4(pm.matrixWorld), night = clamp(-w.clone().normalize().dot(PV.sunDir) * 2 + 0.35, 0.25, 1);
+    A.add(w.x, w.y, w.z, 1, 0.85, 0.55, 0.9 * night, 12 + 8 * night);
+  }
+  if (PV.st === 'skimmer' && !PV.rb) for (let j = 0; j < 10; j++) { const a = time / 1000 * (0.5 + hash(j) * 0.5) + j * 0.63, b = Math.sin(time / 1000 * 0.8 + j) * 0.5, rr = R * (1.02 + 0.03 * Math.sin(time / 500 + j)); A.add(Math.cos(a) * Math.cos(b) * rr, Math.sin(b) * rr, Math.sin(a) * Math.cos(b) * rr, 0.6, 0.95, 1, 1, 3); }
+  if (s.planets[PV.i].st === 'swarm' && PV.rb) for (let j = 0; j < 30; j++) { const a = time / 1000 * (0.3 + hash(j) * 0.4) + j, rr = R * (0.6 + hash(j * 3) * 1.4); A.add(Math.cos(a) * rr, Math.sin(a * 1.7 + j) * R * 0.12, Math.sin(a) * rr, 1, 0.8, 0.4, 1, 3); }
+  const crk = s._crack && G.time - s._crack.t < 0.3 && s._crack.pl === PV.i && !PV.rb ? s._crack : null;
+  if (crk) { // the World Breaker's graviton beam
+    const k = Math.min(1, crk.p), f = G.fleets.find(g => g.id === crk.f), sh = f && breakerOf(f), r = sh && PV.recs.get(sh.id);
+    const from = r ? r.pos.clone() : new THREE.Vector3(420, 160, 260), hit = from.clone().normalize().multiplyScalar(R);
+    for (let q = 0; q < 1 + Math.floor(k * 6); q++) { const j = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(3 + k * 10); L.add(from, hit.clone().add(j), 1, 0.5 + k * 0.4, 0.2 + k * 0.6, 0.3 + k * 0.4, 0.5 + k * 0.5); }
+    A.add(hit.x, hit.y, hit.z, 1, 0.6, 0.3, 0.6 + 0.4 * k, 20 + k * 70); A.add(from.x, from.y, from.z, 1, 0.8, 0.6, 0.8, 12 + k * 30);
+  }
   const camDir = camera.position.clone().normalize(), toWorld = v => v.clone().applyMatrix4(pm.matrixWorld);
-  const main = PV.i === s.pi;
+  const main = PV.i === s.pi && !PV.rb;
   if (main && vis[s.id] && G.time - (s._bomb || -99) < 0.4 && vdt > 0 && Math.random() < vdt * 18) {
     // aim at the side facing the camera so the strikes are visible
     let d = new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(); if (d.dot(camDir) < 0.2) d.addScaledVector(camDir, 1.2).normalize();
@@ -4161,12 +4498,19 @@ function setupCameraForView(instant) {
 function resetGalaxyCamera() { teardownSystem(); if (PV) { PV.scene.remove(sky); disposeScene(PV.scene); PV = null; } layoutCache.clear(); buildGalaxy(); view = { mode: 'galaxy', star: null, planet: null }; setupCameraForView(true); }
 
 // ---------- frame ----------
+// on phones the open bottom panel covers the lower half, so slide the 3D view up to keep the subject visible
+let camOff = 0;
+function updateViewOffset(dt) {
+  const want = W <= 760 && !$('#panel').classList.contains('hidden') && !panelCollapsed ? H * 0.2 : 0;
+  camOff += (want - camOff) * Math.min(1, dt * 6);
+  if (Math.abs(camOff) > 0.5) camera.setViewOffset(W, H, 0, camOff, W, H); else if (camera.view && camera.view.enabled) camera.clearViewOffset();
+}
 function draw(time, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
   if (!G) { renderer.setClearColor(0x02030a, 1); renderer.clear(); return; }
   const vdt = G.paused || modalPauses() ? 0 : dt * Math.min(3, G.speed);
   if (camAnim) { camAnim.t += dt / camAnim.dur; const k = clamp(camAnim.t, 0, 1), e = k * k * (3 - 2 * k); camera.position.lerpVectors(camAnim.p0, camAnim.p1, e); controls.target.lerpVectors(camAnim.t0, camAnim.t1, e); if (k >= 1) camAnim = null; }
-  controls.update();
+  controls.update(); updateViewOffset(dt);
   sky.position.copy(camera.position);
   let scene;
   if (view.mode === 'galaxy') { if (!GX) buildGalaxy(); updateGalaxy(time); scene = GX.scene; if (!scene.children.includes(sky)) scene.add(sky); }
@@ -4401,7 +4745,8 @@ function fleetPanel(f) {
     live.fbomb = bs === 'firing' ? `💣 Bombarding ${prim(t).n}: ${Math.ceil(t.garrison)} soldiers left · ${Math.round((t.devast || 0) * 100)}% devastated` : bs === 'waiting' ? `💣 Bombardment ordered: firing on the orbital defenses until they fall` : `💣 Bombardment ordered: enemy warships still hold the orbit`;
   }
   const cc = classCounts(f), tr = troopsIn(f);
-  h += `<div class="sub" data-live="fst"></div>${live.fbomb ? '<div class="sub bombline" data-live="fbomb"></div>' : ''}<div class="kv"><span>Strength <b data-live="fpow"></b></span><span>Speed <b data-live="fspd"></b></span></div>`;
+  if (f.crack) { const t = G.stars[f.at].planets[f.crack.pl]; live.fcrack = `☄ Planet cracker charging at ${t.n}: ${Math.round(f.crack.p * 100)}%`; }
+  h += `<div class="sub" data-live="fst"></div>${live.fbomb ? '<div class="sub bombline" data-live="fbomb"></div>' : ''}${live.fcrack ? '<div class="sub bombline" data-live="fcrack"></div>' : ''}<div class="kv"><span>Strength <b data-live="fpow"></b></span><span>Speed <b data-live="fspd"></b></span></div>`;
   h += `<div class="chips">`;
   for (const c of CLASS_ORDER) if (cc[c]) h += `<span class="chip">${cc[c]} × ${SHIPS[c].name}${own && f.at !== null && Object.keys(cc).length > 1 ? `<button data-act="splitClass" data-arg="${c}" title="Split into its own fleet">split</button>` : ''}</span>`;
   h += `</div>`;
@@ -4414,6 +4759,8 @@ function fleetPanel(f) {
     if (f.at !== null && hasClass(f, 'colony') && G.stars[f.at].owner < 0 && !G.stars[f.at].colonizing) h += `<button class="good" data-act="colonize">Colonize ${esc(prim(G.stars[f.at]).n)}</button>`;
     if (canBombard(f)) h += f.bomb ? `<button data-act="bombard">Stop bombardment</button>` : `<button class="danger" data-act="bombard">💣 Bombard ${esc(prim(G.stars[f.at]).n)}</button>`;
     h += `</div>`;
+    if (f.crack) h += `<div class="btns"><button data-act="cancelCrack">Stand down the planet cracker</button></div>`;
+    else if (f.at !== null && f.ships.some(sh => SHIPS[sh.c].cracker)) h += `<div class="sub">☄ To destroy a planet, open it in this system (tap it, or its row under Planets) and press <b>Destroy</b>.</div>`;
     if (canBombard(f) && !f.bomb) h += `<div class="sub">Bombardment kills the garrison and population and wrecks buildings once the orbital defenses are down. Every empire will think less of you.</div>`;
     if (tr) h += `<div class="sub">🪖 ${Math.round(tr)} soldiers aboard. They land automatically once an enemy world's orbital defenses are destroyed and no enemy warships remain.</div>`;
   }
@@ -4479,6 +4826,7 @@ function colonyBlock(s, live, w) {
 }
 function devastHtml(s, live) {
   let h = '';
+  if (s._crack && G.time - s._crack.t < 0.5 && s._crack.o !== PLAYER) h += `<div class="ground">☄ <b>A World Breaker is charging at ${esc(s.planets[s._crack.pl].n)}: ${Math.round(s._crack.p * 100)}%.</b> Destroy it before it fires!</div>`;
   if (G.time - (s._bomb || -99) < 1) h += `<div class="ground">💣 <b>Orbital bombardment!</b> ${s.owner === PLAYER ? 'Drive off the enemy fleet to stop it.' : ''}</div>`;
   if (s.devast > 0.01) { live.dev = `${Math.round(s.devast * 100)}% (output −${Math.round(s.devast * 60)}%)`; h += `<div class="kv"><span>Devastation</span><span class="c-bad" data-live="dev"></span></div>`; }
   return h;
@@ -4486,7 +4834,7 @@ function devastHtml(s, live) {
 function planetsList(s) {
   let h = `<h4>Planets (${s.planets.length})</h4>`;
   s.planets.forEach((p, i) => {
-    h += `<div class="planetrow"><span class="pl" style="background:${PLANETS[p.t].color}"></span><div class="grow" style="flex:1;min-width:0"><b>${esc(p.n)}</b>${p.real ? '<span class="tag real">real</span>' : ''}${i === s.pi ? '<span class="tag">main world</span>' : ''}${p.out ? '<span class="tag">outpost</span>' : ''}<br><small>${PLANETS[p.t].name} · ${p.au} AU</small></div><button data-act="selPlanet" data-arg="${i}">View</button></div>`;
+    h += `<div class="planetrow"><span class="pl" style="background:${PLANETS[p.t].color}"></span><div class="grow" style="flex:1;min-width:0"><b>${esc(p.n)}</b>${p.real ? '<span class="tag real">real</span>' : ''}${i === s.pi && !p.dead ? '<span class="tag">main world</span>' : ''}${p.dead ? '<span class="tag">shattered</span>' : ''}${p.st && i !== s.pi ? `<span class="tag">${SETTLE[p.st].icon} ${SETTLE[p.st].name}</span>` : ''}${p.sta && p.sta.length ? `<span class="tag">⛯ ${p.sta.length} station${p.sta.length > 1 ? 's' : ''}</span>` : ''}<br><small>${PLANETS[p.t].name} · ${p.au} AU</small></div><button data-act="selPlanet" data-arg="${i}">View</button></div>`;
   });
   return h;
 }
@@ -4516,7 +4864,7 @@ function starPanel(s) {
   } else {
     if (s.colonizing) { const ce = emp(s.colonizing.owner); w.col = s.colonizing.p * 100; h += `<div class="sub">Being colonized by <b style="color:${ce.color}">${esc(ce.name)}</b></div>${bar('col', 'col')}`; }
     else {
-      h += `<div class="sub">Potential population ≈ ${Math.max(1, s.size * 1.5 * hab).toFixed(1)} · ${s.size} building slots · ${s.planets.length - 1} other planet(s) for outposts</div>`;
+      h += `<div class="sub">Potential population ≈ ${Math.max(1, s.size * 1.5 * hab).toFixed(1)} · ${s.size} building slots · ${s.planets.length - 1} other planet(s) for settlements</div>`;
       if (G.fleets.some(f => f.owner === PLAYER && colonyOnly(f))) h += `<div class="btns"><button class="good" data-act="sendColony" data-arg="${s.id}">Send nearest colony ship</button></div>`;
       else h += `<div class="sub">Build a Colony Ship at a shipyard to settle this world.</div>`;
     }
@@ -4536,28 +4884,75 @@ function starPanel(s) {
 function planetPanel(s, i) {
   const p = s.planets[i], P = PLANETS[p.t], live = {}, w = {};
   const primary = i === s.pi, o = shownOwner(s), owner = o >= 0 ? emp(o) : null;
-  let h = `<div class="ph"><span class="dot" style="background:${P.color}"></span><div class="pt"><b>${esc(p.n)}</b><small>${P.name}${p.t === 'gas' ? '' : ' world'} · orbits ${esc(s.name)} at ${p.au} AU</small></div><button class="x" data-act="${view.mode === 'planet' ? 'toSystem' : 'deselect'}">✕</button></div>`;
+  let h = `<div class="ph"><span class="dot" style="background:${P.color}"></span><div class="pt"><b>${esc(p.n)}</b><small>${P.name}${p.t === 'gas' || p.dead ? '' : ' world'} · orbits ${esc(s.name)} at ${p.au} AU</small></div><button class="x" data-act="${view.mode === 'planet' ? 'toSystem' : 'deselect'}">✕</button></div>`;
   if (p.real) h += `<div class="sub"><span class="tag real">Real planet</span> ${esc(p.note || 'Confirmed exoplanet')}</div>`;
   else if (p.note) h += `<div class="sub">${esc(p.note)}</div>`;
   h += `<div class="kv"><span>Size</span><span>${p.sz}${p.ring ? ' · ringed' : ''}${p.moons ? ` · ${p.moons} moon${p.moons > 1 ? 's' : ''}` : ''}</span></div>`;
-  h += `<div class="kv"><span>Habitability</span><span>${Math.round((primary ? starHab(s, s.owner >= 0 ? s.owner : PLAYER) : clamp(P.hab + mods(emp(s.owner >= 0 ? s.owner : PLAYER)).hab, 0.05, 1)) * 100)}%</span></div><div class="kv"><span>Richness</span><span>◆×${P.min} ⚡×${P.en}</span></div>`;
-  if (view.mode === 'system') h += `<div class="btns"><button class="primary" data-act="landPlanet" data-arg="${i}">View surface ⤢</button></div>`;
-  if (primary) {
+  if (!p.dead) h += `<div class="kv"><span>Habitability</span><span>${Math.round((primary ? starHab(s, s.owner >= 0 ? s.owner : PLAYER) : clamp(P.hab + mods(emp(s.owner >= 0 ? s.owner : PLAYER)).hab, 0.05, 1)) * 100)}%</span></div><div class="kv"><span>Richness</span><span>◆×${P.min} ⚡×${P.en}</span></div>`;
+  if (p.dead) h += `<div class="ground">☄ <b>Shattered world.</b> Only a ring of debris is left, rich in minerals for a mining swarm.</div>`;
+  if (view.mode === 'system') h += `<div class="btns"><button class="primary" data-act="landPlanet" data-arg="${i}">Zoom to orbit ⤢</button></div>`;
+  h += crackerHtml(s, i, live, w);
+  if (primary && !p.dead) {
     h += `<div class="sub">Main world of the system${owner ? `, held by <b style="color:${owner.color}">${esc(owner.name)}</b>` : ''}.</div>`;
-    if (s.owner === PLAYER) h += colonyBlock(s, live, w);
+    if (s.owner === PLAYER) h += orbitHtml(s, i, w) + colonyBlock(s, live, w);
     else if (owner && vis[s.id]) { live.gar = `${Math.ceil(s.garrison)} soldiers`; h += devastHtml(s, live) + `<div class="kv"><span>Garrison</span><span data-live="gar"></span></div>`;
-      if (atWar(PLAYER, s.owner)) { const mine = fleetsAt(s.id).filter(f => f.owner === PLAYER && canBombard(f)); if (mine.length) h += `<div class="btns">${mine.some(f => !f.bomb) ? `<button class="danger" data-act="bombardAll" data-arg="${s.id}">💣 Bombard ${esc(p.n)}</button>` : `<button data-act="bombardAll" data-arg="${s.id}">Stop bombardment</button>`}</div>`; } if (s.inv) { live.inv = `${Math.ceil(s.inv.tr)} invaders vs ${Math.ceil(s.garrison)} defenders`; h += `<div class="ground">⚔ <span data-live="inv"></span></div>`; } }
+      if (atWar(PLAYER, s.owner)) { const mine = fleetsAt(s.id).filter(f => f.owner === PLAYER && canBombard(f)); if (mine.length) h += `<div class="btns">${mine.some(f => !f.bomb) ? `<button class="danger" data-act="bombardAll" data-arg="${s.id}">💣 Bombard ${esc(p.n)}</button>` : `<button data-act="bombardAll" data-arg="${s.id}">Stop bombardment</button>`}</div>`; }
+      if (s.inv) { live.inv = `${Math.ceil(s.inv.tr)} invaders vs ${Math.ceil(s.garrison)} defenders`; h += `<div class="ground">⚔ <span data-live="inv"></span></div>`; } }
+    else if (PLANETS[s.type].hab <= 0) h += `<div class="sub muted">Nothing habitable is left in this system.</div>`;
   } else {
-    const y = outpostYield(p, emp(PLAYER));
-    h += `<div class="sub">Secondary planet. An outpost here yields ${y.mi ? '◆' + y.mi.toFixed(1) : ''}${y.en ? ' ⚡' + y.en.toFixed(1) : ''}/day.</div>`;
-    if (p.out) h += `<div class="sub" style="color:var(--good)">✓ Outpost operating${owner ? ` (${esc(owner.name)})` : ''}</div>`;
-    else if (s.owner === PLAYER) {
-      const q = s.bq.findIndex(x => x.k === 'outpost' && x.pl === i);
-      if (q >= 0) { w.op = s.bq[q].p / s.bq[q].t * 100; h += `<div class="sub">Outpost under construction${q ? ' (queued)' : ''}</div>${bar('op')}`; }
-      else h += `<div class="btns"><button class="good" data-act="outpost" data-arg="${i}" ${canAfford(emp(PLAYER), OUTPOST.cost) ? '' : 'disabled'}>Build outpost (${costStr(OUTPOST.cost)} · ${OUTPOST.time}d)</button></div>`;
-    } else h += `<div class="sub muted">Control ${esc(s.name)} to build outposts here.</div>`;
+    h += settleHtml(s, i, w, owner);
+    if (s.owner === PLAYER) h += orbitHtml(s, i, w);
   }
   return { html: h, live, w };
+}
+const yieldStr = T => [T.y && T.y.en ? '⚡' + T.y.en : '', T.y && T.y.mi ? '◆' + T.y.mi : '', T.y && T.y.re ? '🔬' + T.y.re : '', T.pop ? '+' + T.pop + ' pop' : ''].filter(Boolean).join(' ');
+// settlement on a secondary planet: what's there, what's being built, or what could be
+function settleHtml(s, i, w, owner) {
+  const p = s.planets[i], pe = emp(PLAYER);
+  let h = `<h4>Settlement</h4>`;
+  if (p.st) { const T = SETTLE[p.st]; return h + `<div class="sub" style="color:var(--good)">✓ ${T.icon} <b>${T.name}</b>${owner ? ` (${esc(owner.name)})` : ''}: ${yieldStr(T)}/day</div><div class="sub">${T.desc}</div>`; }
+  const opts = settleOptions(p);
+  if (!opts.length) return h + `<div class="sub muted">Nothing can be settled on this world.</div>`;
+  if (s.owner !== PLAYER) return h + `<div class="sub muted">Control ${esc(s.name)} to settle this world: ${opts.map(k => SETTLE[k].icon + ' ' + SETTLE[k].name).join(', ')}.</div>`;
+  const qi = s.bq.findIndex(x => x.k === 'settle' && x.pl === i);
+  if (qi >= 0) { w['bq' + qi] = s.bq[qi].p / s.bq[qi].t * 100; return h + `<div class="sub">${SETTLE[s.bq[qi].sk].icon} ${SETTLE[s.bq[qi].sk].name} under construction${qi ? ' (queued)' : ''}</div>${bar('bq' + qi)}`; }
+  h += `<div class="grid2">`;
+  for (const k of opts) { const T = SETTLE[k]; h += `<button class="opt" data-act="settle" data-arg="${i}:${k}" ${canAfford(pe, T.cost) ? '' : 'disabled'}><b>${T.icon} ${T.name}</b><small>${costStr(T.cost)} · ${T.time}d · ${yieldStr(T)}/day</small><small>${T.desc}</small></button>`; }
+  return h + `</div>`;
+}
+// orbital stations around one planet
+function orbitHtml(s, i, w) {
+  const p = s.planets[i], pe = emp(PLAYER), list = p.sta || [], slots = staSlots(s, i);
+  if (!slots) return '';
+  const queued = []; s.bq.forEach((q, bi) => { if (q.k === 'sta' && q.pl === i) queued.push(bi); });
+  let h = `<h4>Orbit of ${esc(p.n)} · stations ${list.length}/${slots}</h4><div class="chips">`;
+  list.forEach((k, j) => { h += `<span class="chip">${STATIONS[k].icon} ${STATIONS[k].name}<button data-act="scrapSta" data-arg="${i}:${j}" title="Scrap (no refund)">✕</button></span>`; });
+  if (!list.length) h += `<span class="muted">No stations yet</span>`;
+  h += `</div>`;
+  for (const bi of queued) { const q = s.bq[bi]; w['bq' + bi] = q.p / q.t * 100; h += `<div class="row"><div class="grow">${STATIONS[q.sk].icon} ${STATIONS[q.sk].name}${bi ? ' <small>(queued)</small>' : ''}${bar('bq' + bi)}</div><button data-act="cancelB" data-arg="${bi}" title="Cancel (full refund)">✕</button></div>`; }
+  if (list.length + queued.length < slots) {
+    h += `<div class="grid2">`;
+    for (const k in STATIONS) {
+      const T = STATIONS[k], full = T.max && countSta(s, k) + s.bq.filter(q => q.k === 'sta' && q.sk === k).length >= T.max;
+      h += `<button class="opt" data-act="station" data-arg="${i}:${k}" ${full || !canAfford(pe, T.cost) ? 'disabled' : ''}><b>${T.icon} ${T.name}</b><small>${full ? 'One per system' : costStr(T.cost) + ' · ' + T.time + 'd'}</small><small>${T.desc}</small></button>`;
+    }
+    h += `</div>`;
+  }
+  return h;
+}
+// the planet cracker: aim, charge progress, or why it can't fire
+function crackerHtml(s, i, live, w) {
+  const p = s.planets[i]; let h = '';
+  const c = s._crack && G.time - s._crack.t < 0.5 && s._crack.pl === i ? s._crack : null;
+  if (c && c.o !== PLAYER) h += `<div class="ground">☄ <b>A ${esc(emp(c.o).name)} World Breaker is charging at ${esc(p.n)}: ${Math.round(c.p * 100)}%.</b> Destroy it before it fires!</div>`;
+  if (p.dead) return h;
+  const f = fleetsAt(s.id).find(g => g.owner === PLAYER && g.ships.some(sh => SHIPS[sh.c].cracker)); if (!f) return h;
+  if (f.crack && f.crack.pl === i) {
+    w.crk = f.crack.p * 100; live.crk = `${Math.round(f.crack.p * 100)}% · fires in ${Math.ceil((1 - f.crack.p) * CRACK_DAYS)} days`;
+    return h + `<div class="ground">☄ <b>Planet cracker charging:</b> <span data-live="crk"></span>${bar('crk')}<div class="btns"><button data-act="cancelCrack">Stand down</button></div></div>`;
+  }
+  const why = crackBlock(f, i);
+  return h + `<div class="btns"><button class="danger" data-act="crack" data-arg="${i}" ${why ? 'disabled' : ''}>☄ Destroy ${esc(p.n)}</button></div>` + (why ? `<div class="sub muted">Planet cracker: ${esc(why)}</div>` : `<div class="sub">The World Breaker charges for ${CRACK_DAYS} days and must stay in orbit. The world will be gone forever, and every empire will remember.</div>`);
 }
 
 function refreshViewButtons() { const b = $('#vb-orbit'); if (b) b.classList.toggle('on', controls.autoRotate); const d = $('#vb-drag'); if (d) d.textContent = dragMode === 'rotate' ? '⟲' : '✋'; }
@@ -4861,13 +5256,14 @@ function helpHtml() {
   const shipRows = CLASS_ORDER.map(c => `<tr><td>${shipSVG(c, false, '#4fc3f7', 18)} ${SHIPS[c].name}</td><td>${SHIPS[c].desc}${SHIPS[c].tech ? ` <small>(${TECHS[SHIPS[c].tech].name})</small>` : ''}</td></tr>`).join('');
   return `<div class="help">
   ${sec('Goal', `<p>Lead humanity from Earth into the real stars around the Sun. Win by destroying every alien empire <b>or</b> holding 60% of all systems. You lose if your last world falls.</p><p>New to the game? Open <b>☰ Menu → Tutorial</b> for a guided start.</p>`, true)}
-  ${sec('Getting started', `<ol style="padding-left:18px;margin:4px 0"><li>On Earth, build a <b>Research Lab</b> and pick a technology under <b>Tech</b>.</li><li>Build a <b>Colony Ship</b> at Earth's Shipyard and send it to an unclaimed star (Alpha Centauri is close).</li><li>Add <b>Mining Complexes</b> and <b>Power Plants</b>; give colonies Shipyards; build outposts on other planets.</li><li>Build warships before your neighbours notice you. Speed time up with 2×/4×/8×.</li></ol>`)}
+  ${sec('Getting started', `<ol style="padding-left:18px;margin:4px 0"><li>On Earth, build a <b>Research Lab</b> and pick a technology under <b>Tech</b>.</li><li>Build a <b>Colony Ship</b> at Earth's Shipyard and send it to an unclaimed star (Alpha Centauri is close).</li><li>Add <b>Mining Complexes</b> and <b>Power Plants</b>; give colonies Shipyards; settle the other planets in your systems and build stations in their orbits.</li><li>Build warships before your neighbours notice you. Speed time up with 2×/4×/8×.</li></ol>`)}
   ${sec('Moving around', `<ul><li><b>Galaxy:</b> every star is a real star at its true 3D position, with its real spectral type and many real exoplanets. <b>Double-tap a star</b> (or zoom right in) to enter it.</li><li><b>Star system:</b> planets orbit and battles play out ship by ship. Double-tap a planet to see its surface; zoom out to go back.</li><li><b>Planet:</b> a rotating globe. Watch ground battles and bombardments here.</li><li><b>Drag</b> to rotate, <b>pinch / wheel</b> to zoom, <b>two fingers / right-drag</b> to pan. Bottom buttons: + − zoom, ⌂ home, ◎ focus, ⤒ top, ◢ angled, ▭ side, ⟳ auto-orbit, ⟲/✋ swap drag between rotate and pan.</li></ul>`)}
   ${sec('Orders', `<p>Select one of your fleets, then tap a star (galaxy), or a planet or hyperlane exit (system view), to send it. Right-click also works on a computer. Space pauses; keys 1–4 set speed.</p><p>Fleet panel buttons: <b>Split</b> / <b>Merge</b>, <b>Stop</b>, <b>Colonize</b>, and <b>💣 Bombard</b> over an enemy world.</p>`)}
   ${sec('Ships', `<table><tr><th style="width:38%">Ship</th><th>Role</th></tr>${shipRows}</table><p>Rough counters: Destroyers (flak) beat Corvettes, Frigates and strike craft; Cruisers beat Destroyers; Battleships beat Cruisers; Corvette torpedoes and Titan lances beat Battleships.</p>`)}
   ${sec('Combat: no health bars', `<p>Every ship is simulated individually. Weapons have <b>damage</b> and <b>armour penetration</b>. Autocannons and flak shred small ships; railguns punch armour; missiles and torpedoes <b>breach hulls</b> and start fires (point defense can shoot them down); carrier strike craft hunt nimble ships; a Titan's lance can split a Battleship.</p><p>A breached ship vents air until the crew suffocates; fires spread; damage-control crews fight back. Parts tear off and tumble away, hulls scorch and glow. A ship with no crew left becomes a drifting hulk. Fleets repair in friendly systems, fully at a shipyard, or anywhere with a <b>Repair Tender</b>.</p>`)}
   ${sec('Conquest and bombardment', `<p>Warships destroy a world's <b>orbital defenses</b> (Siege Bombers are best at it). Then <b>Troop Transports</b> in orbit land automatically and fight the garrison. When the garrison falls, the world is yours.</p><p><b>💣 Bombard</b>: once the defenses are down, a fleet ordered to bombard kills soldiers and civilians, flattens buildings and leaves the world <b>devastated</b> (lower output, slowly recovering). It makes invasions easy, but the victim and every other empire will hate you.</p>`)}
-  ${sec('Economy', `<ul><li>⚡ Energy pays upkeep; ◆ Minerals build; 🔬 Research unlocks technology. Storage is limited, so spend or trade surpluses (Empire screen).</li><li>Each building needs a worker. Other planets in your systems can host <b>outposts</b>.</li><li><b>⚓ Fleet capacity</b> grows with systems, shipyards, Naval Yards and Starbases; going over it makes upkeep soar.</li></ul>`)}
+  ${sec('Economy', `<ul><li>⚡ Energy pays upkeep; ◆ Minerals build; 🔬 Research unlocks technology. Storage is limited, so spend or trade surpluses (Empire screen).</li><li>Each building needs a worker.</li><li><b>Settlements:</b> every other planet in your systems can be settled in a way that suits it: Helium-3 Skimmers or a Cloud City on gas giants, Sub-Ice Ocean Colonies on ice worlds, Magma Foundries on lava worlds, Dome Colonies, Arcology and Sea Cities, Atmospheric Refineries, and mining swarms on shattered worlds. Some add population.</li><li><b>Orbital stations:</b> zoom into any planet of a system you hold (<b>Zoom to orbit</b>) to build stations around it: Defense Platforms, an Orbital Shipyard, Research Stations, Orbital Collectors, Ring Habitats and Trade Hubs (3 around the main world, 2 elsewhere).</li><li><b>⚓ Fleet capacity</b> grows with systems, shipyards, Naval Yards and Starbases; going over it makes upkeep soar.</li></ul>`)}
+  ${sec('Destroying planets', `<p>Research <b>Graviton Planet Cracker</b> (after Titans) to build a <b>World Breaker</b>, one per empire. Take it to an enemy system, knock out the orbital defenses and clear any warships, then open a planet and press <b>☄ Destroy</b>. The cannon charges for 8 days (the planet's crust glows as it cracks) and the ship must stay in orbit. Then the world splits apart. Destroying a main world kills everyone on it and the system is lost to its owner. What remains is a debris field that can be mined. Every empire will hate you for it, and the victim most of all.</p>`)}
   ${sec('Diplomacy', `<p>Peace, war or a defensive alliance with each empire. Gifts raise opinion; shared borders, wars and bombardment lower it. Peace brings a 150-day truce.</p>`)}
   ${sec('Saving', `<p>The game autosaves every 2 minutes and when you leave. There are three manual slots. <b>Export</b> gives you a file (or copyable text on an iPhone home-screen app) and <b>Import</b> restores it on any device.</p>`)}
   </div>`;
@@ -4893,7 +5289,7 @@ const TUT = [
     done: () => G.stars.some(s => s.id !== 0 && (s.owner === PLAYER || (s.colonizing && s.colonizing.owner === PLAYER))) || G.fleets.some(f => f.owner === PLAYER && colonyOnly(f) && f.autoCol && (f.at === null || f.path.length)) },
   { t: 'Explore', b: () => `Now select your <b>1st Fleet</b> (the warships beside Sol) and tap another nearby star to scout it. Fleets fly along the hyperlanes. (Lost? <b>⌂</b> flies home.)`, hl: '[data-act="home"]',
     done: () => G.fleets.some(f => f.owner === PLAYER && isArmed(f) && (f.at === null || f.path.length)) },
-  { t: 'Build up', b: () => `Back at Earth, use the <b>Shipyard</b> for more Colony Ships and warships. Add <b>Power Plants</b> ⚡ and <b>Research Labs</b> 🔬, give colonies a Shipyard, and build <b>outposts</b> on other planets. Watch ⚓ fleet capacity: going over makes upkeep soar.`, next: 'Next' },
+  { t: 'Build up', b: () => `Back at Earth, use the <b>Shipyard</b> for more Colony Ships and warships. Add <b>Power Plants</b> ⚡ and <b>Research Labs</b> 🔬, settle the other planets (gas giants, ice worlds…) and tap <b>Zoom to orbit</b> on any planet to build <b>stations</b> around it. Watch ⚓ fleet capacity: going over makes upkeep soar.`, next: 'Next' },
   { t: 'War and conquest', b: () => `Warships knock out a world's <b>orbital defenses</b>. Then land <b>Troop Transports</b>, or select your fleet over the world and tap <b>💣 Bombard</b> to wipe out the garrison first (Siege Bombers do it best, but every empire will hate you). <b>Diplo</b> handles peace, war and alliances.`, next: 'Next' },
   { t: "You're ready", b: () => `Win by destroying every rival or holding 60% of the stars. <b>☰ → How to play</b> explains everything else. Good luck, Commander!`, next: 'Finish' },
 ];
@@ -4955,7 +5351,20 @@ const actions = {
   build(k) { const err = queueBuilding(emp(PLAYER), curStar(), k); if (err) toast(err, '#ef5350'); refreshUI(true); },
   project(k) { const err = queueProject(emp(PLAYER), curStar(), k); if (err) toast(err, '#ef5350'); refreshUI(true); },
   trade(d) { const err = trade(emp(PLAYER), d); if (err) toast(err, '#ef5350'); else toast(d === 'en' ? `Sold ⚡${TRADE.give} for ◆${TRADE.get}` : `Sold ◆${TRADE.give} for ⚡${TRADE.get}`, '#66bb6a'); renderModal(); },
-  outpost(i) { const err = queueOutpost(emp(PLAYER), curStar(), +i); if (err) toast(err, '#ef5350'); refreshUI(true); },
+  settle(a) { const [i, k] = a.split(':'); const err = queueSettle(emp(PLAYER), curStar(), +i, k); if (err) toast(err, '#ef5350'); refreshUI(true); },
+  station(a) { const [i, k] = a.split(':'); const err = queueStation(emp(PLAYER), curStar(), +i, k); if (err) toast(err, '#ef5350'); refreshUI(true); },
+  scrapSta(a, el) {
+    if (el.dataset.confirm !== '1') { el.dataset.confirm = '1'; el.textContent = 'scrap?'; return; }
+    const [i, j] = a.split(':').map(Number), p = curStar().planets[i]; if (!p || !p.sta) return;
+    const k = p.sta.splice(j, 1)[0]; if (k) toast(`${STATIONS[k].name} scrapped`, '#ffca28'); refreshUI(true);
+  },
+  crack(i, el) {
+    const s = curStar(), f = fleetsAt(s.id).find(g => g.owner === PLAYER && g.ships.some(sh => SHIPS[sh.c].cracker)); if (!f) return;
+    const why = crackBlock(f, +i); if (why) { toast(why, '#ef5350'); return; }
+    if (el.dataset.confirm !== '1') { el.dataset.confirm = '1'; el.textContent = `Really destroy ${s.planets[+i].n}?`; return; }
+    f.crack = { pl: +i, p: 0 }; toast(`☄ Charging the planet cracker at ${s.planets[+i].n}. ${CRACK_DAYS} days to fire.`, '#ff7043'); refreshUI(true);
+  },
+  cancelCrack() { for (const f of G.fleets) if (f.owner === PLAYER && f.crack && (f === sel.fleet || f.at === (view.mode !== 'galaxy' ? view.star : sel.star))) f.crack = null; toast('Planet cracker stood down', '#4fc3f7'); refreshUI(true); },
   cancelB(i) { const s = curStar(); const q = s.bq.splice(+i, 1)[0]; if (q) pay(emp(PLAYER), queueCost(q), -1); refreshUI(true); },
   demolish(i) { const s = curStar(); const b = s.buildings[+i]; if (!b) return; s.buildings.splice(+i, 1); if (b === 'shipyard' && !s.buildings.includes('shipyard')) { for (const q of s.sq) pay(emp(PLAYER), SHIPS[q.k].cost, -1); s.sq = []; } toast(`${BUILDINGS[b].name} demolished`, '#ffca28'); refreshUI(true); },
   ship(c) { const err = queueShip(emp(PLAYER), curStar(), c); if (err) toast(err, '#ef5350'); refreshUI(true); },
