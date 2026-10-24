@@ -1585,7 +1585,7 @@ const PERS = {
   scholarly: { name: 'Scholarly', aggr: 0.8, mil: 0.9, expand: 1.0, sci: 1.6, op: 5 },
   pacifist: { name: 'Pacifist', aggr: 0.5, mil: 0.8, expand: 1.1, sci: 1.1, op: 15 },
 };
-const SIZES = { small: { name: 'Small: 32 nearest stars (≤15 ly)', n: 32 }, medium: { name: 'Medium: 56 nearest stars (≤19 ly)', n: 56 }, large: { name: 'Large: 84 nearest stars (≤26 ly)', n: 84 }, huge: { name: 'Huge: 125 stars (≤51 ly)', n: 125 } };
+const SIZES = { small: { name: 'Small: 32 nearest stars (≤15 ly)', n: 32 }, medium: { name: 'Medium: 56 nearest stars (≤20 ly)', n: 56 }, large: { name: 'Large: 84 nearest stars (≤26 ly)', n: 84 }, huge: { name: 'Huge: 125 stars (≤51 ly)', n: 125 } };
 const COLORS = ['#4fc3f7', '#ef5350', '#66bb6a', '#ffca28', '#ab47bc', '#ff7043', '#26a69a', '#ec407a', '#d4e157', '#8d9eff'];
 const AI_NAMES = ['Varn Hegemony', 'Quell Collective', 'Ossari Dominion', 'Thalan Republic', 'Krynn Swarm', 'Eidolon Union', 'Sareth Imperium', 'Nova Concord', 'Draxis Pact', 'Myrr Theocracy'];
 const AI_HOMES = { 'Varn Hegemony': 'Varnis', 'Quell Collective': 'Quellar', 'Ossari Dominion': 'Ossar', 'Thalan Republic': 'Thala', 'Krynn Swarm': 'Krynnhive', 'Eidolon Union': 'Eidos', 'Sareth Imperium': 'Sareth Prime', 'Nova Concord': 'Novara', 'Draxis Pact': 'Draxis', 'Myrr Theocracy': 'Myrrhal' };
@@ -1888,7 +1888,7 @@ function newGame(opts) {
   const seed = Math.floor(Math.random() * 1e9);
   const r = mulberry32(seed ^ 0x5bd1e995);
   const stars = genGalaxy(SIZES[opts.size].n, seed);
-  const nEmp = 1 + opts.ais;
+  let nEmp = 1 + opts.ais;
   G = { v: 3, seed, time: 0, speed: 1, paused: false, diff: opts.diff, size: opts.size, stars, empires: [], fleets: [], rel: {}, op: {}, nextId: 1, log: [], over: false, victoryShown: false };
   distCache = new Map(); byStar = new Map(); fx = []; projs = []; events = []; dialogQueue = [];
   // humanity starts at Sol; alien capitals spread far away
@@ -1898,8 +1898,10 @@ function newGame(opts) {
   while (caps.length < nEmp) {
     let best = null, bd = -1;
     for (const s of cands) { if (caps.includes(s)) continue; let md = Infinity; for (const c of caps) md = Math.min(md, Math.hypot(s.x - c.x, s.y - c.y, s.z - c.z)); md *= 0.85 + r() * 0.3; if (md > bd) { bd = md; best = s; } }
+    if (!best) break;
     caps.push(best);
   }
+  nEmp = caps.length;
   const colors = COLORS.filter(c => c !== opts.color);
   const names = AI_NAMES.slice().sort(() => r() - 0.5);
   const persKeys = Object.keys(PERS);
@@ -1973,7 +1975,7 @@ function toast(msg, color = '#4fc3f7', star = null) {
 // ---------- simulation ----------
 function rebuildIndex() {
   byStar = new Map();
-  for (const f of G.fleets) if (f.at !== null) { let a = byStar.get(f.at); if (!a) byStar.set(f.at, a = []); a.push(f); }
+  for (const f of G.fleets) { for (const sh of f.ships) sh._at = f.at; if (f.at !== null) { let a = byStar.get(f.at); if (!a) byStar.set(f.at, a = []); a.push(f); } }
 }
 function evt(s, e) { if (view.mode !== 'galaxy' && view.star === s.id) { e.s = s.id; events.push(e); if (events.length > 800) events.splice(0, 200); } }
 
@@ -2219,7 +2221,7 @@ function stepProjectiles(dt) {
       evt(s, { k: 'phit', p });
       continue;
     }
-    if (p.to.dead) continue;
+    if (p.to.dead || p.to._at !== p.s) continue;
     applyHit(p.to, p, s);
   }
   projs = projs.filter(p => !p.done);
@@ -2530,11 +2532,11 @@ function splitFleet(f, cls) {
   rebuildIndex();
   return g;
 }
-function mergeHere(f) {
+function mergeHere(f, filter) {
   if (f.at === null) return 0;
   let n = 0;
   for (const g of G.fleets) {
-    if (g === f || g.owner !== f.owner || g.at !== f.at || g.path.length) continue;
+    if (g === f || g.owner !== f.owner || g.at !== f.at || g.path.length || (filter && !filter(g))) continue;
     f.ships.push(...g.ships); g.ships = []; n++;
   }
   G.fleets = G.fleets.filter(x => x.ships.length > 0);
@@ -2705,7 +2707,7 @@ function aiMilitary(e, stars, fleets, wars) {
   }
   const busy = f => f.at === null || f.path.length || hostilePower(f.at, e.id) > 0 || (G.stars[f.at].owner >= 0 && atWar(e.id, G.stars[f.at].owner));
   const seen = new Map();
-  for (const f of armed) { if (busy(f)) continue; const o = seen.get(f.at); if (o) mergeHere(o); else seen.set(f.at, f); }
+  for (const f of armed) { if (busy(f)) continue; const o = seen.get(f.at); if (o) mergeHere(o, g => isArmed(g) || transportOnly(g)); else seen.set(f.at, f); }
   armed = G.fleets.filter(f => f.owner === e.id && isArmed(f));
   const idle = armed.filter(f => !busy(f));
   const used = new Set();
@@ -3075,7 +3077,7 @@ class PointPool {
     this.mat = new THREE.ShaderMaterial({ uniforms: { scale: { value: 1 } }, vertexShader: PTS_VS, fragmentShader: PTS_FS, transparent: true, depthWrite: false, blending: additive ? THREE.AdditiveBlending : THREE.NormalBlending });
     this.obj = new THREE.Points(g, this.mat); this.obj.frustumCulled = false; this.obj.renderOrder = additive ? 5 : 4;
   }
-  add(x, y, z, r, g, b, a, s) { if (this.n >= this.max) return; const i = this.n++; this.pos.set([x, y, z], i * 3); this.col.set([r, g, b, a], i * 4); this.size[i] = s; }
+  add(x, y, z, r, g, b, a, s) { if (this.n >= this.max) return; const i = this.n++, p = this.pos, c = this.col, j = i * 3, k = i * 4; p[j] = x; p[j + 1] = y; p[j + 2] = z; c[k] = r; c[k + 1] = g; c[k + 2] = b; c[k + 3] = a; this.size[i] = s; }
   flush() { this.g.setDrawRange(0, this.n); for (const k of ['position', 'rgba', 'size']) this.g.attributes[k].needsUpdate = true; this.mat.uniforms.scale.value = pxPerUnit(1) * DPR; this.n = 0; }
 }
 class LinePool {
@@ -3088,7 +3090,7 @@ class LinePool {
     this.obj = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     this.obj.frustumCulled = false; this.obj.renderOrder = 6;
   }
-  add(a, b, r, g, bl, a0, a1) { if (this.n >= this.max) return; const i = this.n++; this.pos.set([a.x, a.y, a.z, b.x, b.y, b.z], i * 6); this.col.set([r, g, bl, a0, r, g, bl, a1], i * 8); }
+  add(a, b, r, g, bl, a0, a1) { if (this.n >= this.max) return; const i = this.n++, p = this.pos, c = this.col, j = i * 6, k = i * 8; p[j] = a.x; p[j + 1] = a.y; p[j + 2] = a.z; p[j + 3] = b.x; p[j + 4] = b.y; p[j + 5] = b.z; c[k] = c[k + 4] = r; c[k + 1] = c[k + 5] = g; c[k + 2] = c[k + 6] = bl; c[k + 3] = a0; c[k + 7] = a1; }
   flush() { this.g.setDrawRange(0, this.n * 2); this.g.attributes.position.needsUpdate = true; this.g.attributes.color.needsUpdate = true; this.n = 0; }
 }
 function rgb01(hex) { const [r, g, b] = hexRGB(hex); return [r / 255, g / 255, b / 255]; }
@@ -3441,7 +3443,8 @@ function buildSystem(s) {
   if (s.bin) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: new THREE.Color('#ffd2a1'), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); sp.scale.setScalar(L.starRad * 2.4); sp.position.set(L.starRad * 2.6, L.starRad * 0.8, -L.starRad * 1.5); sc.add(sp); }
   // orbits
   const om = new THREE.LineBasicMaterial({ color: 0x4a6aa8, transparent: true, opacity: 0.28, depthWrite: false });
-  L.orb.forEach((r, i) => { const pts = []; for (let k = 0; k <= 160; k++) { const a = k / 160 * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r)); } const ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), i === s.pi && s.owner >= 0 ? new THREE.LineBasicMaterial({ color: new THREE.Color(emp(s.owner).color), transparent: true, opacity: 0.5 }) : om); sc.add(ln); });
+  let mainOrbit = null;
+  L.orb.forEach((r, i) => { const pts = []; for (let k = 0; k <= 160; k++) { const a = k / 160 * Math.PI * 2; pts.push(new THREE.Vector3(Math.cos(a) * r, 0, Math.sin(a) * r)); } const ln = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), i === s.pi ? new THREE.LineBasicMaterial({ color: 0x4a6aa8, transparent: true, opacity: 0.28, depthWrite: false }) : om); if (i === s.pi) mainOrbit = ln; sc.add(ln); });
   if (L.belt) { const r = mulberry32(s.id + 99), pts = []; for (let i = 0; i < 900; i++) { const a = r() * 6.283, rr = L.belt + (r() - 0.5) * 26; pts.push(new THREE.Vector3(Math.cos(a) * rr, (r() - 0.5) * 6, Math.sin(a) * rr)); } sc.add(new THREE.Points(new THREE.BufferGeometry().setFromPoints(pts), new THREE.PointsMaterial({ color: 0xa89c8a, size: 1.6, sizeAttenuation: true }))); }
   // planets
   const planets = s.planets.map((p, i) => {
@@ -3457,7 +3460,7 @@ function buildSystem(s) {
     return { id: l, pos }; });
   const add = new PointPool(5000, true), norm = new PointPool(2500, false), lines = new LinePool(5000);
   sc.add(add.obj, norm.obj, lines.obj);
-  SY = { scene: sc, s, L, planets, exits, add, norm, lines, sun, recs: new Map(), debris: [], wrecks: [], parts: [], lastP: null, follow: true };
+  SY = { scene: sc, s, L, planets, exits, add, norm, lines, sun, mainOrbit, ownerShown: null, recs: new Map(), debris: [], wrecks: [], parts: [], lastP: null };
 }
 function teardownSystem() { if (!SY) return; SY.scene.remove(sky); disposeScene(SY.scene); SY = null; }
 
@@ -3488,6 +3491,7 @@ function detachUnit(r, u, boom, quiet) {
   }
 }
 function reattachUnit(u) { if (!u.lost) return; u.lost = false; for (const m of u.meshes) m.visible = true; }
+const SCORCH = new THREE.Color('#0d0806'), HULK = new THREE.Color('#090909');
 // physical damage: parts torn off, hull scorched, glowing gashes, venting, fires, dying lights
 function applyDamageVisuals(r, time, vdt, quiet) {
   const sh = r.sh, S = SHIPS[sh.c], stf = clamp(sh.st / stMax(sh, r.o), 0, 1), crf = clamp(sh.cr / S.crew, 0, 1), m = r.m;
@@ -3499,7 +3503,7 @@ function applyDamageVisuals(r, time, vdt, quiet) {
   const wep = byKind('weapon'); want(wep, Math.round((1 - sh.wp) * wep.length * 0.9));
   r.canRepair = stf > 0.95;
   // scorched, heat-glowing hull
-  m.hull.color.copy(m.base).lerp(new THREE.Color('#0d0806'), (1 - stf) * 0.75);
+  m.hull.color.copy(m.base).lerp(SCORCH, (1 - stf) * 0.75);
   const heat = stf < 0.35 ? (0.35 - stf) * (0.6 + 0.4 * Math.sin(time / 90 + sh.id)) : 0;
   m.hull.emissive.setRGB(heat * 0.9, heat * 0.25, 0);
   // neon trim dims with crew and stutters when damaged
@@ -3650,6 +3654,12 @@ function updateSystem(time, vdt) {
     pl.m.userData.mat.uniforms.sun.value.set(0, 0, 0); pl.m.userData.mat.uniforms.cloudOff.value = G.time * 0.002;
     pl.moons.forEach((mm, k) => { const a = G.time * (0.4 / (k + 1)) + k * 2.1, mr = pl.R * (1.8 + k * 0.5); mm.position.set(x + Math.cos(a) * mr, y + Math.sin(a * 0.7) * mr * 0.15, z + Math.sin(a) * mr); mm.userData.mat.uniforms.sun.value.set(0, 0, 0); });
   });
+  if (SY.ownerShown !== s.owner) {
+    SY.ownerShown = s.owner;
+    const mat = SY.mainOrbit.material;
+    if (s.owner >= 0) { mat.color.set(emp(s.owner).color); mat.opacity = 0.5; } else { mat.color.set(0x4a6aa8); mat.opacity = 0.28; }
+    SY.planets[s.pi].m.userData.mat.uniforms.lights.value = s.owner >= 0 ? 0.9 : 0;
+  }
   // keep the camera riding along with the main world while it orbits
   const [px, py, pz] = planetPosSys(s, s.pi), PP = new THREE.Vector3(px, py, pz);
   if (SY.lastP) { const dlt = PP.clone().sub(SY.lastP); if (controls.target.distanceTo(PP) < planetDrawR(s, s.pi) * 10) { camera.position.add(dlt); controls.target.add(dlt); } }
@@ -3660,10 +3670,10 @@ function updateSystem(time, vdt) {
   for (const w of SY.wrecks) {
     w.life -= vdt; w.pos.addScaledVector(w.vel, vdt);
     const g = w.m.group; g.position.copy(w.pos); g.rotation.x += w.spin.x * vdt; g.rotation.y += w.spin.y * vdt; g.rotation.z += w.spin.z * vdt;
-    w.m.trim.opacity = 0.06; w.m.glow.opacity = 0.05; w.m.hull.color.lerp(new THREE.Color('#090909'), 0.02); for (const n of w.m.nozzles) n.sp.visible = false;
+    w.m.trim.opacity = 0.06; w.m.glow.opacity = 0.05; w.m.hull.color.lerp(HULK, 0.02); for (const n of w.m.nozzles) n.sp.visible = false;
     if (Math.random() < vdt * 3 && w.life > 10) P({ x: w.pos.x, y: w.pos.y, z: w.pos.z, vx: (Math.random() - 0.5) * 16, vy: (Math.random() - 0.5) * 16, vz: (Math.random() - 0.5) * 16, life: 1.5, max: 1.5, size: 2, r: 0.8, g: 0.88, b: 1, add: false, grow: 2, a0: 0.4 });
     if (w.life < 2) g.scale.setScalar(SHIPS[w.sh.c].len * Math.max(0.01, w.life / 2));
-    if (w.life <= 0) SY.scene.remove(g);
+    if (w.life <= 0) { SY.scene.remove(g); disposeModel(w.m); }
   }
   SY.wrecks = SY.wrecks.filter(w => w.life > 0);
   // debris: torn-off parts tumbling away, glowing hot at first
@@ -3901,9 +3911,17 @@ function backToSystem() {
 // =====================================================================
 let panelCollapsed = false;
 let tapStart = null, lastTap = { t: 0, x: 0, y: 0 };
-glCanvas.addEventListener('pointerdown', e => { tapStart = { x: e.clientX, y: e.clientY, b: e.button, t: performance.now(), n: (tapStart && tapStart.n) || 0 }; controls.autoRotate = controls.autoRotate && false; });
+let activePointers = 0, multiTouch = false;
+glCanvas.addEventListener('pointerdown', e => {
+  activePointers++; if (activePointers > 1) multiTouch = true;
+  tapStart = activePointers === 1 ? { x: e.clientX, y: e.clientY, b: e.button, t: performance.now() } : null;
+  if (controls.autoRotate) { controls.autoRotate = false; refreshViewButtons(); }
+});
+glCanvas.addEventListener('pointercancel', () => { activePointers = Math.max(0, activePointers - 1); tapStart = null; if (!activePointers) multiTouch = false; });
 glCanvas.addEventListener('pointerup', e => {
-  if (!tapStart) return;
+  activePointers = Math.max(0, activePointers - 1);
+  const wasMulti = multiTouch; if (!activePointers) multiTouch = false;
+  if (!tapStart || wasMulti) { tapStart = null; return; }
   const moved = Math.hypot(e.clientX - tapStart.x, e.clientY - tapStart.y);
   if (moved < 8 && performance.now() - tapStart.t < 600) handleTap(e.clientX, e.clientY, tapStart.b);
   tapStart = null;
@@ -3981,6 +3999,7 @@ let viewCycle = 1;
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
   if (e.key === 'Escape') {
+    if (!playing()) return;
     if (modalKind) actions.closeModal();
     else if (sel.fleet || sel.planet != null) { sel.fleet = null; sel.planet = null; refreshUI(true); }
     else if (view.mode === 'planet') backToSystem();
@@ -4037,7 +4056,7 @@ function updateTopbar() {
 function updateNav() {
   const nav = $('#viewnav');
   nav.style.top = ($('#topbar').offsetHeight + 6) + 'px';
-  if (view.mode === 'galaxy') { nav.innerHTML = `<span class="cur">Local stars</span><span class="muted" style="font-size:12px">Double-tap a star to enter it</span>`; return; }
+  if (view.mode === 'galaxy') { const g = `<span class="cur">Local stars</span><span class="muted" style="font-size:12px">Double-tap a star to enter it</span>`; if (nav._h !== g) { nav.innerHTML = g; nav._h = g; } return; }
   const s = G.stars[view.star];
   let h = `<button data-act="toGalaxy">◀ Galaxy</button><span class="sep">›</span>`;
   if (view.mode === 'system') h += `<span class="cur">${esc(s.name)}</span><span class="muted" style="font-size:12px">Double-tap a planet to land</span>`;
@@ -4180,7 +4199,7 @@ function planetPanel(s, i) {
   if (p.real) h += `<div class="sub"><span class="tag real">Real planet</span> ${esc(p.note || 'Confirmed exoplanet')}</div>`;
   else if (p.note) h += `<div class="sub">${esc(p.note)}</div>`;
   h += `<div class="kv"><span>Size</span><span>${p.sz}${p.ring ? ' · ringed' : ''}${p.moons ? ` · ${p.moons} moon${p.moons > 1 ? 's' : ''}` : ''}</span></div>`;
-  h += `<div class="kv"><span>Habitability</span><span>${Math.round(clamp(P.hab + (s.owner >= 0 ? mods(emp(s.owner)).hab : mods(emp(PLAYER)).hab), 0.05, 1) * 100)}%</span></div><div class="kv"><span>Richness</span><span>◆×${P.min} ⚡×${P.en}</span></div>`;
+  h += `<div class="kv"><span>Habitability</span><span>${Math.round((primary ? starHab(s, s.owner >= 0 ? s.owner : PLAYER) : clamp(P.hab + mods(emp(s.owner >= 0 ? s.owner : PLAYER)).hab, 0.05, 1)) * 100)}%</span></div><div class="kv"><span>Richness</span><span>◆×${P.min} ⚡×${P.en}</span></div>`;
   if (view.mode === 'system') h += `<div class="btns"><button class="primary" data-act="landPlanet" data-arg="${i}">View surface ⤢</button></div>`;
   if (primary) {
     h += `<div class="sub">Main world of the system${owner ? `, held by <b style="color:${owner.color}">${esc(owner.name)}</b>` : ''}.</div>`;
@@ -4483,11 +4502,11 @@ function startPlaying() {
 function helpHtml() {
   return `<div class="help">
   <h3>Goal</h3>Lead humanity from Earth into the real stars around the Sun. Win by destroying every alien empire <b>or</b> holding 60% of all systems. You lose if your last world falls.
-  <h3>The map is real</h3>Every star is a real star at its true distance from Sol (direction from right ascension), with its real spectral type. Many real exoplanets are included: Proxima b, the TRAPPIST-1 worlds, Tau Ceti e and f, Teegarden b and more. The Solar System has all eight planets.
+  <h3>The map is real</h3>Every star is a real star at its true 3D position around the Sun (from its right ascension, declination and distance), with its real spectral type. Many real exoplanets are included: Proxima b, the TRAPPIST-1 worlds, Tau Ceti e and f, Teegarden b and more. The Solar System has all eight planets.
   <h3>Three levels of zoom</h3><ul>
    <li><b>Galaxy (3D):</b> stars sit at their true 3D positions; faint lines drop each star to the galactic plane, with rings every 10 ly around Sol. <b>Double-tap a star</b> (or zoom right into it) to enter it.</li>
    <li><b>Star system:</b> planets orbit their star and battles play out ship by ship. Double-tap a planet to view its surface; zoom out to return.</li>
-   <li><b>Planet:</b> a rotating globe (Earth has real continents, clouds and city lights). Drag to spin. If soldiers are fighting there, you watch the ground battle.</li></ul>
+   <li><b>Planet:</b> a rotating globe (Earth has real continents, clouds and city lights). Drag to orbit around it. If soldiers are fighting there, you watch the ground battle.</li></ul>
   <h3>Camera</h3><ul>
    <li><b>Drag</b> to rotate and tilt, <b>pinch / wheel</b> to zoom, <b>two fingers / right-drag</b> to pan. The ⟲/✋ button swaps one-finger drag between rotate and pan.</li>
    <li>View buttons: <b>⤒</b> top-down, <b>◢</b> angled, <b>▭</b> side-on (cinematic), <b>⟳</b> slow auto-orbit, <b>◎</b> focus on your selection. Keys: V cycles views, O orbit, F focus, R drag mode.</li>
@@ -4589,9 +4608,10 @@ const actions = {
   ngColor(c, el) { ngColor = c; document.querySelectorAll('.swatch').forEach(s => s.classList.toggle('on', s === el)); },
   startGame() {
     const opts = { name: $('#ng-name').value.trim() || 'United Earth', color: ngColor, size: $('#ng-size').value, ais: +$('#ng-ai').value, diff: $('#ng-diff').value };
-    const maxAI = Math.floor(SIZES[opts.size].n / 7) - 1; if (opts.ais > maxAI) opts.ais = maxAI;
+    const maxAI = Math.floor(SIZES[opts.size].n / 7) - 1; const clamped = opts.ais > maxAI; if (clamped) opts.ais = maxAI;
     newGame(opts); startPlaying();
     enterSystem(0, true); sel.planet = G.stars[0].pi; panelCollapsed = window.innerWidth <= 760; refreshUI(true);
+    if (clamped) toast(`This map has room for at most ${maxAI} rivals, so the game started with ${maxAI}.`, '#ffca28');
     setTimeout(() => toast('Tip: Earth is selected. Build here, double-tap Earth to see it, or zoom out to the local stars.', '#4fc3f7'), 1200);
   },
   zoomIn() { zoomBy(1.4); },
