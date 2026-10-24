@@ -5815,7 +5815,7 @@ const actions = {
   gift(id) { const p = emp(PLAYER); if (p.res.energy < 100) return; p.res.energy -= 100; const k = id + '>' + PLAYER, cur = G.op[k] || 0; G.op[k] = cur + 20 * (1 - clamp(cur, 0, 90) / 100); toast(`Gift sent to the ${emp(+id).name}. Opinion improved.`, '#66bb6a'); renderModal(); },
   dialogYes() { const d = modalArg; modalKind = null; $('#modal').classList.add('hidden'); if (d.kind === 'peace') makePeace(PLAYER, d.from); else makeAlliance(PLAYER, d.from); showNextDialog(); },
   dialogNo() { const d = modalArg; modalKind = null; $('#modal').classList.add('hidden'); G.op[d.from + '>' + PLAYER] = (G.op[d.from + '>' + PLAYER] || 0) - 5; showNextDialog(); },
-  saveSlot(k) { if (saveTo(k)) toast(`Saved to slot ${k}`, '#66bb6a'); else toast('Save failed (storage unavailable?). Try Export instead.', '#ef5350'); renderModal(); },
+  saveSlot(k) { if (saveTo(k)) { toast(`Saved to slot ${k}`, '#66bb6a'); actions.closeModal(); } else { toast('Save failed (storage unavailable?). Try Export instead.', '#ef5350'); renderModal(); } },
   loadSlot(k) { loadFrom(k); },
   delSlot(k) { lsDel(k.startsWith('v1:') ? V1_PREFIX + k.slice(3) : SAVE_PREFIX + k); if ($('#screen').style.display === 'none') renderModal(); else { anySaves() ? loadScreen() : titleScreen(); } },
   exportSave() { if (G) exportSave(); }, importSave() { importSave(); }, pickSaveFile() { pickSaveFile(); },
