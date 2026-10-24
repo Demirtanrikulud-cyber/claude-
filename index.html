@@ -151,7 +151,7 @@ small{color:var(--muted)}
   #mapctl.up{bottom:calc(52vh + 8px)}
   .techgrid{grid-template-columns:1fr 1fr}
   .cols{grid-template-columns:1fr}
-  #toasts{top:84px}
+  #toasts{top:140px}
 }
 @media (max-width:420px){ .techgrid{grid-template-columns:1fr} }
 /* v2 additions */
@@ -369,9 +369,9 @@ const PLANETS = {
 const ROCKY_HZ = [['terran', 2], ['ocean', 2], ['jungle', 1], ['desert', 3], ['tundra', 2], ['toxic', 2], ['barren', 2]];
 
 const BUILDINGS = {
-  mine: { name: 'Mining Complex', icon: '◆', cost: { minerals: 60 }, time: 10, jobs: 1, upkeep: 0.3, desc: '+4 minerals/day × planet richness' },
-  power: { name: 'Power Plant', icon: '⚡', cost: { minerals: 60 }, time: 10, jobs: 1, upkeep: 0, desc: '+4 energy/day × planet richness' },
-  lab: { name: 'Research Lab', icon: '🔬', cost: { minerals: 80, energy: 20 }, time: 14, jobs: 1, upkeep: 0.5, desc: '+3 research/day' },
+  mine: { name: 'Mining Complex', icon: '◆', cost: { minerals: 60 }, time: 10, jobs: 1, upkeep: 0.3, desc: '+3 minerals/day × planet richness' },
+  power: { name: 'Power Plant', icon: '⚡', cost: { minerals: 60 }, time: 10, jobs: 1, upkeep: 0, desc: '+3 energy/day × planet richness' },
+  lab: { name: 'Research Lab', icon: '🔬', cost: { minerals: 80, energy: 20 }, time: 14, jobs: 1, upkeep: 0.5, desc: '+2.5 research/day' },
   shipyard: { name: 'Shipyard', icon: '⚓', cost: { minerals: 120 }, time: 20, jobs: 1, upkeep: 1, unique: true, desc: 'Build and fully repair ships here' },
   defense: { name: 'Defense Grid', icon: '🛡', cost: { minerals: 100 }, time: 16, jobs: 1, upkeep: 0.5, desc: 'Orbital batteries + point defense, +20 garrison' },
   habitat: { name: 'Habitat Dome', icon: '⌂', cost: { minerals: 80 }, time: 14, jobs: 0, upkeep: 0.5, desc: '+3 pop capacity (no worker needed)' },
@@ -433,6 +433,22 @@ const TECHS = {
   diplomacy: { name: 'Xeno-Linguistics', cat: 'Society', cost: 480, req: [], desc: '+20 opinion with every empire' },
 };
 const TECH_CATS = ['Military', 'Engineering', 'Economy', 'Society'];
+// endless late-game research, unlocked after 18 technologies; each level costs 50% more
+const REPEAT = {
+  rep_dmg: { name: 'Weapon Refinement', base: 1600, desc: '+5% weapon damage per level' },
+  rep_hull: { name: 'Hull Reinforcement', base: 1600, desc: '+5% ship structure per level' },
+  rep_eco: { name: 'Industrial Automation', base: 2000, desc: '+5% energy, mineral & research output per level' },
+  rep_ground: { name: 'Veteran Legions', base: 1400, desc: '+5% soldier strength per level' },
+};
+const REPEAT_UNLOCK = 18;
+// major planetary projects: expensive late-game sinks for minerals & energy
+const PROJECTS = {
+  terraform: { name: 'Terraform', icon: '🌱', cost: { minerals: 500, energy: 250 }, time: 60, max: 2, desc: '+25% habitability on the main world' },
+  orbital: { name: 'Orbital Habitat', icon: '◎', cost: { minerals: 450, energy: 150 }, time: 50, max: 1, desc: '+2 building slots' },
+  navalyards: { name: 'Naval Yards', icon: '⚓', cost: { minerals: 450, energy: 200 }, time: 35, max: 3, scale: 0.5, needs: 'shipyard', desc: '+4 fleet capacity (up to 3; each costs 50% more)' },
+  starbase: { name: 'Starbase', icon: '✦', cost: { minerals: 400, energy: 100 }, time: 40, max: 1, desc: '+6 fleet capacity, +150 orbital defense, +2 batteries' },
+};
+const TRADE = { give: 100, get: 35 };
 
 const DIFF = {
   easy: { name: 'Easy', mult: 0.75, ai: 3.0, mil: 0.6, war: 2.2, grace: 400 },
@@ -483,8 +499,9 @@ function allied(a, b) { return a === b || relS(a, b) === 'alliance'; }
 
 function mods(e) {
   if (e._m) return e._m;
-  const t = e.techs;
-  return e._m = {
+  const t = e.techs, rp = e.rep || {};
+  const R = k => 1 + 0.05 * (rp[k] || 0);
+  const m = e._m = {
     dmg: 1 + (t.weapons1 ? .15 : 0) + (t.weapons2 ? .15 : 0) + (t.weapons3 ? .2 : 0),
     pen: (t.weapons1 ? 1 : 0) + (t.weapons2 ? 2 : 0) + (t.weapons3 ? 3 : 0),
     armor: 1 + (t.armor1 ? .15 : 0) + (t.armor2 ? .15 : 0) + (t.armor3 ? .2 : 0),
@@ -500,7 +517,26 @@ function mods(e) {
     hab: t.hab1 ? .2 : 0, growth: t.genetics ? 1.5 : 1, capBonus: t.genetics ? 2 : 0,
     slots: t.admin ? 1 : 0, opinion: t.diplomacy ? 20 : 0,
   };
+  m.dmg *= R('rep_dmg'); m.hull *= R('rep_hull'); m.ground *= R('rep_ground');
+  m.en *= R('rep_eco'); m.min *= R('rep_eco'); m.res *= R('rep_eco');
+  return m;
 }
+const isRepeat = k => !!REPEAT[k];
+function techInfo(k) { return TECHS[k] || REPEAT[k]; }
+function techCost(e, k) {
+  if (REPEAT[k]) return Math.round(REPEAT[k].base * Math.pow(1.5, (e.rep && e.rep[k]) || 0));
+  return Math.round(TECHS[k].cost * (1 + 0.12 * Object.keys(e.techs).length) / 10) * 10;
+}
+function storageCap(e) { let n = 0; for (const s of G.stars) if (s.owner === e.id) n++; return 2000 + 300 * n; }
+function researchCap(e) { let n = 0; for (const s of G.stars) if (s.owner === e.id) n++; return 1500 + 150 * n; }
+function repeatUnlocked(e) { return Object.keys(e.techs).length >= REPEAT_UNLOCK; }
+function availableTechs(e) {
+  const a = Object.keys(TECHS).filter(k => !e.techs[k] && TECHS[k].req.every(r => e.techs[r]));
+  if (repeatUnlocked(e)) a.push(...Object.keys(REPEAT));
+  return a;
+}
+const pj = (s, k) => (s.proj && s.proj[k]) || 0;
+function projCost(s, k) { const P = PROJECTS[k], f = 1 + (P.scale || 0) * pj(s, k); return { minerals: Math.round(P.cost.minerals * f), energy: Math.round(P.cost.energy * f) }; }
 function canAfford(e, cost) { return (e.res.minerals >= (cost.minerals || 0)) && (e.res.energy >= (cost.energy || 0)); }
 function pay(e, cost, sign = 1) { e.res.minerals -= sign * (cost.minerals || 0); e.res.energy -= sign * (cost.energy || 0); }
 function costStr(cost) { let s = ''; if (cost.minerals) s += '◆' + cost.minerals; if (cost.energy) s += ' ⚡' + cost.energy; return s.trim(); }
@@ -511,25 +547,25 @@ const prim = s => s.planets[s.pi];
 function countB(s, k) { let n = 0; for (const b of s.buildings) if (b === k) n++; return n; }
 function jobs(s) { let j = 0; for (const b of s.buildings) j += BUILDINGS[b].jobs; return j; }
 function isCapital(s) { return s.owner >= 0 && emp(s.owner).capital === s.id; }
-function starHab(s, eid = s.owner) { const e = eid >= 0 ? emp(eid) : null; return clamp(PLANETS[s.type].hab + (e ? mods(e).hab : 0), 0.05, 1); }
-function slots(s) { return s.size + (s.owner >= 0 ? mods(emp(s.owner)).slots : 0); }
+function starHab(s, eid = s.owner) { const e = eid >= 0 ? emp(eid) : null; return clamp(PLANETS[s.type].hab + (e ? mods(e).hab : 0) + 0.25 * pj(s, 'terraform'), 0.05, 1); }
+function slots(s) { return s.size + (s.owner >= 0 ? mods(emp(s.owner)).slots : 0) + 2 * pj(s, 'orbital'); }
 function popCap(s) { const m = mods(emp(s.owner)); return Math.max(1, s.size * 1.5 * starHab(s) + countB(s, 'habitat') * 3 + m.capBonus + (isCapital(s) ? 3 : 0)); }
-function defMax(s) { if (s.owner < 0) return 0; const m = mods(emp(s.owner)); return (60 + s.size * 15 + countB(s, 'defense') * 100 + (isCapital(s) ? 250 : 0)) * m.def; }
-function batteries(s) { return s.owner < 0 ? 0 : 1 + countB(s, 'defense') * 2 + (isCapital(s) ? 3 : 0); }
+function defMax(s) { if (s.owner < 0) return 0; const m = mods(emp(s.owner)); return (60 + s.size * 15 + countB(s, 'defense') * 100 + (isCapital(s) ? 250 : 0) + 150 * pj(s, 'starbase')) * m.def; }
+function batteries(s) { return s.owner < 0 ? 0 : 1 + countB(s, 'defense') * 2 + (isCapital(s) ? 3 : 0) + 2 * pj(s, 'starbase'); }
 function planetPower(s) { return s.owner < 0 ? 0 : Math.sqrt(batteries(s) * 25 * Math.max(0, s.defense)) * 0.9; }
 function garrisonMax(s) { if (s.owner < 0) return 0; return (10 + s.pop * 3 + countB(s, 'defense') * 20 + (isCapital(s) ? 40 : 0)) * mods(emp(s.owner)).garrison; }
 function outpostYield(p, e) {
   const P = PLANETS[p.t], m = mods(e);
-  if (p.t === 'gas') return { en: 3 * P.en * m.en * e.mult, mi: 0 };
-  if (p.t === 'ice') return { en: 1.5 * m.en * e.mult, mi: 1.5 * P.min * m.min * e.mult };
-  return { en: 0, mi: 3 * P.min * m.min * e.mult };
+  if (p.t === 'gas') return { en: 2 * P.en * m.en * e.mult, mi: 0 };
+  if (p.t === 'ice') return { en: 1 * m.en * e.mult, mi: 1 * P.min * m.min * e.mult };
+  return { en: 0, mi: 2 * P.min * m.min * e.mult };
 }
 function starOutput(s) {
   const e = emp(s.owner), m = mods(e), P = PLANETS[s.type];
   const j = jobs(s), fill = j ? Math.min(1, s.pop / j) : 0, unemployed = Math.max(0, s.pop - j);
-  let en = countB(s, 'power') * 4 * P.en * fill + unemployed * 0.5 + s.pop * 0.1;
-  let mi = countB(s, 'mine') * 4 * P.min * fill;
-  let re = countB(s, 'lab') * 3 * fill + s.pop * 0.05;
+  let en = countB(s, 'power') * 3 * P.en * fill + unemployed * 0.4 + s.pop * 0.1;
+  let mi = countB(s, 'mine') * 3 * P.min * fill;
+  let re = countB(s, 'lab') * 2.5 * fill + s.pop * 0.05;
   if (isCapital(s)) { en += 4; mi += 3; re += 3; }
   en *= m.en * e.mult; mi *= m.min * e.mult; re *= m.res * e.mult;
   let up = 0; for (const b of s.buildings) up += BUILDINGS[b].upkeep;
@@ -589,7 +625,7 @@ function hostilePower(starId, eid) { let p = 0; for (const f of fleetsAt(starId)
 function friendlyPower(starId, eid) { let p = 0; for (const f of fleetsAt(starId)) if (allied(f.owner, eid)) p += fleetPower(f); return p; }
 function hostileArmedAt(starId, eid) { for (const f of fleetsAt(starId)) if (atWar(f.owner, eid) && isArmed(f)) return true; return false; }
 function fleetUsage(e) { let u = 0; for (const f of G.fleets) if (f.owner === e.id) for (const sh of f.ships) u += SHIPS[sh.c].size; return u; }
-function fleetCap(e) { let c = 10; for (const s of G.stars) if (s.owner === e.id) c += 3 + (s.buildings.includes('shipyard') ? 2 : 0); return Math.round(c * mods(e).cap); }
+function fleetCap(e) { let c = 10; for (const s of G.stars) if (s.owner === e.id) c += 3 + (s.buildings.includes('shipyard') ? 2 : 0) + 6 * pj(s, 'starbase') + 4 * pj(s, 'navalyards'); return Math.round(c * mods(e).cap); }
 
 // ship condition: words instead of health bars
 function shipCondition(sh, owner) {
@@ -801,12 +837,13 @@ function notify(msg, o = {}) {
 }
 function toast(msg, color = '#4fc3f7', star = null) {
   const box = $('#toasts');
-  while (box.children.length >= 4) box.firstChild.remove();
+  const small = window.innerWidth <= 760;
+  while (box.children.length >= (small ? 2 : 4)) box.firstChild.remove();
   const d = document.createElement('div');
   d.className = 'toast'; d.style.borderLeftColor = color; d.textContent = msg;
   if (star != null) { d.dataset.act = 'goto'; d.dataset.arg = star; }
   box.appendChild(d);
-  setTimeout(() => d.remove(), 5500);
+  setTimeout(() => d.remove(), small ? 3800 : 5500);
 }
 
 // ---------- simulation ----------
@@ -862,15 +899,24 @@ function economy(dt) {
     const net = t.en - t.up;
     e.inc = { en: net, mi: t.mi, re: t.re, up: t.up, gross: t.en, over };
     e.res.energy += net * dt; e.res.minerals += t.mi * dt; e.res.research += t.re * dt;
+    // storage limits: surpluses beyond the silos are lost
+    const sc = storageCap(e); e.store = sc;
+    for (const k of ['energy', 'minerals']) if (e.res[k] > sc) {
+      e.res[k] = sc;
+      if (e.isPlayer && G.time - (e['_full' + k] || -999) > 120) { e['_full' + k] = G.time; notify(`${k === 'energy' ? 'Energy' : 'Mineral'} storage is full (${fmt(sc)}). Spend it on projects or ships, or trade it in the Empire screen.`, { color: '#ffca28' }); }
+    }
+    const rc = researchCap(e); if (e.res.research > rc) e.res.research = rc;
     if (e.res.energy < 0) { e.res.energy = 0; if (!e.deficit && e.isPlayer) notify('Energy deficit! Mineral and research output halved. Build power plants or reduce your fleet.', { color: '#ef5350' }); e.deficit = true; }
     else if (e.res.energy > 5) e.deficit = false;
     if (e.researching) {
-      const k = e.researching, T = TECHS[k];
-      const need = T.cost - (e.techProg[k] || 0), x = Math.min(need, e.res.research);
+      const k = e.researching, T = techInfo(k), cost = techCost(e, k);
+      const need = cost - (e.techProg[k] || 0), x = Math.max(0, Math.min(need, e.res.research));
       e.techProg[k] = (e.techProg[k] || 0) + x; e.res.research -= x;
-      if (e.techProg[k] >= T.cost - 1e-6) {
-        e.techs[k] = true; e._m = null; e.researching = null;
-        if (e.isPlayer) notify(`Research complete: ${T.name} (${T.desc})`, { color: '#b39ddb' });
+      if (e.techProg[k] >= cost - 1e-6) {
+        if (isRepeat(k)) { e.rep = e.rep || {}; e.rep[k] = (e.rep[k] || 0) + 1; e.techProg[k] = 0; }
+        else e.techs[k] = true;
+        e._m = null; e.researching = null;
+        if (e.isPlayer) notify(`Research complete: ${T.name}${isRepeat(k) ? ' level ' + e.rep[k] : ''} (${T.desc})`, { color: '#b39ddb' });
       }
     }
   }
@@ -893,7 +939,8 @@ function upkeepStars(dt) {
       const q = s.bq[0]; q.p += dt;
       if (q.p >= q.t) {
         s.bq.shift();
-        if (q.k === 'outpost') { if (s.planets[q.pl]) s.planets[q.pl].out = 1; if (e.isPlayer) notify(`Outpost established on ${s.planets[q.pl].n}`, { color: '#66bb6a', star: s.id, silent: true }); }
+        if (q.k === 'proj') { s.proj = s.proj || {}; s.proj[q.pj] = (s.proj[q.pj] || 0) + 1; if (e.isPlayer) notify(`${PROJECTS[q.pj].name} completed at ${prim(s).n}!`, { color: '#66bb6a', star: s.id }); }
+        else if (q.k === 'outpost') { if (s.planets[q.pl]) s.planets[q.pl].out = 1; if (e.isPlayer) notify(`Outpost established on ${s.planets[q.pl].n}`, { color: '#66bb6a', star: s.id, silent: true }); }
         else if (s.buildings.length < slots(s)) { s.buildings.push(q.k); if (e.isPlayer) notify(`${BUILDINGS[q.k].name} completed at ${prim(s).n}`, { color: '#66bb6a', star: s.id, silent: true }); }
       }
     }
@@ -1309,7 +1356,7 @@ function aiAcceptsAlliance(e, o) { return relS(e.id, o.id) === 'peace' && opinio
 function queueBuilding(e, s, k) {
   const B = BUILDINGS[k];
   if (s.owner !== e.id) return 'Not your system';
-  if (s.buildings.length + s.bq.filter(q => q.k !== 'outpost').length >= slots(s)) return 'No free building slots';
+  if (s.buildings.length + s.bq.filter(q => BUILDINGS[q.k]).length >= slots(s)) return 'No free building slots';
   if (B.unique && (s.buildings.includes(k) || s.bq.some(q => q.k === k))) return 'Only one per world';
   if (!canAfford(e, B.cost)) return 'Not enough resources';
   pay(e, B.cost); s.bq.push({ k, p: 0, t: B.time }); return null;
@@ -1321,6 +1368,22 @@ function queueOutpost(e, s, i) {
   if (!canAfford(e, OUTPOST.cost)) return 'Not enough resources';
   pay(e, OUTPOST.cost); s.bq.push({ k: 'outpost', pl: i, p: 0, t: OUTPOST.time }); return null;
 }
+function queueProject(e, s, k) {
+  const P = PROJECTS[k];
+  if (s.owner !== e.id) return 'Not your system';
+  if (pj(s, k) + s.bq.filter(q => q.k === 'proj' && q.pj === k).length >= P.max) return 'Already completed here';
+  if (P.needs && !s.buildings.includes(P.needs)) return 'Needs a ' + BUILDINGS[P.needs].name;
+  const cost = projCost(s, k);
+  if (!canAfford(e, cost)) return 'Not enough resources';
+  pay(e, cost); s.bq.push({ k: 'proj', pj: k, p: 0, t: P.time, c: cost }); return null;
+}
+function trade(e, dir) {
+  const from = dir === 'en' ? 'energy' : 'minerals', to = dir === 'en' ? 'minerals' : 'energy';
+  if (e.res[from] < TRADE.give) return 'Not enough ' + from;
+  e.res[from] -= TRADE.give; e.res[to] += TRADE.get; return null;
+}
+function queueCost(q) { return q.k === 'outpost' ? OUTPOST.cost : q.k === 'proj' ? (q.c || PROJECTS[q.pj].cost) : BUILDINGS[q.k].cost; }
+function queueName(s, q) { return q.k === 'outpost' ? `Outpost on ${s.planets[q.pl].n}` : q.k === 'proj' ? `${PROJECTS[q.pj].icon} ${PROJECTS[q.pj].name}` : `${BUILDINGS[q.k].icon} ${BUILDINGS[q.k].name}`; }
 function queueShip(e, s, c) {
   const S = SHIPS[c];
   if (s.owner !== e.id || !s.buildings.includes('shipyard')) return 'Needs a shipyard';
@@ -1367,6 +1430,20 @@ function aiTick(e) {
   aiColonize(e, fleets);
   aiMilitary(e, stars, fleets, wars);
   aiInvade(e, wars);
+  aiTrimFleet(e);
+}
+function aiTrimFleet(e) {
+  if (!e.cap || e.used <= e.cap * 1.25) return;
+  let worst = null, wf = null, ws = Infinity;
+  for (const f of G.fleets) {
+    if (f.owner !== e.id || f.at === null || f.path.length || hostileArmedAt(f.at, e.id)) continue;
+    for (const sh of f.ships) { const sc = shipPower(sh, mods(e)) / SHIPS[sh.c].size + (sh.c === 'colony' ? 999 : 0); if (sc < ws) { ws = sc; worst = sh; wf = f; } }
+  }
+  if (!worst) return;
+  wf.ships.splice(wf.ships.indexOf(worst), 1);
+  pay(e, SHIPS[worst.c].cost, -0.25);
+  e.used -= SHIPS[worst.c].size;
+  G.fleets = G.fleets.filter(f => f.ships.length);
 }
 function aiEconomy(e, stars, wars) {
   const P = PERS[e.pers];
@@ -1396,23 +1473,37 @@ function aiEconomy(e, stars, wars) {
     // outposts on other planets of the system
     if (!k && e.res.minerals > 150) {
       const i = s.planets.findIndex((p, i) => i !== s.pi && !p.out);
-      if (i >= 0) queueOutpost(e, s, i);
+      if (i >= 0) { queueOutpost(e, s, i); continue; }
+    }
+    // spend surpluses on major projects
+    if (!k && e.res.minerals > 700 && e.res.energy > 350) {
+      const front = wars.some(o => s.lanes.some(l => G.stars[l].owner === o.id));
+      let pk = null;
+      if (pj(s, 'starbase') < 1 && (isCapital(s) || front || e.used >= e.cap - 2)) pk = 'starbase';
+      else if (pj(s, 'orbital') < 1 && free <= 0) pk = 'orbital';
+      else if (pj(s, 'terraform') < 2 && starHab(s) < 0.8 && s.size >= 3) pk = 'terraform';
+      else if (s.buildings.includes('shipyard') && pj(s, 'navalyards') < 3 && e.used >= e.cap - 6 && e.res.minerals > (e.store || 3000) * 0.7) pk = 'navalyards';
+      if (pk) queueProject(e, s, pk);
     }
   }
+  // trade away lopsided stockpiles
+  if (e.res.energy > 1200 && e.res.minerals < 400) trade(e, 'en');
+  else if (e.res.minerals > 2500 && e.res.energy < 100) trade(e, 'mi');
 }
 function aiResearch(e, wars) {
   if (e.researching) return;
   const P = PERS[e.pers];
-  const avail = Object.keys(TECHS).filter(k => !e.techs[k] && TECHS[k].req.every(r => e.techs[r]));
+  const avail = availableTechs(e);
   if (!avail.length) return;
   e.researching = wpick(avail.map(k => {
+    if (isRepeat(k)) return [k, k === 'rep_eco' ? 1.2 : 1];
     const T = TECHS[k]; let w = 1;
     if (T.cat === 'Economy') w = 1.5 * P.sci;
     if (T.cat === 'Military') w = (wars.length ? 1.6 : 0.9) * P.mil;
     if (k === 'cruisers' || k === 'battleships') w = 2.2 * P.mil;
     if (k === 'hab1' || k === 'genetics' || k === 'admin') w = 1.3 * P.expand;
     if (k === 'diplomacy') w = 0.4;
-    return [k, w / Math.sqrt(T.cost / 250)];
+    return [k, w / Math.sqrt(techCost(e, k) / 400)];
   }));
 }
 function aiShipyards(e, stars, fleets, wars) {
@@ -2239,7 +2330,7 @@ function projPos(p, k, info) {
   if (W2.kind === 'missile' || W2.kind === 'torpedo') { const curve = Math.sin(k * Math.PI) * (p.sd - 0.5) * (W2.kind === 'torpedo' ? 40 : 90); x += -dy / d * curve; y += dx / d * curve; }
   return { x, y, ax: a.x, ay: a.y, bx, by, ang: Math.atan2(by - a.y, bx - a.x) };
 }
-function addFx(o) { if (sysFx.length < 1600) sysFx.push(o); }
+function addFx(o) { if (sysFx.length < (W <= 760 ? 500 : 1600)) sysFx.push(o); }
 function burst(x, y, n, col, spd, life, size) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, v = spd * (0.3 + Math.random()); addFx({ k: 'spark', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life, max: life, size: size * (0.5 + Math.random()), col }); } }
 function processEvents(info) {
   for (const e of events) {
@@ -2521,6 +2612,7 @@ function enterSystem(id, instant) {
   sel.planet = null; sel.star = id;
   if (sel.fleet && sel.fleet.owner !== PLAYER) sel.fleet = null;
   fitSystemCam(s, G.time - (s._combat || -99) < 1);
+  if (window.innerWidth <= 760) panelCollapsed = true;
   sysFx = []; events = [];
   trans = instant ? null : { t: 0, dir: from.mode === 'galaxy' ? 'in' : 'out', from };
   refreshUI(true);
@@ -2553,6 +2645,7 @@ function backToSystem() {
 // =====================================================================
 // INPUT
 // =====================================================================
+let panelCollapsed = false;
 const pointers = new Map(); let drag = null, pinch = null, lastTap = { t: 0, x: 0, y: 0 };
 function zoomAt(sx, sy, f) {
   if (view.mode === 'galaxy') {
@@ -2699,10 +2792,14 @@ function updateTopbar() {
   const e = emp(PLAYER);
   $('#tb-color').style.background = e.color; $('#tb-name').textContent = e.name;
   $('#tb-en').textContent = fmt(e.res.energy); $('#tb-mi').textContent = fmt(e.res.minerals);
+  const sc = e.store || storageCap(e);
+  $('#tb-en').style.color = e.res.energy >= sc - 1 ? '#ffca28' : ''; $('#tb-mi').style.color = e.res.minerals >= sc - 1 ? '#ffca28' : '';
+  $('#tb-en').parentElement.title = `Energy ${fmt(e.res.energy)} / ${fmt(sc)} storage. Pays upkeep for ships and buildings.`;
+  $('#tb-mi').parentElement.title = `Minerals ${fmt(e.res.minerals)} / ${fmt(sc)} storage. Used to construct buildings, projects and ships.`;
   const rr = (id, v) => { const n = $(id); n.textContent = ' ' + sgn(v); n.className = v >= 0 ? 'pos' : 'neg'; };
   rr('#tb-enr', e.inc.en || 0); rr('#tb-mir', e.inc.mi || 0);
-  if (e.researching) { const T = TECHS[e.researching]; $('#tb-re').textContent = T.name.split(' ')[0] + ' ' + Math.floor((e.techProg[e.researching] || 0) / T.cost * 100) + '%'; }
-  else $('#tb-re').textContent = fmt(e.res.research) + (Object.keys(e.techs).length < Object.keys(TECHS).length ? ' (pick!)' : '');
+  if (e.researching) { const T = techInfo(e.researching); $('#tb-re').textContent = T.name.split(' ')[0] + ' ' + Math.floor((e.techProg[e.researching] || 0) / techCost(e, e.researching) * 100) + '%'; }
+  else $('#tb-re').textContent = fmt(e.res.research) + (availableTechs(e).length ? ' (pick!)' : '');
   rr('#tb-rer', e.inc.re || 0);
   const cv = $('#tb-capv'); cv.textContent = `${e.used || 0}/${e.cap || 0}`; cv.style.color = (e.used || 0) > (e.cap || 0) ? '#ff8a65' : '';
   $('#tb-date').textContent = dateStr(G.time);
@@ -2769,17 +2866,23 @@ function colonyBlock(s, live, w) {
     <div class="kv"><span>Garrison</span><span data-live="gar"></span></div>`;
   if (s.inv) { live.inv = `${Math.ceil(s.inv.tr)} enemy soldiers vs ${Math.ceil(s.garrison)} defenders`; h += `<div class="ground">⚔ <b>Ground battle!</b> <span data-live="inv"></span><div class="btns"><button data-act="landPlanet" data-arg="${s.pi}">Watch the battle ⤢</button></div></div>`; }
   if (s.pop < jobs(s) - 0.5) h += `<div class="sub" style="color:var(--warn)">Not enough workers. Buildings run at reduced output; build a Habitat Dome or wait for growth.</div>`;
-  const used = s.buildings.length + s.bq.filter(q => q.k !== 'outpost').length, sl = slots(s);
+  const used = s.buildings.length + s.bq.filter(q => BUILDINGS[q.k]).length, sl = slots(s);
   h += `<h4>Buildings on ${esc(prim(s).n)} ${s.buildings.length}/${sl}</h4><div class="chips">`;
   s.buildings.forEach((b, i) => { h += `<span class="chip">${BUILDINGS[b].icon} ${BUILDINGS[b].name}<button data-act="demolish" data-arg="${i}" title="Demolish (no refund)">✕</button></span>`; });
   if (!s.buildings.length) h += `<span class="muted">None yet</span>`;
   h += `</div>`;
-  s.bq.forEach((q, i) => { w['bq' + i] = q.p / q.t * 100; const nm = q.k === 'outpost' ? `Outpost on ${s.planets[q.pl].n}` : `${BUILDINGS[q.k].icon} ${BUILDINGS[q.k].name}`; h += `<div class="row"><div class="grow">${esc(nm)}${i ? ' <small>(queued)</small>' : ''}${bar('bq' + i)}</div><button data-act="cancelB" data-arg="${i}" title="Cancel (full refund)">✕</button></div>`; });
+  s.bq.forEach((q, i) => { w['bq' + i] = q.p / q.t * 100; const nm = queueName(s, q); h += `<div class="row"><div class="grow">${esc(nm)}${i ? ' <small>(queued)</small>' : ''}${bar('bq' + i)}</div><button data-act="cancelB" data-arg="${i}" title="Cancel (full refund)">✕</button></div>`; });
   h += `<h4>Construct</h4><div class="grid2">`;
   for (const k in BUILDINGS) {
     const B = BUILDINGS[k];
     const dis = used >= sl || (B.unique && (s.buildings.includes(k) || s.bq.some(q => q.k === k))) || !canAfford(pe, B.cost);
     h += `<button class="opt" data-act="build" data-arg="${k}" ${dis ? 'disabled' : ''}><b>${B.icon} ${B.name}</b><small>${costStr(B.cost)} · ${B.time}d</small><small>${B.desc}</small></button>`;
+  }
+  h += `</div><h4>Major projects</h4><div class="grid2">`;
+  for (const k in PROJECTS) {
+    const P = PROJECTS[k], n = pj(s, k), queued = s.bq.some(q => q.k === 'proj' && q.pj === k), cost = projCost(s, k);
+    const done = n >= P.max, need = P.needs && !s.buildings.includes(P.needs);
+    h += `<button class="opt" data-act="project" data-arg="${k}" ${done || queued || need || !canAfford(pe, cost) ? 'disabled' : ''}><b>${P.icon} ${P.name}${P.max > 1 ? ` (${n}/${P.max})` : ''}</b><small>${done ? '✓ Complete' : queued ? 'In progress' : need ? 'Needs a ' + BUILDINGS[P.needs].name : costStr(cost) + ' · ' + P.time + 'd'}</small><small>${P.desc}</small></button>`;
   }
   h += `</div>`;
   if (s.buildings.includes('shipyard')) {
@@ -2934,8 +3037,8 @@ function renderModal() {
 function techView() {
   const e = emp(PLAYER), live = {}, w = {};
   live.bank = fmt(e.res.research); live.rate = sgn(e.inc.re || 0);
-  let h = `<div class="kv" style="margin-bottom:10px"><span>Research stored: <b data-live="bank"></b> (<span data-live="rate"></span>/day)</span><span class="muted">Click a technology to research it. Progress is kept if you switch.</span></div>`;
-  if (e.researching) { const T = TECHS[e.researching]; w.cur = (e.techProg[e.researching] || 0) / T.cost * 100; h += `<div style="margin-bottom:12px">Researching <b>${T.name}</b>: ${T.desc}${bar('cur')}</div>`; }
+  let h = `<div class="kv" style="margin-bottom:10px"><span>Research stored: <b data-live="bank"></b> (<span data-live="rate"></span>/day)</span><span class="muted">Each technology you know makes new ones 12% more expensive. Progress is kept if you switch.</span></div>`;
+  if (e.researching) { const T = techInfo(e.researching); w.cur = (e.techProg[e.researching] || 0) / techCost(e, e.researching) * 100; h += `<div style="margin-bottom:12px">Researching <b>${T.name}</b>: ${T.desc}${bar('cur')}</div>`; }
   else h += `<div class="hint" style="margin:0 0 12px">No active research. Research points are being stored; pick a technology!</div>`;
   h += `<div class="techgrid">`;
   for (const cat of TECH_CATS) {
@@ -2945,10 +3048,17 @@ function techView() {
       const done = !!e.techs[k], locked = !T.req.every(r => e.techs[r]), active = e.researching === k;
       const cls = done ? 'done' : active ? 'active' : locked ? 'locked' : '';
       const prog = e.techProg[k] || 0;
-      if (prog > 0 && !done) w['t' + k] = prog / T.cost * 100;
-      h += `<button class="tech ${cls}" data-act="research" data-arg="${k}" ${done || locked ? 'disabled' : ''}><b>${T.name}</b><small>${T.desc}</small><small>${done ? '✓ Researched' : `🔬 ${T.cost}` + (locked ? ' · needs ' + T.req.map(r => TECHS[r].name).join(', ') : '')}</small>${prog > 0 && !done ? `<i class="tp" data-w="t${k}"></i>` : ''}</button>`;
+      const cost = techCost(e, k);
+      if (prog > 0 && !done) w['t' + k] = prog / cost * 100;
+      h += `<button class="tech ${cls}" data-act="research" data-arg="${k}" ${done || locked ? 'disabled' : ''}><b>${T.name}</b><small>${T.desc}</small><small>${done ? '✓ Researched' : `🔬 ${cost}` + (locked ? ' · needs ' + T.req.map(r => TECHS[r].name).join(', ') : '')}</small>${prog > 0 && !done ? `<i class="tp" data-w="t${k}"></i>` : ''}</button>`;
     }
     h += `</div>`;
+  }
+  h += `</div><h3 style="margin:16px 0 6px;font-size:13px;text-transform:uppercase;color:var(--muted);letter-spacing:.06em">Repeatable research ${repeatUnlocked(e) ? '' : `(unlocks after ${REPEAT_UNLOCK} technologies, you have ${Object.keys(e.techs).length})`}</h3><div class="techgrid">`;
+  for (const k in REPEAT) {
+    const T = REPEAT[k], lvl = (e.rep && e.rep[k]) || 0, cost = techCost(e, k), prog = e.techProg[k] || 0, locked = !repeatUnlocked(e), active = e.researching === k;
+    if (prog > 0) w['t' + k] = prog / cost * 100;
+    h += `<button class="tech ${active ? 'active' : locked ? 'locked' : ''}" data-act="research" data-arg="${k}" ${locked ? 'disabled' : ''}><b>${T.name} ${lvl ? '· Lv ' + lvl : ''}</b><small>${T.desc}</small><small>🔬 ${cost}</small>${prog > 0 ? `<i class="tp" data-w="t${k}"></i>` : ''}</button>`;
   }
   return { html: h + '</div>', live, w };
 }
@@ -2989,9 +3099,11 @@ function empireView() {
   let h = `<div class="cols"><div>
     <div class="kv"><span>Systems</span><b data-live="esys"></b></div><div class="kv"><span>Population</span><b data-live="epop"></b></div>
     <div class="kv"><span>Ships</span><b data-live="eships"></b></div><div class="kv"><span>Fleet capacity</span><b data-live="ecap"></b></div><div class="kv"><span>Military strength</span><b data-live="epow"></b></div>
-    <div class="kv"><span>Net income/day</span><b data-live="einc"></b></div><div class="kv"><span>Total upkeep</span><span data-live="eup"></span></div>
+    <div class="kv"><span>Net income/day</span><b data-live="einc"></b></div><div class="kv"><span>Total upkeep</span><span data-live="eup"></span></div><div class="kv"><span>Storage (each resource)</span><span>${fmt(storageCap(e))}</span></div>
     <div class="kv"><span>Technologies</span><span>${Object.keys(e.techs).length}/${Object.keys(TECHS).length}</span></div>
-    <div class="kv"><span>Difficulty</span><span>${DIFF[G.diff].name}</span></div><h4>Systems</h4>`;
+    <div class="kv"><span>Difficulty</span><span>${DIFF[G.diff].name}</span></div>
+    <h4>Galactic market</h4><div class="btns" style="margin-top:0"><button data-act="trade" data-arg="en" ${e.res.energy < TRADE.give ? 'disabled' : ''}>Sell ⚡${TRADE.give} → ◆${TRADE.get}</button><button data-act="trade" data-arg="mi" ${e.res.minerals < TRADE.give ? 'disabled' : ''}>Sell ◆${TRADE.give} → ⚡${TRADE.get}</button></div>
+    <h4>Systems</h4>`;
   for (const s of stars.sort((a, b) => b.pop - a.pop)) h += `<div class="row"><span class="pl" style="background:${PLANETS[s.type].color}"></span><div class="grow">${esc(prim(s).n)} <small>${esc(s.name)}${isCapital(s) ? ' ★' : ''} · pop ${s.pop.toFixed(0)} · ${s.buildings.length}/${slots(s)}${s.buildings.includes('shipyard') ? ' · ⚓' : ''}${s.inv ? ' · ⚔ invaded' : ''}</small></div><button data-act="goto" data-arg="${s.id}">Go</button></div>`;
   h += `<h4>Fleets</h4>`;
   for (const f of fleets) h += `<div class="row">${shipSVG(topClass(f), false, e.color, 20)}<div class="grow">${esc(f.name)} <small>${f.ships.length} ships · ${f.at !== null && !f.path.length ? 'at ' + esc(G.stars[f.at].name) : 'moving'}</small></div><button data-act="gotoFleet" data-arg="${f.id}">Go</button></div>`;
@@ -3020,14 +3132,47 @@ function lsDel(k) { try { localStorage.removeItem(k); } catch (e) { } }
 function serialize() { return JSON.stringify({ meta: { name: emp(PLAYER).name, day: Math.floor(G.time), systems: G.stars.filter(s => s.owner === PLAYER).length, diff: G.diff, size: G.size, at: Date.now() }, game: G }, (k, v) => k[0] === '_' ? undefined : v); }
 function saveTo(slot) { if (!G || (G.over && slot === 'auto')) return false; return lsSet(SAVE_PREFIX + slot, serialize()); }
 function slotMeta(slot) { const raw = lsGet(SAVE_PREFIX + slot); if (!raw) return null; try { return JSON.parse(raw).meta; } catch (e) { return null; } }
+const V1_PREFIX = 'stellar_dominion_';
+function v1Meta(slot) { const raw = lsGet(V1_PREFIX + slot); if (!raw) return null; try { return JSON.parse(raw).meta; } catch (e) { return null; } }
+// convert a first-version save (random galaxy, ship counts) into the current format
+function migrateV1(g) {
+  const old = g; G = old;
+  const r = mulberry32((g.seed || 1) ^ 0x1234567);
+  const specs = ['G2V', 'K3V', 'M4V', 'A1V', 'DA2', 'F5V'];
+  for (const s of g.stars) {
+    const sp = specs[s.sc % specs.length] || 'G2V', si = specInfo(sp);
+    Object.assign(s, { ly: +(Math.hypot(s.x - g.stars[0].x, s.y - g.stars[0].y) / LY).toFixed(1), sp, cls: si.cls, col: si.col, lum: si.lum, sr: si.r, bin: 0, giant: 0, belt: 0, garrison: 0, inv: null, proj: {} });
+    const t = s.type, sz = s.size;
+    s.planets = genPlanets(s, r); choosePrimary(s);
+    const p = prim(s); p.t = t; p.sz = sz; s.type = t; s.size = sz;
+    s.bq = (s.bq || []).filter(q => BUILDINGS[q.k]); s.sq = (s.sq || []).filter(q => SHIPS[q.k]);
+  }
+  for (const e of g.empires) {
+    e._m = null; e.shipNo = e.shipNo || 0; e.rep = {};
+    if (e.techs.flak) { delete e.techs.flak; e.techs.pd1 = true; }
+    for (const k of Object.keys(e.techProg)) if (!TECHS[k]) delete e.techProg[k];
+    if (e.researching && !TECHS[e.researching]) e.researching = null;
+  }
+  g.v = 2;
+  for (const f of g.fleets) {
+    const counts = f.ships; f.ships = [];
+    for (const c in counts) if (SHIPS[c]) for (let i = 0; i < counts[c].n; i++) f.ships.push(makeShip(g.empires[f.owner], c));
+    f.target = f.target ?? null;
+  }
+  g.fleets = g.fleets.filter(f => f.ships.length);
+  for (const s of g.stars) if (s.owner >= 0) s.garrison = garrisonMax(s);
+  return g;
+}
 function loadData(obj) {
   if (!obj || !obj.game || !obj.game.stars) throw new Error('Not a Stellar Dominion save');
-  if (obj.game.v !== 2) throw new Error('This save is from an older version of the game');
+  if (obj.game.v === 1 || (!obj.game.v && obj.game.stars[0] && !obj.game.stars[0].planets)) { migrateV1(obj.game); toast('Converted a save from the first version of the game.', '#4fc3f7'); }
+  if (obj.game.v !== 2) throw new Error('Unknown save version');
   G = obj.game; G.paused = true;
   afterLoad(); startPlaying();
   toast(`Loaded: day ${Math.floor(G.time)}. Game is paused; press ▶ to continue.`, '#66bb6a');
 }
-function loadFrom(slot) { const raw = lsGet(SAVE_PREFIX + slot); if (!raw) return; try { loadData(JSON.parse(raw)); } catch (e) { toast('Could not load save: ' + e.message, '#ef5350'); } }
+function loadFrom(slot) { const raw = slot.startsWith('v1:') ? lsGet(V1_PREFIX + slot.slice(3)) : lsGet(SAVE_PREFIX + slot); if (!raw) return; try { loadData(JSON.parse(raw)); } catch (e) { toast('Could not load save: ' + e.message, '#ef5350'); } }
+function anySaves() { return SLOT_KEYS.some(k => slotMeta(k) || v1Meta(k)); }
 function slotsView(mode) {
   let h = '';
   for (const k of SLOT_KEYS) {
@@ -3037,6 +3182,10 @@ function slotsView(mode) {
     if (mode === 'save') h += `<button class="primary" data-act="saveSlot" data-arg="${k}">Save</button>`;
     else if (m) h += `<button class="primary" data-act="loadSlot" data-arg="${k}">Load</button><button data-act="delSlot" data-arg="${k}" title="Delete">🗑</button>`;
     h += `</div>`;
+  }
+  if (mode === 'load') for (const k of SLOT_KEYS) {
+    const m = v1Meta(k); if (!m) continue;
+    h += `<div class="row"><div class="grow"><b>Old save (${k === 'auto' ? 'autosave' : 'slot ' + k})</b> <span class="tag">v1</span><br><small>${esc(m.name)} · ${dateStr(m.day)} · converted to the real star map's rules on load</small></div><button class="primary" data-act="loadSlot" data-arg="v1:${k}">Load</button><button data-act="delSlot" data-arg="v1:${k}" title="Delete">🗑</button></div>`;
   }
   if (mode === 'load') h += `<div class="btns"><button data-act="importSave">Import from file…</button></div>`;
   return h;
@@ -3063,7 +3212,7 @@ window.addEventListener('pagehide', () => { if (playing()) saveTo('auto'); });
 let ngColor = COLORS[0];
 function showScreen(html) { const s = $('#screen'); s.innerHTML = html; s.style.display = 'flex'; for (const id of ['#topbar', '#panel', '#mapctl', '#viewnav']) $(id).classList.add('hidden'); }
 function titleScreen() {
-  const hasAuto = !!slotMeta('auto'), anySave = SLOT_KEYS.some(k => slotMeta(k));
+  const hasAuto = !!slotMeta('auto'), anySave = anySaves();
   showScreen(`<div class="scr"><h1>STELLAR DOMINION</h1><div class="tag">Real-time grand strategy across the real stars near Earth · plays fully offline</div>
     <div class="menu-btns">
       ${hasAuto ? '<button class="primary" data-act="continue">Continue</button>' : ''}
@@ -3120,7 +3269,6 @@ function helpHtml() {
 // =====================================================================
 // ACTIONS
 // =====================================================================
-let panelCollapsed = false;
 const curStar = () => G.stars[view.mode !== 'galaxy' ? view.star : sel.star];
 const actions = {
   closeModal() {
@@ -3146,8 +3294,10 @@ const actions = {
   },
   gotoFleet(id) { const f = G.fleets.find(x => x.id === +id); if (!f) return; view = { mode: 'galaxy', star: null, planet: null }; const [x, y] = fleetPos(f); cam.x = x; cam.y = y; actions.closeModal(); selectFleet(f); },
   build(k) { const err = queueBuilding(emp(PLAYER), curStar(), k); if (err) toast(err, '#ef5350'); refreshUI(true); },
+  project(k) { const err = queueProject(emp(PLAYER), curStar(), k); if (err) toast(err, '#ef5350'); refreshUI(true); },
+  trade(d) { const err = trade(emp(PLAYER), d); if (err) toast(err, '#ef5350'); else toast(d === 'en' ? `Sold ⚡${TRADE.give} for ◆${TRADE.get}` : `Sold ◆${TRADE.give} for ⚡${TRADE.get}`, '#66bb6a'); renderModal(); },
   outpost(i) { const err = queueOutpost(emp(PLAYER), curStar(), +i); if (err) toast(err, '#ef5350'); refreshUI(true); },
-  cancelB(i) { const s = curStar(); const q = s.bq.splice(+i, 1)[0]; if (q) pay(emp(PLAYER), q.k === 'outpost' ? OUTPOST.cost : BUILDINGS[q.k].cost, -1); refreshUI(true); },
+  cancelB(i) { const s = curStar(); const q = s.bq.splice(+i, 1)[0]; if (q) pay(emp(PLAYER), queueCost(q), -1); refreshUI(true); },
   demolish(i) { const s = curStar(); const b = s.buildings[+i]; if (!b) return; s.buildings.splice(+i, 1); if (b === 'shipyard' && !s.buildings.includes('shipyard')) { for (const q of s.sq) pay(emp(PLAYER), SHIPS[q.k].cost, -1); s.sq = []; } toast(`${BUILDINGS[b].name} demolished`, '#ffca28'); refreshUI(true); },
   ship(c) { const err = queueShip(emp(PLAYER), curStar(), c); if (err) toast(err, '#ef5350'); refreshUI(true); },
   cancelS(i) { const s = curStar(); const q = s.sq.splice(+i, 1)[0]; if (q) pay(emp(PLAYER), SHIPS[q.k].cost, -1); refreshUI(true); },
@@ -3186,7 +3336,7 @@ const actions = {
   dialogNo() { const d = modalArg; modalKind = null; $('#modal').classList.add('hidden'); G.op[d.from + '>' + PLAYER] = (G.op[d.from + '>' + PLAYER] || 0) - 5; showNextDialog(); },
   saveSlot(k) { if (saveTo(k)) toast(`Saved to slot ${k}`, '#66bb6a'); else toast('Save failed (storage unavailable?). Try Export instead.', '#ef5350'); renderModal(); },
   loadSlot(k) { loadFrom(k); },
-  delSlot(k) { lsDel(SAVE_PREFIX + k); if ($('#screen').style.display === 'none') renderModal(); else { SLOT_KEYS.some(x => slotMeta(x)) ? loadScreen() : titleScreen(); } },
+  delSlot(k) { lsDel(k.startsWith('v1:') ? V1_PREFIX + k.slice(3) : SAVE_PREFIX + k); if ($('#screen').style.display === 'none') renderModal(); else { anySaves() ? loadScreen() : titleScreen(); } },
   exportSave() { if (G) exportSave(); }, importSave() { importSave(); },
   continue() { loadFrom('auto'); },
   newGameScreen() { if (playing() && !G.over) saveTo('auto'); modalKind = null; $('#modal').classList.add('hidden'); newGameScreen(); },

@@ -15,7 +15,7 @@ Build an interstellar empire across a galaxy of star systems linked by hyperlane
    - **Android (Chrome):** ⋮ menu → *Install app* / *Add to Home screen*.
 3. Launch it once from the home screen while online. It is then cached and runs fully offline.
 
-Saves are stored in the browser on each device. To move a game between devices, use **☰ → Export save** and **Import save**.
+Saves are stored in the browser on each device. Saves from the first version of the game are converted automatically when loaded. To move a game between devices, use **☰ → Export save** and **Import save**.
 
 ## Features
 
@@ -24,8 +24,8 @@ Saves are stored in the browser on each device. To move a game between devices, 
 - **Real ships, not blocks:** Corvettes, Destroyers, Cruisers, Battleships, Troop Transports and Colony Ships, drawn as actual ships. Humans have angular grey hulls; aliens have organic, tinted ones.
 - **Damage without health bars:** weapons have damage and armour penetration. Autocannons barely scratch heavy armour. Missiles and torpedoes breach hulls, so ships vent air, catch fire, lose crew and suffer engine or weapon damage, and can die slowly if damage control can't keep up. Ships report conditions like "3 hull breaches: venting atmosphere · Air 41% · Crew 212/750".
 - **Ground war:** destroy a world's orbital defences, then land Troop Transports. You watch soldiers fight the garrison on the surface.
-- **Economy:** energy, minerals and research. Buildings need workers, other planets in a system can host outposts, and fleet capacity limits your navy.
-- **Tech tree:** 27 technologies. **Diplomacy:** war, peace, defensive alliances, opinion and gifts. **AI rivals:** 1–7 alien empires with personalities, on 4 difficulty levels.
+- **Economy:** energy, minerals and research. Buildings need workers, other planets in a system can host outposts, and fleet capacity limits your navy. Storage silos cap stockpiles (2,000 + 300 per system), so surpluses should be spent on **major projects** (Terraform, Orbital Habitat, Starbase, Naval Yards) or traded on the galactic market.
+- **Tech tree:** 27 technologies that get pricier the more you know, plus endless repeatable research for the late game. **Diplomacy:** war, peace, defensive alliances, opinion and gifts. **AI rivals:** 1–7 alien empires with personalities, on 4 difficulty levels.
 - **Real time:** pause and 1×/2×/4×/8× speed. Autosave, 3 save slots, and export/import of save files. Touch and mouse controls.
 
 ## Controls
