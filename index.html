@@ -3948,6 +3948,7 @@ let panelCollapsed = false;
 let tapStart = null, lastTap = { t: 0, x: 0, y: 0 };
 let activePointers = 0, multiTouch = false;
 glCanvas.addEventListener('pointerdown', e => {
+  if (e.isPrimary) { activePointers = 0; multiTouch = false; } // first finger down: nothing else can be touching
   activePointers++; if (activePointers > 1) multiTouch = true;
   tapStart = activePointers === 1 ? { x: e.clientX, y: e.clientY, b: e.button, t: performance.now() } : null;
   if (controls.autoRotate) { controls.autoRotate = false; refreshViewButtons(); }
