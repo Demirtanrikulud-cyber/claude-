@@ -9,8 +9,10 @@ Build an interstellar empire across a galaxy of star systems linked by hyperlane
 **Laptop (Windows / Mac / Linux):** download `index.html` and double-click it. It opens in your browser and works with no connection.
 
 **Phone or tablet:** phones don't run games from a downloaded HTML file very well, so install it as an app while you still have internet:
-1. Enable GitHub Pages for this repo (Settings → Pages → deploy from branch, root folder). You only need to do this once.
-2. Open the Pages URL on your phone.
+1. Put the game online once (free):
+   - **Netlify Drop (easiest):** on a laptop go to https://app.netlify.com/drop and drag in the files `index.html`, `sw.js`, `manifest.webmanifest`, `icon.svg`, `icon-180.png`, `icon-192.png`, `icon-512.png` (or the `stellar-dominion-app.zip`). You get an `https://….netlify.app` address. Make a free account to keep it permanently.
+   - **GitHub Pages:** only free for public repos. Settings → Pages → deploy from branch, root folder.
+2. Open that address on your phone.
    - **iPhone/iPad (Safari):** Share → *Add to Home Screen*.
    - **Android (Chrome):** ⋮ menu → *Install app* / *Add to Home screen*.
 3. Launch it once from the home screen while online. It is then cached and runs fully offline.
