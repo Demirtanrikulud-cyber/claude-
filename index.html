@@ -239,6 +239,16 @@ button.x{min-width:40px;min-height:40px;font-size:20px}
 #tut.min{padding:4px 10px}
 #tut.min .th{margin:0}
 @media (max-width:760px){ #tut .th b{font-size:14px} #tut .tb{font-size:12.5px;line-height:1.35} }
+/* phone top bar: four resources on one line, speed + menus on the next */
+@media (max-width:500px){
+  #topbar #tb-cap{display:none}
+  #topbar{gap:3px 4px}
+  #topbar .res{font-size:11.5px;padding:2px 5px;gap:2px}
+  #topbar .res small{font-size:10px}
+  #topbar .speed button{min-width:28px}
+  #topbar .menu button{padding:2px 5px;font-size:11.5px}
+  #topbar .menu button[data-act="openMenu"],#topbar .menu button[data-act="openVictory"]{min-width:32px;font-size:14px}
+}
 
 </style>
 </head>
@@ -251,6 +261,7 @@ button.x{min-width:40px;min-height:40px;font-size:20px}
   <div class="res" title="Energy (credits): pays upkeep for ships and buildings">⚡<span id="tb-en">0</span><small id="tb-enr"></small></div>
   <div class="res" title="Minerals: used to construct buildings and ships">◆<span id="tb-mi">0</span><small id="tb-mir"></small></div>
   <div class="res" id="tb-research" data-act="openTech" title="Research: click to open the tech tree">🔬<span id="tb-re">0</span><small id="tb-rer"></small></div>
+  <div class="res" id="tb-cr" data-act="openEmpire" title="Credits: earned by trade, freighters, bounties and branch offices. Spend them on the market, mercenaries and branch offices.">₡<span id="tb-crv">0</span><small id="tb-crr"></small></div>
   <div class="res" id="tb-cap" title="Fleet capacity used / available. Going over raises ship upkeep sharply.">⚓<span id="tb-capv">0</span></div>
   <div class="date" id="tb-date"></div>
   <div class="speed">
@@ -264,6 +275,7 @@ button.x{min-width:40px;min-height:40px;font-size:20px}
     <button data-act="openTech" title="Tech tree (T)">Tech</button>
     <button data-act="openDiplo" title="Diplomacy (D)">Diplo<span class="long">macy</span></button>
     <button data-act="openEmpire" title="Empire overview (E)">Empire</button>
+    <button data-act="openVictory" title="Victory progress">🏆</button>
     <button data-act="openMenu" title="Menu (Esc)">☰</button>
   </div>
 </div>
@@ -1613,10 +1625,11 @@ const SHIPS = {
   carrier: { name: 'Carrier', size: 6, crew: 520, st: 820, armor: 10, ev: 0.05, speed: 26, pd: 1.2, vent: 0.025, len: 38, weapons: ['fighters', 'fighters', 'fighters', 'fighters', 'flak', 'flak'], cost: { minerals: 320, energy: 80 }, time: 34, upkeep: 1.3, tech: 'carriers', desc: 'Launches strike-craft wings that hunt small, nimble ships.' },
   titan: { name: 'Titan', size: 16, crew: 2400, st: 3800, armor: 24, ev: 0.02, speed: 19, pd: 2, vent: 0.01, len: 72, weapons: ['lance', 'heavyrail', 'heavyrail', 'heavyrail', 'heavyrail', 'missile', 'missile', 'missile', 'flak', 'flak', 'flak'], bomb: 4, unique: 1, cost: { minerals: 1100, energy: 300 }, time: 80, upkeep: 4, tech: 'titans', desc: 'Flagship colossus. Its spinal lance can split a Battleship. One per empire.' },
   worldbreaker: { name: 'World Breaker', size: 20, crew: 3000, st: 4200, armor: 22, ev: 0.01, speed: 16, pd: 1.5, vent: 0.008, len: 90, weapons: ['flak', 'flak', 'flak', 'heavyrail', 'heavyrail'], cracker: 1, unique: 1, cost: { minerals: 1800, energy: 700 }, time: 100, upkeep: 6, tech: 'cracker', desc: 'Carries a graviton planet cracker: charges for 8 days, then shatters a world. One per empire.' },
+  freighter: { name: 'Freighter', size: 1, crew: 12, st: 150, armor: 3, ev: 0.1, speed: 30, pd: 0, vent: 0.1, len: 22, weapons: [], cargo: 40, cost: { minerals: 90 }, time: 10, upkeep: 0.2, tech: null, desc: 'Hauls commodities between markets for profit. Unarmed: watch out for pirates.' },
   colony: { name: 'Colony Ship', size: 1, crew: 40, st: 120, armor: 2, ev: 0.1, speed: 28, pd: 0, vent: 0.1, len: 20, weapons: [], cost: { minerals: 90, energy: 40 }, time: 16, upkeep: 0.3, tech: null, desc: 'Settles an unclaimed world.' },
 };
 const WAR_CLASSES = ['corvette', 'frigate', 'destroyer', 'cruiser', 'carrier', 'battleship', 'titan'];
-const CLASS_ORDER = ['worldbreaker', 'titan', 'battleship', 'carrier', 'cruiser', 'bomber', 'tender', 'frigate', 'destroyer', 'corvette', 'transport', 'colony'];
+const CLASS_ORDER = ['worldbreaker', 'titan', 'battleship', 'carrier', 'cruiser', 'bomber', 'tender', 'frigate', 'destroyer', 'corvette', 'transport', 'freighter', 'colony'];
 
 const TECHS = {
   weapons1: { name: 'Coilgun Accelerators', cat: 'Military', cost: 400, req: [], desc: '+15% weapon damage, +1 penetration' },
@@ -1650,6 +1663,8 @@ const TECHS = {
   genetics: { name: 'Gene Tailoring', cat: 'Society', cost: 960, req: ['hab1'], desc: '+50% pop growth, +2 pop cap per world' },
   admin: { name: 'Galactic Administration', cat: 'Society', cost: 800, req: [], desc: '+1 building slot on every world' },
   diplomacy: { name: 'Xeno-Linguistics', cat: 'Society', cost: 480, req: [], desc: '+20 opinion with every empire' },
+  commerce: { name: 'Interstellar Commerce', cat: 'Society', cost: 560, req: [], desc: '+30% credits, freighters carry 50% more, unlocks Branch Offices' },
+  gateway: { name: 'Gateway Theory', cat: 'Society', cost: 5200, req: ['research2', 'commerce'], desc: 'Unlocks the Gateway Nexus (science victory)' },
 };
 const TECH_CATS = ['Military', 'Engineering', 'Economy', 'Society'];
 // endless late-game research, unlocked after 20 technologies; each level costs 50% more
@@ -1665,17 +1680,33 @@ const PROJECTS = {
   terraform: { name: 'Terraform', icon: '🌱', cost: { minerals: 500, energy: 250 }, time: 60, max: 2, desc: '+25% habitability on the main world' },
   orbital: { name: 'Orbital Habitat', icon: '◎', cost: { minerals: 450, energy: 150 }, time: 50, max: 1, desc: '+2 building slots' },
   navalyards: { name: 'Naval Yards', icon: '⚓', cost: { minerals: 450, energy: 200 }, time: 35, max: 3, scale: 0.5, needs: 'shipyard', desc: '+4 fleet capacity (up to 3; each costs 50% more)' },
+  nexus: { name: 'Gateway Nexus', icon: '🌀', cost: { minerals: 3000, energy: 1500 }, time: 240, max: 1, tech: 'gateway', desc: 'A gate to the wider galaxy. Science victory once every technology is known.' },
   starbase: { name: 'Starbase', icon: '✦', cost: { minerals: 400, energy: 100 }, time: 40, max: 1, desc: '+6 fleet capacity, +150 orbital defense, +2 batteries' },
 };
 const TRADE = { give: 100, get: 35 };
+// credit market: what 100 units fetch or cost
+const MARKET = { sell: { energy: 40, minerals: 45 }, buy: { energy: 85, minerals: 95 } };
+// commodities traded between system markets by freighters
+const COMM = {
+  ore: { name: 'Ore', icon: '⛏', base: 0.6 },
+  fuel: { name: 'Fuel', icon: '⛽', base: 0.7 },
+  food: { name: 'Food', icon: '🌾', base: 0.65 },
+  alloys: { name: 'Alloys', icon: '⚙', base: 1.0 },
+  meds: { name: 'Medicine', icon: '💊', base: 1.2 },
+  tech: { name: 'Electronics', icon: '💾', base: 1.4 },
+  luxury: { name: 'Luxuries', icon: '💎', base: 1.6 },
+};
+const MERCS = { cost: 650, ships: ['destroyer', 'frigate', 'corvette', 'corvette', 'corvette'], cooldown: 60 };
+const BRANCH = { credits: 400, minerals: 100, income: 2, host: 0.7 };
+const PIRATES = { name: 'Void Reavers', color: '#c9c9c9' };
 
 // grace: days of guaranteed peace at the start; shy: how much more reluctant AIs are to attack you than each other
 const DIFF = {
-  relaxed: { name: 'Relaxed', mult: 0.6, ai: 4.0, mil: 0.45, war: 3.2, grace: 1500, shy: 2.2, warn: 120, desc: 'Long peaceful start, timid rivals' },
-  easy: { name: 'Easy', mult: 0.75, ai: 3.0, mil: 0.6, war: 2.6, grace: 900, shy: 1.6, warn: 90, desc: 'Plenty of time to build up' },
-  normal: { name: 'Normal', mult: 0.95, ai: 2.2, mil: 0.85, war: 1.9, grace: 500, shy: 1.3, warn: 60, desc: 'A fair fight' },
-  hard: { name: 'Hard', mult: 1.3, ai: 1.3, mil: 1.3, war: 1.3, grace: 200, shy: 1, warn: 30, desc: 'Aggressive, well-armed rivals' },
-  insane: { name: 'Insane', mult: 1.7, ai: 0.9, mil: 1.6, war: 1.15, grace: 100, shy: 1, warn: 15, desc: 'Good luck' },
+  relaxed: { name: 'Relaxed', mult: 0.6, ai: 4.0, mil: 0.45, war: 3.2, grace: 1500, shy: 2.2, warn: 120, pir: 0.4, desc: 'Long peaceful start, timid rivals' },
+  easy: { name: 'Easy', mult: 0.75, ai: 3.0, mil: 0.6, war: 2.6, grace: 900, shy: 1.6, warn: 90, pir: 0.6, desc: 'Plenty of time to build up' },
+  normal: { name: 'Normal', mult: 0.95, ai: 2.2, mil: 0.85, war: 1.9, grace: 500, shy: 1.3, warn: 60, pir: 0.85, desc: 'A fair fight' },
+  hard: { name: 'Hard', mult: 1.3, ai: 1.3, mil: 1.3, war: 1.3, grace: 200, shy: 1, warn: 30, pir: 1.1, desc: 'Aggressive, well-armed rivals' },
+  insane: { name: 'Insane', mult: 1.7, ai: 0.9, mil: 1.6, war: 1.15, grace: 100, shy: 1, warn: 15, pir: 1.4, desc: 'Good luck' },
 };
 const DAY_RATE = 0.5; // game days per real second at 1× speed
 const PERS = {
@@ -1838,6 +1869,78 @@ function makeShip(e, c) {
   return { id: G.nextId++, c, n: shipName(e, c), st: S.st * m.hull, cr: S.crew, air: 1, br: 0, fi: 0, en: 1, wp: 1, tr: S.troops ? S.troops * m.ground : 0, cd: S.weapons.map(w => Math.random() * WEAPONS[w].rof), lh: -1 };
 }
 function fleetTotal(f) { return f.ships.length; }
+const freighterOnly = f => f.ships.length > 0 && f.ships.every(sh => sh.c === 'freighter');
+const rivals = () => G.empires.filter(e => e.alive && !e.isPlayer && !e.pirate);
+const pirateEmp = () => G.empires.find(e => e.pirate);
+
+// ---------- the pirate syndicate: a stateless outlaw faction at war with everyone ----------
+function addPirates() {
+  const id = G.empires.length;
+  G.empires.push({ id, name: PIRATES.name, color: PIRATES.color, pirate: true, isPlayer: false, alive: true, pers: 'militarist', mult: 1,
+    res: { energy: 0, minerals: 0, research: 0, credits: 0 }, techs: {}, techProg: {}, researching: null, capital: -1, fleetNo: 0, shipNo: 0,
+    aiT: 30, diploT: 1e9, power: 0, inc: { en: 0, mi: 0, re: 0 }, deficit: false, propT: 0, rally: null, bases: [], raidT: 0 });
+  for (const e of G.empires) if (e.id !== id) { G.rel[relKey(e.id, id)] = { s: 'war', truce: 0, since: 0, loss: {} }; G.op[e.id + '>' + id] = -100; G.op[id + '>' + e.id] = -100; }
+}
+
+// ---------- markets & trade ----------
+// can owner's freighters do business in system s? (own systems, or anyone it is not at war with)
+function tradeable(owner, s) { return s.owner >= 0 && !emp(s.owner).pirate && (s.owner === owner || !atWar(owner, s.owner)); }
+// supply and demand of each commodity, turned into local prices that also drift with the markets
+function marketOf(s) {
+  const bucket = Math.floor(G.time / 5);
+  if (s._mk && s._mk.b === bucket) return s._mk.p;
+  const sup = {}, dem = {}, add = (o, k, v) => { o[k] = (o[k] || 0) + v; };
+  const P = PLANETS[s.type], st = k => s.planets.filter((p, i) => i !== s.pi && p.st === k).length;
+  add(sup, 'ore', countB(s, 'mine') + st('deepmine') + st('foundry') * 0.6 + st('swarm') * 1.4 + st('cryo') * 0.5 + (P.min > 1.2 ? 0.5 : 0));
+  add(sup, 'fuel', s.planets.filter(p => p.t === 'gas').length * 0.35 + st('skimmer') * 1.5 + st('refinery') + st('cryo') * 0.6);
+  add(sup, 'food', (['terran', 'ocean', 'jungle'].includes(s.type) ? 1.2 : 0) + st('seacity') + st('arcology') * 0.4);
+  add(sup, 'alloys', st('foundry') * 1.2 + countB(s, 'mine') * 0.3);
+  add(sup, 'meds', countB(s, 'lab') * 0.5 + st('oceancol') * 0.8 + st('arcology') * 0.4);
+  add(sup, 'tech', countSta(s, 'science') + countB(s, 'lab') * 0.6);
+  add(sup, 'luxury', st('cloudcity') * 1.2 + (isCapital(s) ? 1 : 0) + st('arcology') * 0.5 + countSta(s, 'trade') * 0.5);
+  const yard = hasYard(s) ? 1 : 0;
+  add(dem, 'food', s.pop / 5); add(dem, 'meds', s.pop / 8); add(dem, 'luxury', s.pop / 9); add(dem, 'tech', s.pop / 14 + countB(s, 'lab') * 0.3);
+  add(dem, 'alloys', yard * 1.2 + countSta(s, 'yard') * 0.5); add(dem, 'fuel', yard * 0.6 + s.pop / 12); add(dem, 'ore', yard * 0.8 + st('foundry') * 0.6);
+  const p = {}; let ki = 0;
+  for (const k in COMM) { ki++; p[k] = COMM[k].base * clamp(1 + 0.22 * ((dem[k] || 0) - (sup[k] || 0)) + 0.12 * Math.sin(G.time / 70 + hash(s.id * 7 + ki) * 6.28), 0.55, 1.7) * (1 - glutOf(s, k)); }
+  s._mk = { b: bucket, p }; return p;
+}
+// every cargo sold floods the local market for a while: one route can't be milked forever
+function glutOf(s, k) { const g = s.glut && s.glut[k]; return g ? Math.min(0.6, g.v * Math.exp(-(G.time - g.t) / 30)) : 0; }
+function addGlut(s, k, units) { s.glut = s.glut || {}; s.glut[k] = { v: glutOf(s, k) + units / 120, t: G.time }; s._mk = null;
+}
+function cargoCap(f) { const m = emp(f.owner).techs.commerce ? 1.5 : 1; let c = 0; for (const sh of f.ships) c += (SHIPS[sh.c].cargo || 0) * clamp(sh.cr / SHIPS[sh.c].crew, 0.3, 1); return Math.round(c * m); }
+// pirates lurking at or next to a system make it risky
+function pirateZone() { const pe = pirateEmp(), z = new Set(); if (pe) for (const f of G.fleets) if (f.owner === pe.id && f.at !== null) { z.add(f.at); for (const l of G.stars[f.at].lanes) z.add(l); } return z; }
+function pirateRisk(sid) { return pirateZone().has(sid); }
+// the most profitable runs for a freighter fleet (or any freighter of an empire, starting near `from`)
+function bestRoutes(owner, from, cap, n = 6, here = false) {
+  const mk = G.stars.filter(s => tradeable(owner, s) && (s.exp || s.owner === owner));
+  const df = dij(from).dist, out = [], risky = pirateZone();
+  for (const a of here ? mk.filter(s => s.id === from) : mk) {
+    if (!isFinite(df[a.id]) || df[a.id] > 1000) continue;
+    const pa = marketOf(a), da = dij(a.id).dist;
+    for (const b of mk) {
+      if (b === a || !isFinite(da[b.id]) || da[b.id] > 1300) continue;
+      const pb = marketOf(b); let best = null, bm = 0;
+      for (const k in COMM) { const m = pb[k] - pa[k]; if (m > bm) { bm = m; best = k; } }
+      if (!best || bm < 0.08) continue;
+      const days = (df[a.id] + 2 * da[b.id]) / (30 * 1.4), profit = bm * cap;
+      out.push({ a: a.id, b: b.id, k: best, profit, days, rate: profit / Math.max(4, days), risk: risky.has(a.id) || risky.has(b.id) });
+    }
+  }
+  out.sort((x, y) => (y.rate * (y.risk ? 0.6 : 1)) - (x.rate * (x.risk ? 0.6 : 1)));
+  return out.slice(0, n);
+}
+// steady credit income: commerce in populated systems, trade hubs, foreign branch offices
+function creditIncome(e) {
+  let c = 0;
+  for (const s of G.stars) {
+    if (s.owner === e.id) c += s.pop * 0.04 + countSta(s, 'trade') * 1.5 + s.planets.filter((p, i) => i !== s.pi && ['cloudcity', 'arcology', 'seacity'].includes(p.st)).length * 0.3;
+    if (s.branch != null && s.owner >= 0) { if (s.branch === e.id) c += BRANCH.income * (1 + s.pop / 20); else if (s.owner === e.id) c += BRANCH.host; }
+  }
+  return c * (e.techs.commerce ? 1.3 : 1) * (e.isPlayer ? 1 : e.mult);
+}
 // orbital bombardment strength: Siege Bombers and Titans are built for it, other warships help by size
 function bombardPower(f) {
   let b = 0;
@@ -1856,7 +1959,7 @@ function fleetSpeed(f) { let sp = Infinity; for (const sh of f.ships) sp = Math.
 function shipPowerBase(c, m) { const S = SHIPS[c]; if (!S.weapons.length) return 0; let a = 0; for (const w of S.weapons) a += WEAPONS[w].dmg / WEAPONS[w].rof; return Math.sqrt(a * m.dmg * S.st * m.hull * (1 + S.armor / 10)) * 0.25; }
 function shipPower(sh, m) { const S = SHIPS[sh.c]; return shipPowerBase(sh.c, m) * clamp(sh.st / (S.st * m.hull), 0.15, 1) * (0.4 + 0.6 * clamp(sh.cr / S.crew, 0, 1)) * (0.5 + 0.5 * sh.wp); }
 function fleetPower(f) { const m = mods(emp(f.owner)); let p = 0; for (const sh of f.ships) p += shipPower(sh, m); return p; }
-function fleetName(e, kind) { if (kind === 'colony') return 'Colony Ship'; if (kind === 'transport') return 'Troop Convoy'; e.fleetNo = (e.fleetNo || 0) + 1; return ordinal(e.fleetNo) + ' Fleet'; }
+function fleetName(e, kind) { if (kind === 'colony') return 'Colony Ship'; if (kind === 'transport') return 'Troop Convoy'; if (kind === 'freighter') return 'Freighter'; e.fleetNo = (e.fleetNo || 0) + 1; return ordinal(e.fleetNo) + ' Fleet'; }
 function newFleet(owner, at, name) { const f = { id: G.nextId++, owner, name, ships: [], at, path: [], from: null, to: null, prog: 0, autoCol: false, target: null }; G.fleets.push(f); return f; }
 function fleetPos(f) {
   if (f.at !== null) { const s = G.stars[f.at]; return [s.x, s.y, s.z || 0]; }
@@ -2031,7 +2134,7 @@ function newGame(opts) {
     const e = {
       id: i, name: isP ? (opts.name || 'United Earth') : names[i - 1], color: isP ? opts.color : colors[(i - 1) % colors.length],
       isPlayer: isP, alive: true, pers: isP ? null : pick(persKeys, r), mult: isP ? 1 : DIFF[opts.diff].mult,
-      res: { energy: 150, minerals: 220, research: 0 }, techs: {}, techProg: {}, researching: null,
+      res: { energy: 150, minerals: 220, research: 0, credits: 300 }, techs: {}, techProg: {}, researching: null,
       capital: caps[i].id, fleetNo: 0, shipNo: 0, aiT: 1 + r() * 2, diploT: 5 + r() * 10, power: 0, inc: { en: 0, mi: 0, re: 0 }, deficit: false, propT: 0, rally: null,
     };
     G.empires.push(e);
@@ -2062,6 +2165,7 @@ function newGame(opts) {
     for (const c of ['corvette', 'corvette', 'corvette', 'destroyer']) f.ships.push(makeShip(e, c));
     const c = newFleet(e.id, e.capital, fleetName(e, 'colony')); c.ships.push(makeShip(e, 'colony'));
     const t = newFleet(e.id, e.capital, fleetName(e, 'transport')); t.ships.push(makeShip(e, 'transport'));
+    const h = newFleet(e.id, e.capital, fleetName(e, 'freighter')); h.ships.push(makeShip(e, 'freighter'));
   }
   afterLoad();
   notify(`Welcome, leader of ${G.empires[0].name}. From Earth, the stars await.`, { color: '#4fc3f7' });
@@ -2070,7 +2174,9 @@ function newGame(opts) {
 function afterLoad() {
   distCache = new Map(); fx = []; projs = []; events = []; sel = { star: null, fleet: null, planet: null };
   view = { mode: 'galaxy', star: null, planet: null };
-  for (const e of G.empires) { e._m = null; if (!e.isPlayer && DIFF[G.diff]) e.mult = DIFF[G.diff].mult; }
+  for (const e of G.empires) { e._m = null; if (!e.isPlayer && !e.pirate && DIFF[G.diff]) e.mult = DIFF[G.diff].mult; e.res.credits = e.res.credits || 0; }
+  if (!G.empires.some(e => e.pirate)) addPirates();
+  G.vic = G.vic || {};
   // older saves: outposts become the matching settlement
   for (const s of G.stars) {
     s.planets.forEach(p => { if (p.out) { p.st = defaultSettle(p.t); delete p.out; } });
@@ -2123,8 +2229,10 @@ function step(dt) {
   upkeepStars(dt);
   const dec = Math.pow(0.99, dt);
   for (const k in G.op) G.op[k] *= dec;
+  tradeStep(dt);
   for (const e of G.empires) {
     if (!e.alive || e.isPlayer) continue;
+    if (e.pirate) { e.aiT -= dt; if (e.aiT <= 0) { e.aiT = 4; pirateTick(e); } continue; }
     e.aiT -= dt; if (e.aiT <= 0) { e.aiT = DIFF[G.diff].ai * (0.8 + Math.random() * 0.4); aiTick(e); }
     e.diploT -= dt; if (e.diploT <= 0) { e.diploT = 8 + Math.random() * 6; aiDiplo(e); }
   }
@@ -2144,14 +2252,18 @@ function economy(dt) {
   }
   for (const f of G.fleets) { const m = mods(emp(f.owner)); for (const sh of f.ships) inc[f.owner].shipUp += SHIPS[sh.c].upkeep * m.upkeep; }
   for (const e of G.empires) {
-    if (!e.alive) continue;
+    if (!e.alive || e.pirate) continue;
     const t = inc[e.id];
     e.cap = fleetCap(e); e.used = fleetUsage(e);
+    // credits from commerce; trade flow is tracked as a 90-day average for the trade victory
+    if (e._crT == null || G.time - e._crT >= 1 || G.time < e._crT) { e._crT = G.time; e._cr = creditIncome(e); } // recomputed daily
+    const cr = e._cr; e.res.credits += cr * dt; e.inc.cr = cr;
+    e.tradeAvg = (e.tradeAvg || 0) + (cr * dt + (e.trBank || 0) - (e.tradeAvg || 0) * dt) / 90; e.trBank = 0;
     const over = e.used > e.cap ? 1 + (e.used - e.cap) / e.cap * 2 : 1;
     t.up += t.shipUp * over;
     if (e.deficit) { t.mi *= 0.5; t.re *= 0.5; }
     const net = t.en - t.up;
-    e.inc = { en: net, mi: t.mi, re: t.re, up: t.up, gross: t.en, over };
+    e.inc = { en: net, mi: t.mi, re: t.re, up: t.up, gross: t.en, over, cr: e.inc.cr };
     e.res.energy += net * dt; e.res.minerals += t.mi * dt; e.res.research += t.re * dt;
     // storage limits: surpluses beyond the silos are lost
     const sc = storageCap(e); e.store = sc;
@@ -2210,9 +2322,9 @@ function upkeepStars(dt) {
 function spawnShip(s, c) {
   const e = emp(s.owner);
   let f = null;
-  if (c !== 'colony') f = fleetsAt(s.id).find(g => g.owner === s.owner && !g.path.length && g.at === s.id && isArmed(g));
+  if (c !== 'colony' && c !== 'freighter' && SHIPS[c].weapons.length) f = fleetsAt(s.id).find(g => g.owner === s.owner && !g.path.length && g.at === s.id && isArmed(g));
   if (!f && c === 'transport') f = fleetsAt(s.id).find(g => g.owner === s.owner && !g.path.length && g.at === s.id && transportOnly(g));
-  if (!f) { f = newFleet(s.owner, s.id, fleetName(e, c === 'colony' ? 'colony' : c === 'transport' ? 'transport' : null)); let a = byStar.get(s.id); if (!a) byStar.set(s.id, a = []); a.push(f); }
+  if (!f) { f = newFleet(s.owner, s.id, fleetName(e, ['colony', 'transport', 'freighter'].includes(c) ? c : null)); let a = byStar.get(s.id); if (!a) byStar.set(s.id, a = []); a.push(f); }
   const sh = makeShip(e, c); f.ships.push(sh);
   if (e.isPlayer) notify(`${SHIPS[c].name} ${sh.n} launched at ${prim(s).n}`, { color: '#4fc3f7', star: s.id, silent: c !== 'colony' });
 }
@@ -2250,6 +2362,7 @@ function orderMove(f, target) {
   }
   f.autoCol = colonyOnly(f) && G.stars[target].owner < 0;
   if (target !== f.at) { f.bomb = false; f.crack = null; }
+  if (f.route && !f._routeMove) f.route = null; // a manual order ends the trade run
   return true;
 }
 function fleetEta(f) {
@@ -2430,6 +2543,10 @@ function killShip(f, sh, mode, s) {
   sh.dead = 1;
   const S = SHIPS[sh.c];
   if (sh.lh >= 0) { const r = rel(f.owner, sh.lh); if (r) r.loss[f.owner] = (r.loss[f.owner] || 0) + costValue(S.cost); }
+  if (emp(f.owner).pirate && sh.lh >= 0 && !emp(sh.lh).pirate) { // bounty on outlaws
+    const b = Math.round(costValue(S.cost) * 0.6); emp(sh.lh).res.credits += b;
+    if (sh.lh === PLAYER) notify(`Bounty collected: ₡${b} for the pirate ${S.name} ${sh.n}${s ? ' at ' + s.name : ''}.`, { color: '#66bb6a', silent: true });
+  }
   if (s) {
     evt(s, { k: 'death', sh, mode: sh.cat ? 'boom' : mode, o: f.owner });
     if (vis[s.id] && fx.length < 60) fx.push({ s: s.id, id: sh.id, t: 0, c: emp(f.owner).color, big: S.size >= 4 });
@@ -2573,6 +2690,7 @@ function capture(s, newOwner) {
   const old = s.owner, oe = emp(old), ne = emp(newOwner);
   const wasCap = oe.capital === s.id;
   s.owner = newOwner; s.pop = Math.max(1, s.pop * 0.7);
+  if (s.branch === newOwner || (s.branch != null && atWar(s.branch, newOwner))) s.branch = null;
   if (s.buildings.length) s.buildings.splice(Math.floor(Math.random() * s.buildings.length), 1);
   s.bq = []; s.sq = []; s.colonizing = null; s.defense = defMax(s) * 0.1;
   const r = rel(old, newOwner); if (r) r.loss[old] = (r.loss[old] || 0) + 250;
@@ -2643,7 +2761,7 @@ function updateBorders() {
   G._borders = b;
 }
 function borders(a, b) { return G._borders && G._borders.has(relKey(a, b)); }
-function commonEnemy(a, b) { for (const c of G.empires) if (c.alive && c.id !== a && c.id !== b && atWar(a, c.id) && atWar(b, c.id)) return true; return false; }
+function commonEnemy(a, b) { for (const c of G.empires) if (c.alive && !c.pirate && c.id !== a && c.id !== b && atWar(a, c.id) && atWar(b, c.id)) return true; return false; }
 function opinion(a, b) {
   const ea = emp(a), eb = emp(b);
   let v = (ea.isPlayer ? 0 : PERS[ea.pers].op) + mods(eb).opinion + (G.op[a + '>' + b] || 0);
@@ -2656,7 +2774,13 @@ function opinion(a, b) {
 function opinionWord(v) { return v >= 60 ? 'Friendly' : v >= 25 ? 'Cordial' : v > -25 ? 'Neutral' : v > -60 ? 'Hostile' : 'Hateful'; }
 
 // ---------- diplomacy actions ----------
-function setWar(a, b) { const r = rel(a, b); r.s = 'war'; r.since = G.time; r.loss = { [a]: 0, [b]: 0 }; }
+function setWar(a, b) {
+  const r = rel(a, b); r.s = 'war'; r.since = G.time; r.loss = { [a]: 0, [b]: 0 };
+  for (const s of G.stars) if (s.branch != null && ((s.owner === a && s.branch === b) || (s.owner === b && s.branch === a))) {
+    if (s.branch === PLAYER) notify(`Our branch office at ${s.name} was seized by the ${emp(s.owner).name}.`, { color: '#ef5350', star: s.id });
+    s.branch = null;
+  }
+}
 function declareWar(a, b) {
   if (relS(a, b) !== 'peace') return 'Not possible';
   const r = rel(a, b);
@@ -2669,7 +2793,7 @@ function declareWar(a, b) {
   else if (a === PLAYER) notify(`We declared war on the ${B.name}.`, { color: '#ef5350' });
   else notify(`${A.name} declared war on ${B.name}.`, { color: '#90a4ae', silent: !(borders(PLAYER, a) || borders(PLAYER, b)) });
   for (const c of G.empires) {
-    if (!c.alive || c.id === a || c.id === b || relS(c.id, b) !== 'alliance') continue;
+    if (!c.alive || c.pirate || c.id === a || c.id === b || relS(c.id, b) !== 'alliance') continue;
     if (relS(c.id, a) === 'alliance') rel(c.id, a).s = 'peace';
     if (relS(c.id, a) === 'peace') {
       setWar(c.id, a);
@@ -2745,9 +2869,89 @@ function queueProject(e, s, k) {
   if (s.owner !== e.id) return 'Not your system';
   if (pj(s, k) + s.bq.filter(q => q.k === 'proj' && q.pj === k).length >= P.max) return 'Already completed here';
   if (P.needs && !s.buildings.includes(P.needs)) return 'Needs a ' + BUILDINGS[P.needs].name;
+  if (P.tech && !e.techs[P.tech]) return 'Requires ' + TECHS[P.tech].name;
   const cost = projCost(s, k);
   if (!canAfford(e, cost)) return 'Not enough resources';
   pay(e, cost); s.bq.push({ k: 'proj', pj: k, p: 0, t: P.time, c: cost }); return null;
+}
+// ---------- freighter trade runs ----------
+// A freighter with a route shuttles between two markets: it buys the commodity that sells best at the other
+// end, pays for it in credits, and sells on arrival. Auto routes re-pick the best run each time.
+function tradeStep(dt) {
+  for (const f of G.fleets) {
+    const R = f.route; if (!R || f.at === null || f.path.length || !freighterOnly(f)) continue;
+    const e = emp(f.owner), here = G.stars[f.at];
+    if (R.cargo) { // sell
+      if (f.at === R.dst || !tradeable(f.owner, G.stars[R.dst])) {
+        if (tradeable(f.owner, here)) {
+          const rev = R.cargo * marketOf(here)[R.k], prof = rev - R.cost;
+          e.res.credits += rev; e.trBank = (e.trBank || 0) + Math.max(0, prof); e.trProfit = (e.trProfit || 0) + prof; R.last = Math.round(prof); addGlut(here, R.k, R.cargo);
+          if (here.owner !== f.owner) { const h = emp(here.owner); h.res.credits += rev * 0.08; h.trBank = (h.trBank || 0) + rev * 0.08; G.op[here.owner + '>' + f.owner] = Math.min(60, (G.op[here.owner + '>' + f.owner] || 0) + 0.3); }
+          R.cargo = 0; R.repick = true;
+        } else { R.cargo = 0; R.repick = true; R.last = -Math.round(R.cost); } // nowhere to sell: cargo dumped
+      } else { f._routeMove = 1; orderMove(f, R.dst); f._routeMove = 0; continue; }
+    }
+    // choose the next run from here
+    if (R.a == null || (R.auto && R.repick)) {
+      if (G.time < (R.wait || 0)) continue;
+      const best = bestRoutes(f.owner, f.at, cargoCap(f), 1, tradeable(f.owner, here))[0]; // plan from here when this is a market
+      if (!best) { R.wait = G.time + 5; continue; } // nothing worth hauling yet: look again in a few days
+      R.a = best.a; R.b = best.b; R.repick = false;
+    }
+    if (!tradeable(f.owner, G.stars[R.a]) || !tradeable(f.owner, G.stars[R.b])) { if (f.owner === PLAYER) notify(`${f.name}: trade route closed (war or lost system).`, { color: '#ffca28', star: f.at }); f.route = null; continue; }
+    if (f.at !== R.a && f.at !== R.b) { f._routeMove = 1; orderMove(f, R.a); f._routeMove = 0; continue; }
+    const dst = f.at === R.a ? R.b : R.a, pa = marketOf(here), pb = marketOf(G.stars[dst]);
+    let k = null, bm = 0.05; for (const c in COMM) { const m = pb[c] - pa[c]; if (m > bm) { bm = m; k = c; } }
+    if (k) {
+      const units = Math.min(cargoCap(f), Math.floor(e.res.credits / pa[k]));
+      if (units > 0) { const cost = units * pa[k]; e.res.credits -= cost; Object.assign(R, { cargo: units, k, cost, dst }); }
+    }
+    R.dst = dst; f._routeMove = 1; orderMove(f, dst); f._routeMove = 0;
+  }
+}
+// ---------- rushing construction with credits ----------
+function rushCost(q, cost) { return Math.round(costValue(cost) * 1.5 * (1 - q.p / q.t)) + 20; }
+function rushQueue(e, s, which) {
+  const q = which === 's' ? s.sq[0] : s.bq[0]; if (!q || s.owner !== e.id) return 'Nothing to rush';
+  const c = rushCost(q, which === 's' ? SHIPS[q.k].cost : queueCost(q));
+  if (e.res.credits < c) return `Needs ₡${c}`;
+  e.res.credits -= c; q.p = q.t; return null;
+}
+// ---------- the credit market ----------
+function marketTrade(e, kind, res) {
+  const amt = 100, price = MARKET[kind][res];
+  if (kind === 'sell') { if (e.res[res] < amt) return 'Not enough ' + res; e.res[res] -= amt; e.res.credits += price; }
+  else { if (e.res.credits < price) return 'Not enough credits'; e.res.credits -= price; e.res[res] += amt; }
+  return null;
+}
+// mercenaries: an instant squadron for credits
+function hireMercs(e, s) {
+  if (s.owner !== e.id || !hasYard(s)) return 'Mercenaries dock at a shipyard';
+  if (G.time < (e.mercT || -999)) return `The mercenary guilds can send another company in ${Math.ceil(e.mercT - G.time)} days`;
+  if (e.res.credits < MERCS.cost) return 'Not enough credits';
+  e.res.credits -= MERCS.cost; e.mercT = G.time + MERCS.cooldown;
+  const f = newFleet(e.id, s.id, 'Mercenary Company'); for (const c of MERCS.ships) f.ships.push(makeShip(e, c));
+  rebuildIndex();
+  if (e.isPlayer) notify(`A mercenary company has signed on at ${s.name}.`, { color: '#66bb6a', star: s.id });
+  return null;
+}
+// branch offices: your megacorp sets up shop in another empire's system
+function canBranch(e, s) {
+  if (!e.techs.commerce) return 'Requires Interstellar Commerce';
+  if (s.owner < 0 || s.owner === e.id || emp(s.owner).pirate) return 'Only in other empires\' systems';
+  if (atWar(e.id, s.owner)) return 'Not while at war';
+  if (s.branch != null) return s.branch === e.id ? 'You already have a branch office here' : `The ${emp(s.branch).name} already runs the local branch`;
+  if (opinion(s.owner, e.id) < -20) return `The ${emp(s.owner).name} won't allow it (opinion too low)`;
+  if (e.res.credits < BRANCH.credits || e.res.minerals < BRANCH.minerals) return 'Not enough resources';
+  return null;
+}
+function openBranch(e, s) {
+  const why = canBranch(e, s); if (why) return why;
+  e.res.credits -= BRANCH.credits; e.res.minerals -= BRANCH.minerals; s.branch = e.id;
+  G.op[s.owner + '>' + e.id] = (G.op[s.owner + '>' + e.id] || 0) + 5;
+  if (e.isPlayer) notify(`🏢 Branch office opened at ${s.name} (${emp(s.owner).name}).`, { color: '#66bb6a', star: s.id });
+  else if (s.owner === PLAYER) notify(`🏢 The ${e.name} opened a branch office at ${s.name}.`, { color: '#90a4ae', star: s.id, silent: true });
+  return null;
 }
 function trade(e, dir) {
   const from = dir === 'en' ? 'energy' : 'minerals', to = dir === 'en' ? 'minerals' : 'energy';
@@ -2796,8 +3000,9 @@ function mergeHere(f, filter) {
 function aiTick(e) {
   const stars = G.stars.filter(s => s.owner === e.id); if (!stars.length) return;
   const fleets = G.fleets.filter(f => f.owner === e.id);
-  const wars = G.empires.filter(o => o.alive && atWar(e.id, o.id));
+  const wars = G.empires.filter(o => o.alive && !o.pirate && atWar(e.id, o.id));
   aiEconomy(e, stars, wars);
+  aiTrade(e, stars, fleets, wars);
   aiResearch(e, wars);
   aiShipyards(e, stars, fleets, wars);
   aiColonize(e, fleets);
@@ -2805,12 +3010,93 @@ function aiTick(e) {
   aiInvade(e, wars);
   aiTrimFleet(e);
 }
+// AI commerce: freighters on the best runs, credits turned into minerals, branch offices, mercenaries in a pinch
+function aiTrade(e, stars, fleets, wars) {
+  for (const f of fleets) if (freighterOnly(f) && !f.route && f.at !== null && !f.path.length) f.route = { auto: true };
+  const sc = e.store || storageCap(e);
+  for (let i = 0; i < 3 && e.res.credits > 350; i++) {
+    if (e.res.minerals < sc * 0.6) marketTrade(e, 'buy', 'minerals');
+    else if (e.res.energy < sc * 0.4) marketTrade(e, 'buy', 'energy');
+    else break;
+  }
+  if (e.techs.commerce && e.res.credits > 1000 && G.stars.filter(s => s.branch === e.id).length < 4 && Math.random() < 0.15) {
+    const c = G.stars.filter(s => !canBranch(e, s) && stars.some(m => m.lanes.includes(s.id) || dij(m.id).dist[s.id] < 500));
+    if (c.length) openBranch(e, c[Math.floor(Math.random() * c.length)]);
+  }
+  if (wars.length && e.res.credits > 600) for (const s of stars) if (s.sq.length && SHIPS[s.sq[0].k].weapons.length && e.res.credits > 600) rushQueue(e, s, 's');
+  if (wars.length && e.res.credits > MERCS.cost + 400 && wars.some(o => o.power > e.power * 1.1)) {
+    const s = stars.filter(hasYard).sort((a, b) => hostilePower(b.id, e.id) - hostilePower(a.id, e.id))[0]; if (s) hireMercs(e, s);
+  }
+}
+// ---------- the pirates ----------
+// Pirates keep dens in unclaimed systems near inhabited space and send raiders after freighters and soft targets.
+function pirateTick(e) {
+  const D = DIFF[G.diff], k = D.pir || 0.8;
+  if (G.time < D.grace * 0.3) return;
+  const mine = G.fleets.filter(f => f.owner === e.id), ships = mine.reduce((a, f) => a + f.ships.length, 0);
+  const cap = Math.round((4 + G.time / 110) * k);
+  const lost = (e.bases || []).filter(id => !mine.some(f => f.base && f.at === id));
+  for (const id of lost) if (vis[id]) notify(`☠ The pirate den at ${G.stars[id].name} has been wiped out.`, { color: '#66bb6a', star: id });
+  e.bases = (e.bases || []).filter(id => !lost.includes(id));
+  for (const f of mine) if (f.base) for (const sh of f.ships) sh.st = Math.min(stMax(sh, e.id), sh.st + stMax(sh, e.id) * 0.02 * 4);
+  // new dens in quiet, unclaimed systems next to inhabited space
+  const wantBases = Math.min(1 + Math.floor(G.time / 700), Math.ceil(G.stars.length / 18));
+  if (e.bases.length < wantBases && ships < cap) {
+    const caps = new Set(G.empires.filter(o => o.alive && o.capital >= 0).map(o => o.capital));
+    let best = null, bs = -1;
+    for (const s of G.stars) {
+      if (s.owner >= 0 || s.colonizing || e.bases.includes(s.id) || s.lanes.some(l => caps.has(l)) || fleetsAt(s.id).length) continue;
+      const sc = s.lanes.filter(l => G.stars[l].owner >= 0).length + Math.random() * 1.5;
+      if (sc > bs) { bs = sc; best = s; }
+    }
+    if (best) {
+      const f = newFleet(e.id, best.id, 'Reaver Den'); f.base = true;
+      for (const c of ['destroyer', 'frigate', 'corvette', 'corvette'].concat(G.time > 900 ? ['cruiser'] : [], G.time > 1800 ? ['cruiser', 'frigate'] : [])) f.ships.push(makeShip(e, c));
+      e.bases.push(best.id); rebuildIndex();
+      if (vis[best.id] || best.lanes.some(l => G.stars[l].owner === PLAYER)) notify(`☠ Pirates of the ${e.name} have set up a den at ${best.name}. Their raiders will prey on trade. Destroy it for a bounty.`, { color: '#ff7043', star: best.id });
+    }
+  }
+  // raids
+  e.raidT = (e.raidT || 0) - 4;
+  if (e.raidT <= 0 && ships < cap) {
+    e.raidT = (80 + Math.random() * 60) / k;
+    // raiders sortie from a den, or jump in from deep space at an empty fringe system
+    const fringe = G.stars.filter(s => !isCapital(s) && !hostileArmedAt(s.id, e.id) && (s.owner < 0 || s.defense < defMax(s) * 0.6 || s.lanes.length <= 2));
+    const home = e.bases.length ? e.bases[Math.floor(Math.random() * e.bases.length)] : fringe.length ? fringe[Math.floor(Math.random() * fringe.length)].id : null;
+    if (home == null) return;
+    const d = dij(home).dist;
+    const traffic = new Map(); for (const f of G.fleets) if (f.route && f.route.dst != null) traffic.set(f.route.dst, (traffic.get(f.route.dst) || 0) + 1);
+    let tgt = null, ts = -1;
+    for (const s of G.stars) {
+      if (!isFinite(d[s.id]) || d[s.id] > 520 || s.id === home) continue;
+      const sc = (traffic.get(s.id) || 0) * 2 + (s.owner >= 0 ? 1 : 0) + (s.owner >= 0 && s.defense < 120 ? 1.5 : 0) - d[s.id] / 300 + Math.random();
+      if (sc > ts && !isCapital(s)) { ts = sc; tgt = s; }
+    }
+    if (tgt) {
+      const n = Math.min(8, 2 + Math.floor(G.time / 400 * k)), f = newFleet(e.id, home, 'Reaver Raiders');
+      for (let i = 0; i < n; i++) f.ships.push(makeShip(e, pick(G.time > 1200 ? ['corvette', 'frigate', 'destroyer', 'cruiser'] : ['corvette', 'corvette', 'frigate', 'destroyer'], Math.random)));
+      f.raid = { until: G.time + 40 + Math.random() * 30, home }; rebuildIndex(); orderMove(f, tgt.id);
+      if (tgt.owner === PLAYER || [...traffic.keys()].includes(tgt.id) && G.fleets.some(g => g.owner === PLAYER && g.route && g.route.dst === tgt.id)) notify(`☠ Pirate raiders are heading for ${tgt.name}!`, { color: '#ff7043', star: tgt.id });
+    }
+  }
+  // raiders go home when their time is up or they've been mauled
+  for (const f of mine) {
+    if (!f.raid || f.at === null || f.path.length) continue;
+    const beaten = fleetPower(f) < 6;
+    if (G.time < f.raid.until && !beaten) continue;
+    const home = e.bases.includes(f.raid.home) ? f.raid.home : e.bases[0];
+    if (home == null) { f.ships = []; continue; } // no den to return to: they jump back out to deep space
+    if (f.at === home) { const den = mine.find(g => g.base && g.at === home); if (den) { den.ships.push(...f.ships); f.ships = []; } else f.raid = null; }
+    else orderMove(f, home);
+  }
+  G.fleets = G.fleets.filter(f => f.ships.length);
+}
 function aiTrimFleet(e) {
   if (!e.cap || e.used <= e.cap * 1.25) return;
   let worst = null, wf = null, ws = Infinity;
   for (const f of G.fleets) {
     if (f.owner !== e.id || f.at === null || f.path.length || hostileArmedAt(f.at, e.id)) continue;
-    for (const sh of f.ships) { const sc = shipPower(sh, mods(e)) / SHIPS[sh.c].size + (sh.c === 'colony' ? 999 : 0); if (sc < ws) { ws = sc; worst = sh; wf = f; } }
+    for (const sh of f.ships) { const sc = shipPower(sh, mods(e)) / SHIPS[sh.c].size + (sh.c === 'colony' || sh.c === 'freighter' ? 999 : 0); if (sc < ws) { ws = sc; worst = sh; wf = f; } }
   }
   if (!worst) return;
   wf.ships.splice(wf.ships.indexOf(worst), 1);
@@ -2911,8 +3197,10 @@ function aiShipyards(e, stars, fleets, wars) {
   let room = (e.cap || fleetCap(e)) - (e.used || fleetUsage(e)) - yards.reduce((a, s) => a + s.sq.reduce((b, q) => b + SHIPS[q.k].size, 0), 0);
   const wantMil = (20 + stars.length * 12 + G.time * 0.08) * D.mil * P.mil * (wars.length ? 1.6 : 1);
   if (wars.length && e.techs.cracker && !hasUnique(e, 'worldbreaker') && e.res.minerals > 2200 && e.res.energy > 800 && yards.length && Math.random() < 0.2 * P.aggr) queueShip(e, yards[0], 'worldbreaker');
+  let freighters = fleets.filter(freighterOnly).length + yards.reduce((a, s) => a + s.sq.filter(q => q.k === 'freighter').length, 0);
   for (const s of yards) {
     if (s.sq.length >= (e.res.minerals > 1500 ? 4 : 2)) continue;
+    if (freighters < 1 + Math.floor(stars.length / 3) && room >= 1 && e.res.minerals > 150 && !wars.some(o => o.power > e.power)) { queueShip(e, s, 'freighter'); freighters++; room--; continue; }
     if (wantCol && canAfford(e, SHIPS.colony.cost) && !wars.some(o => o.power > e.power)) { queueShip(e, s, 'colony'); wantCol = false; room--; continue; }
     if (troops < wantTroops && room >= 1 && canAfford(e, SHIPS.transport.cost)) { queueShip(e, s, 'transport'); troops += 40; room--; continue; }
     const rich = e.res.minerals > 700;
@@ -3019,6 +3307,9 @@ function aiMilitary(e, stars, fleets, wars) {
       for (const f of free.slice(1)) if (d[f.at] < 450 && Math.random() < 0.6) orderMove(f, best.id);
     } else for (const f of free.slice(1)) if (f.at !== main.at) orderMove(f, main.at);
   } else {
+    const pe = pirateEmp(), main = free[0], d = dij(main.at).dist;
+    const den = pe && (pe.bases || []).filter(id => isFinite(d[id]) && d[id] < 600 && fleetPower(main) > hostilePower(id, e.id) * 1.4).sort((a, b) => d[a] - d[b])[0];
+    if (den != null && Math.random() < 0.5) { orderMove(main, den); return; }
     const rally = e.rally != null && G.stars[e.rally].owner === e.id ? e.rally : e.capital;
     if (rally >= 0) for (const f of free) if (f.at !== rally && Math.random() < 0.3) orderMove(f, rally);
   }
@@ -3040,11 +3331,11 @@ function aiInvade(e, wars) {
 function aiDiplo(e) {
   const D = DIFF[G.diff], P = PERS[e.pers];
   let worst = null, wo = 999;
-  for (const o of G.empires) if (o.alive && o.id !== e.id && borders(e.id, o.id)) { const v = opinion(e.id, o.id); if (v < wo) { wo = v; worst = o; } }
+  for (const o of G.empires) if (o.alive && !o.pirate && o.id !== e.id && borders(e.id, o.id)) { const v = opinion(e.id, o.id); if (v < wo) { wo = v; worst = o; } }
   e.rally = null;
   if (worst) { const b = G.stars.filter(s => s.owner === e.id && s.lanes.some(l => G.stars[l].owner === worst.id)).sort((a, c) => c.pop - a.pop)[0]; if (b) e.rally = b.id; }
   for (const o of G.empires) {
-    if (o === e || !o.alive) continue;
+    if (o === e || !o.alive || o.pirate) continue;
     const r = rel(e.id, o.id);
     if (r.s === 'war') {
       if (aiWantsPeace(e, o)) {
@@ -3059,7 +3350,7 @@ function aiDiplo(e) {
     }
   }
   if (G.time < D.grace) return;
-  const wars = G.empires.filter(o => o.alive && atWar(e.id, o.id));
+  const wars = G.empires.filter(o => o.alive && !o.pirate && atWar(e.id, o.id));
   if (wars.length >= 2 || (wars.length === 1 && e.power < wars[0].power * 1.6)) return;
   const cap = G.stars[e.capital], dd = cap ? dij(cap.id).dist : null;
   const landLeft = dd && G.stars.some(s => s.owner < 0 && !s.colonizing && dd[s.id] < 900);
@@ -3067,7 +3358,7 @@ function aiDiplo(e) {
   const cands = G.empires.filter(o => o.alive && o !== e && relS(e.id, o.id) === 'peace' && rel(e.id, o.id).truce < G.time && borders(e.id, o.id));
   cands.sort((a, b) => a.power - b.power);
   for (const o of cands) {
-    const t = thr * (G.empires.some(c => c.alive && atWar(o.id, c.id)) ? 0.85 : 1) * (o.isPlayer ? D.shy || 1 : 1);
+    const t = thr * (G.empires.some(c => c.alive && !c.pirate && atWar(o.id, c.id)) ? 0.85 : 1) * (o.isPlayer ? D.shy || 1 : 1);
     const want = e.power / (o.power + 1) > t && opinion(e.id, o.id) < 20;
     if (o.isPlayer) {
       // rivals give you fair warning before they come for you
@@ -3081,11 +3372,37 @@ function aiDiplo(e) {
 }
 function proposeToPlayer(kind, from) { dialogQueue.push({ kind, from }); if (!modalKind) showNextDialog(); }
 
+// ---------- victory: six ways to win ----------
+function victoryStatus() {
+  const me = emp(PLAYER), rv = rivals(), n = G.stars.length, mine = G.stars.filter(s => s.owner === PLAYER).length, V = G.vic || {};
+  const allRivals = G.empires.filter(e => !e.isPlayer && !e.pirate).length || 1;
+  const totalTrade = G.empires.filter(e => e.alive && !e.pirate).reduce((a, e) => a + Math.max(0, e.tradeAvg || 0), 0);
+  const share = totalTrade > 0 ? Math.max(0, me.tradeAvg || 0) / totalTrade : 0;
+  const branches = G.stars.filter(s => s.branch === PLAYER && s.owner >= 0 && s.owner !== PLAYER), hosts = new Set(branches.map(s => s.owner));
+  const bNeed = clamp(Math.round(n * 0.12), 5, 14), wealth = 8000 + 300 * n, hostsAll = rv.every(e => hosts.has(e.id));
+  const tk = Object.keys(TECHS), known = tk.filter(k => me.techs[k]).length;
+  const nx = G.stars.find(s => s.owner === PLAYER && (pj(s, 'nexus') || s.bq.some(q => q.k === 'proj' && q.pj === 'nexus'))), nexusDone = !!(nx && pj(nx, 'nexus'));
+  const nq = nx && !nexusDone ? nx.bq.find(q => q.k === 'proj' && q.pj === 'nexus') : null, nexusP = nexusDone ? 1 : nq ? nq.p / nq.t : 0;
+  const allies = rv.filter(e => relS(PLAYER, e.id) === 'alliance').length, allied = rv.length >= 2 && allies === rv.length;
+  const held = (t, d) => t != null ? Math.min(d, Math.floor(G.time - t)) : 0;
+  return [
+    { k: 'conquest', name: 'Conquest', icon: '⚔', desc: 'Destroy every rival empire.', p: 1 - rv.length / allRivals, txt: `${rv.length} rival empire${rv.length === 1 ? '' : 's'} left`, won: rv.length === 0 },
+    { k: 'hegemony', name: 'Domination', icon: '👑', desc: 'Control 60% of all star systems.', p: mine / Math.ceil(n * 0.6), txt: `${mine} / ${Math.ceil(n * 0.6)} systems`, won: mine >= n * 0.6 },
+    { k: 'trade', name: 'Trade', icon: '⇄', desc: 'Control 45% of all galactic trade for 180 days in a row. Run freighters, build Trade Hubs and grow rich worlds.', p: share >= 0.45 ? 0.5 + held(V.tradeT, 180) / 360 : share / 0.9, txt: `${Math.round(share * 100)}% of galactic trade${V.tradeT != null ? ` · held ${held(V.tradeT, 180)}/180 days` : ' (need 45%)'}`, won: held(V.tradeT, 180) >= 180, share },
+    { k: 'business', name: 'Business', icon: '🏢', desc: `Build a megacorp: branch offices in ${bNeed} systems of other empires, at least one in every surviving rival, and ₡${fmt(wealth)} in the bank.`, p: (Math.min(1, branches.length / bNeed) + Math.min(1, me.res.credits / wealth) + (hostsAll && rv.length ? 1 : 0)) / 3, txt: `${branches.length}/${bNeed} branches · ₡${fmt(me.res.credits)} / ${fmt(wealth)}${rv.length && !hostsAll ? ' · not in every rival yet' : ''}`, won: branches.length >= bNeed && me.res.credits >= wealth && hostsAll && rv.length > 0 },
+    { k: 'science', name: 'Science', icon: '🌀', desc: 'Research every technology, then build the Gateway Nexus (a major project at any of your worlds).', p: known / tk.length * 0.7 + nexusP * 0.3, txt: `${known}/${tk.length} technologies · Nexus ${nexusDone ? 'complete' : nq ? Math.round(nexusP * 100) + '%' : 'not started'}`, won: known === tk.length && nexusDone },
+    { k: 'diplomacy', name: 'Diplomacy', icon: '🤝', desc: 'Be allied with every surviving empire (at least two) for 120 days. Gifts, trade and common enemies win friends.', p: allied ? 0.5 + held(V.dipT, 120) / 240 : allies / Math.max(2, rv.length) * 0.5, txt: `Allied with ${allies} of ${rv.length}${V.dipT != null ? ` · held ${held(V.dipT, 120)}/120 days` : ''}`, won: held(V.dipT, 120) >= 120 },
+  ];
+}
 function checkVictory() {
   if (G.over || !emp(PLAYER).alive) return;
-  const rivals = G.empires.filter(e => !e.isPlayer && e.alive).length;
-  const mine = G.stars.filter(s => s.owner === PLAYER).length;
-  if (!G.victoryShown && (rivals === 0 || mine >= G.stars.length * 0.6)) { G.victoryShown = true; openModal('gameover', rivals === 0 ? 'conquest' : 'hegemony'); }
+  G.vic = G.vic || {};
+  const st = victoryStatus(), tr = st.find(v => v.k === 'trade'), rv = rivals();
+  if (tr.share >= 0.45) { if (G.vic.tradeT == null) { G.vic.tradeT = G.time; notify('⇄ We now control 45% of galactic trade! Hold it for 180 days for a trade victory.', { color: '#66bb6a' }); } } else G.vic.tradeT = null;
+  const allied = rv.length >= 2 && rv.every(e => relS(PLAYER, e.id) === 'alliance');
+  if (allied) { if (G.vic.dipT == null) { G.vic.dipT = G.time; notify('🤝 Every surviving empire is our ally! Keep the peace for 120 days for a diplomatic victory.', { color: '#66bb6a' }); } } else G.vic.dipT = null;
+  const w = st.find(v => v.won);
+  if (w && !G.victoryShown) { G.victoryShown = true; G.wonBy = w.k; openModal('gameover', w.k); }
 }
 
 // =====================================================================
@@ -3277,6 +3594,7 @@ const ATMO = { earth: [110, 170, 255], terran: [110, 170, 255], ocean: [100, 160
 
 // --- panel icons: top-down silhouettes of the angular cyberpunk hulls ---
 const SVG_SHAPES = {
+  freighter: { h: 'M13.5 1 L16.5 1 L17 5 L21 6 L21 25 L17 26 L16 29 L14 29 L13 26 L9 25 L9 6 L13 5 Z M9 11 L21 11 M9 16 L21 16 M9 21 L21 21', a: 'M15 1 L18 6 L23 9 L22 22 L18 24 L16 29 L14 29 L12 24 L8 22 L7 9 L12 6 Z' },
   worldbreaker: { h: 'M10 0 L12 9 L13 6 L15 10 L17 6 L18 9 L20 0 L22 8 L19 13 L20 27 L17 30 L13 30 L10 27 L11 13 L8 8 Z', a: 'M8 0 L13 10 L15 4 L17 10 L22 0 L24 9 L19 15 L25 22 L17 22 L15 30 L13 22 L5 22 L11 15 L6 9 Z' },
   frigate: { h: 'M15 0 L16.5 8 L16.8 27 L15.6 29 L14.4 29 L13.2 27 L13.5 8 Z M9 9 L12 9 L12 22 L9 22 Z M18 9 L21 9 L21 22 L18 22 Z', a: 'M15 0 L17 9 L23 12 L21 17 L17 16 L16 29 L14 29 L13 16 L9 17 L7 12 L13 9 Z' },
   tender: { h: 'M15 1 L19 6 L19 26 L17 29 L13 29 L11 26 L11 6 Z M7 3 L9 3 L9 18 L7 18 Z M21 3 L23 3 L23 18 L21 18 Z M7 3 L23 3 L23 5 L7 5 Z', a: 'M15 1 L19 7 L24 9 L22 15 L19 13 L18 28 L12 28 L11 13 L8 15 L6 9 L11 7 Z' },
@@ -3675,6 +3993,12 @@ function humanDefs(cls) {
       for (let i = 0; i < 4; i++) { const a = i / 4 * Math.PI * 2, x = Math.cos(a), y = Math.sin(a); d.push(D(box(0.04, 0.04, 0.04).scale(Math.abs(x) > 0.5 ? 9 : 1, Math.abs(y) > 0.5 ? 9 : 1, 1), 'plate', [x * 0.3, y * 0.3, 0]), D(box(0.07, 0.05, 0.14), 'pod', [x * 0.5, y * 0.5, 0.05]), D(box(0.02, 0.02, 0.02), 'core', [x * 0.5, y * 0.5, 0.13], { m: 'glow' })); }
       d.push(D(new THREE.TorusGeometry(0.18, 0.01, 3, 16), 'core', [0, 0, 0.3], { m: 'glow' }));
     }
+  } else if (cls === 'freighter') { // a hauler: cockpit, long spine and racks of cargo containers
+    d.push(D(spindle([[0, -0.5], [1, -0.4], [1, 0.3], [0.5, 0.5], [0, 0.5]], 6, 0.06, 0.05, 0.22), 'core', [0, 0, 0.38], { core: [0.05, 0.05] }));
+    d.push(D(box(0.035, 0.035, 0.8), 'core', [0, 0, -0.02]));
+    for (let i = 0; i < 4; i++) { const z = 0.2 - i * 0.16, g = 'c' + i; for (const [x, y] of [[0.055, 0.055], [-0.055, 0.055], [0.055, -0.055], [-0.055, -0.055]]) d.push(D(box(0.09, 0.09, 0.14), 'pod', [x, y, z], { grp: g })); d.push(D(box(0.2, 0.004, 0.004), 'pod', [0, 0.101, z], { grp: g, m: 'glow' })); }
+    d.push(D(box(0.03, 0.02, 0.006), 'core', [0, 0.035, 0.49], { m: 'glow' }));
+    engine(d, 0.04, 0, -0.47, 0.04); engine(d, -0.04, 0, -0.47, 0.04);
   } else if (cls === 'transport') {
     d.push(D(spindle([[0, -0.5], [1, -0.47], [1, 0.3], [0.6, 0.45], [0, 0.5]], 4, 0.08, 0.06), 'core', [0, 0, 0], { core: [0.08, 0.06] }));
     for (const [x, z] of [[0.12, 0.13], [-0.12, 0.13], [0.12, -0.16], [-0.12, -0.16]]) { const g = 'p' + x + z; d.push(D(spindle([[0, -0.5], [1, -0.3], [1, 0.3], [0, 0.5]], 4, 0.035, 0.03, 0.18), 'pod', [x, 0, z], { grp: g }), D(box(0.004, 0.004, 0.12), 'pod', [x, 0.03, z], { grp: g, m: 'glow' })); }
@@ -3691,14 +4015,14 @@ function humanDefs(cls) {
   return d;
 }
 function alienDefs(cls) {
-  const d = [], big = { worldbreaker: 1.5, corvette: 0.8, frigate: 0.85, destroyer: 0.9, tender: 0.95, bomber: 1.1, cruiser: 1, carrier: 1.1, battleship: 1.15, titan: 1.35, transport: 1, colony: 1 }[cls];
-  const coreW = { worldbreaker: 0.13, corvette: 0.08, frigate: 0.065, destroyer: 0.06, tender: 0.09, bomber: 0.075, cruiser: 0.1, carrier: 0.11, battleship: 0.12, titan: 0.13, transport: 0.09, colony: 0.1 }[cls];
+  const d = [], big = { freighter: 1, worldbreaker: 1.5, corvette: 0.8, frigate: 0.85, destroyer: 0.9, tender: 0.95, bomber: 1.1, cruiser: 1, carrier: 1.1, battleship: 1.15, titan: 1.35, transport: 1, colony: 1 }[cls];
+  const coreW = { freighter: 0.07, worldbreaker: 0.13, corvette: 0.08, frigate: 0.065, destroyer: 0.06, tender: 0.09, bomber: 0.075, cruiser: 0.1, carrier: 0.11, battleship: 0.12, titan: 0.13, transport: 0.09, colony: 0.1 }[cls];
   d.push(D(spindle([[0, -0.5], [0.45, -0.34], [1, -0.05], [0.5, 0.28], [0, 0.42]], 3, coreW, coreW * 0.75, 1, Math.PI / 2), 'core', [0, 0, 0], { core: [coreW, coreW * 0.7] }));
   const prong = spindle([[0, -0.5], [1, -0.25], [0, 0.5]], 3, 0.022 * big, 0.02 * big, 0.48);
-  if (!['colony', 'transport', 'tender'].includes(cls)) for (const s of [1, -1]) d.push(D(prong, 'weapon', [s * coreW * 0.7, 0, 0.3], { r: [0, s * 0.13, 0] }));
+  if (!['colony', 'transport', 'tender', 'freighter'].includes(cls)) for (const s of [1, -1]) d.push(D(prong, 'weapon', [s * coreW * 0.7, 0, 0.3], { r: [0, s * 0.13, 0] }));
   const cres = [[coreW * 0.4, -0.02], [coreW + 0.18 * big, -0.2], [coreW + 0.24 * big, -0.48], [coreW + 0.1 * big, -0.3], [coreW * 0.4, -0.3]];
   d.push(D(blade(cres, 0.012), 'wing'), D(blade(mir(cres), 0.012), 'wing'));
-  const nSp = { worldbreaker: 6, corvette: 1, frigate: 2, destroyer: 2, tender: 1, bomber: 2, cruiser: 3, carrier: 3, battleship: 5, titan: 6, transport: 1, colony: 2 }[cls];
+  const nSp = { freighter: 1, worldbreaker: 6, corvette: 1, frigate: 2, destroyer: 2, tender: 1, bomber: 2, cruiser: 3, carrier: 3, battleship: 5, titan: 6, transport: 1, colony: 2 }[cls];
   for (let i = 0; i < nSp; i++) { const cg = new THREE.ConeGeometry(0.022, 0.2 * big, 3); cg.rotateX(-1.1); d.push(D(cg, 'plate', [0, coreW * 0.6, 0.15 - i * 0.14])); }
   if (['cruiser', 'battleship', 'carrier', 'titan', 'worldbreaker'].includes(cls)) { const c2 = [[coreW, 0.3], [coreW + 0.14, 0.12], [coreW + 0.1, 0.0], [coreW, 0.06]]; d.push(D(blade(c2, 0.012), 'wing'), D(blade(mir(c2), 0.012), 'wing')); d.push(D(fin([[-0.4, 0], [0.3, 0], [0.1, -0.09]], 0.012), 'plate', [0, -coreW * 0.5, 0])); }
   if (cls === 'battleship' || cls === 'titan') { const cs = spindle([[0, -0.5], [1, -0.2], [0, 0.5]], 3, 0.03, 0.03, cls === 'titan' ? 0.75 : 0.6); d.push(D(cs, 'weapon', [0, 0.02, cls === 'titan' ? 0.48 : 0.4])); }
@@ -3711,8 +4035,8 @@ function alienDefs(cls) {
   if (cls === 'bomber') { const dw = [[coreW * 0.4, 0.15], [coreW + 0.3, -0.25], [coreW + 0.22, -0.4], [coreW * 0.4, -0.2]]; d.push(D(blade(dw, 0.014), 'wing'), D(blade(mir(dw), 0.014), 'wing'), D(box(0.04, 0.004, 0.24), 'core', [0, -coreW * 0.55, 0], { m: 'glow' })); }
   if (cls === 'carrier') for (const s of [1, -1]) for (const z of [0.15, -0.1]) { const o = new THREE.OctahedronGeometry(0.045); o.scale(1.4, 0.6, 2); d.push(D(o, 'pod', [s * (coreW + 0.07), 0, z])); }
   if (cls === 'tender') { for (const s of [1, -1]) d.push(D(spindle([[0, -0.5], [1, -0.2], [0, 0.5]], 3, 0.015, 0.015, 0.5), 'plate', [s * 0.13, 0, 0.2], { r: [0, -s * 0.25, 0] }), D(new THREE.OctahedronGeometry(0.02), 'plate', [s * 0.19, 0, 0.42], { m: 'glow' })); }
-  if (cls === 'transport' || cls === 'colony' || cls === 'tender') for (const [x, z] of [[0.12, 0.1], [-0.12, 0.1], [0.12, -0.15], [-0.12, -0.15]]) { const o = new THREE.OctahedronGeometry(0.05); o.scale(1, 1, 2); d.push(D(o, 'pod', [x, 0, z])); }
-  const orbs = { worldbreaker: [[0, 0.03, -0.5], [0.09, 0, -0.46], [-0.09, 0, -0.46], [0.05, -0.05, -0.44], [-0.05, -0.05, -0.44], [0, -0.06, -0.42]], frigate: [[0.03, 0, -0.47], [-0.03, 0, -0.47]], tender: [[0.04, 0, -0.47], [-0.04, 0, -0.47]], bomber: [[0, 0, -0.48], [0.06, 0, -0.44], [-0.06, 0, -0.44]], carrier: [[0, 0.02, -0.48], [0.07, 0, -0.45], [-0.07, 0, -0.45], [0, -0.03, -0.42]], titan: [[0, 0.03, -0.5], [0.08, 0, -0.46], [-0.08, 0, -0.46], [0.05, -0.04, -0.44], [-0.05, -0.04, -0.44], [0, -0.05, -0.42]], corvette: [[0, 0, -0.48]], destroyer: [[0.03, 0, -0.47], [-0.03, 0, -0.47]], cruiser: [[0, 0.02, -0.48], [0.06, 0, -0.44], [-0.06, 0, -0.44]], battleship: [[0, 0.02, -0.5], [0.07, 0, -0.45], [-0.07, 0, -0.45], [0, -0.03, -0.42]], transport: [[0, 0, -0.48]], colony: [[0, 0, -0.48]] }[cls];
+  if (cls === 'transport' || cls === 'colony' || cls === 'tender' || cls === 'freighter') for (const [x, z] of [[0.12, 0.1], [-0.12, 0.1], [0.12, -0.15], [-0.12, -0.15]]) { const o = new THREE.OctahedronGeometry(0.05); o.scale(1, 1, 2); d.push(D(o, 'pod', [x, 0, z])); }
+  const orbs = { freighter: [[0.03, 0, -0.47], [-0.03, 0, -0.47]], worldbreaker: [[0, 0.03, -0.5], [0.09, 0, -0.46], [-0.09, 0, -0.46], [0.05, -0.05, -0.44], [-0.05, -0.05, -0.44], [0, -0.06, -0.42]], frigate: [[0.03, 0, -0.47], [-0.03, 0, -0.47]], tender: [[0.04, 0, -0.47], [-0.04, 0, -0.47]], bomber: [[0, 0, -0.48], [0.06, 0, -0.44], [-0.06, 0, -0.44]], carrier: [[0, 0.02, -0.48], [0.07, 0, -0.45], [-0.07, 0, -0.45], [0, -0.03, -0.42]], titan: [[0, 0.03, -0.5], [0.08, 0, -0.46], [-0.08, 0, -0.46], [0.05, -0.04, -0.44], [-0.05, -0.04, -0.44], [0, -0.05, -0.42]], corvette: [[0, 0, -0.48]], destroyer: [[0.03, 0, -0.47], [-0.03, 0, -0.47]], cruiser: [[0, 0.02, -0.48], [0.06, 0, -0.44], [-0.06, 0, -0.44]], battleship: [[0, 0.02, -0.5], [0.07, 0, -0.45], [-0.07, 0, -0.45], [0, -0.03, -0.42]], transport: [[0, 0, -0.48]], colony: [[0, 0, -0.48]] }[cls];
   for (const [x, y, z] of orbs) d.push(D(new THREE.OctahedronGeometry(0.035 * big), 'engine', [x, y, z], { m: 'glow', noz: [x, y, z - 0.05] }));
   d.push(D(box(0.006, 0.006, 0.6), 'core', [0, coreW * 0.55, 0], { m: 'glow' }));
   return d;
@@ -3872,6 +4196,8 @@ function drawGalaxyLabels(time) {
     if (d < 900) { ctx.font = '10px system-ui'; ctx.fillStyle = 'rgba(160,180,215,0.8)'; ctx.fillText(s.id === 0 ? 'Home' : `${s.ly} ly · ${s.sp.split('+')[0]}`, sc.x, sc.y + r * 0.5 + 20); }
     if (vis[s.id] && (s.inv || G.time - (s._combat || -99) < 0.6)) { ctx.fillStyle = '#ff6a4d'; ctx.font = 'bold 13px system-ui'; ctx.fillText('⚔', sc.x + r * 0.5 + 12, sc.y - r * 0.5 - 14); }
     if (vis[s.id] && G.time - (s._bomb || -99) < 0.6) { ctx.font = '13px system-ui'; ctx.fillText('💣', sc.x - r * 0.5 - 12, sc.y - r * 0.5 - 14); }
+    if (vis[s.id] && fleetsAt(s.id).some(f => f.base)) { ctx.font = '13px system-ui'; ctx.fillStyle = '#e0e0e0'; ctx.fillText('☠', sc.x + r * 0.5 + 12, sc.y + 2); }
+    if (s.branch === PLAYER) { ctx.font = '12px system-ui'; ctx.fillText('🏢', sc.x - r * 0.5 - 12, sc.y + 2); }
     if (s.colonizing && vis[s.id]) { ctx.strokeStyle = emp(s.colonizing.owner).color; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(sc.x, sc.y, r * 0.5 + 9, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * s.colonizing.p); ctx.stroke(); }
   }
   ctx.globalAlpha = 1;
@@ -4726,8 +5052,9 @@ function updateTopbar() {
   $('#tb-mi').parentElement.title = `Minerals ${fmt(e.res.minerals)} / ${fmt(sc)} storage. Used to construct buildings, projects and ships.`;
   const rr = (id, v) => { const n = $(id); n.textContent = ' ' + sgn(v); n.className = v >= 0 ? 'pos' : 'neg'; };
   rr('#tb-enr', e.inc.en || 0); rr('#tb-mir', e.inc.mi || 0);
+  $('#tb-crv').textContent = fmt(e.res.credits || 0); rr('#tb-crr', e.inc.cr || 0);
   if (e.researching) { const T = techInfo(e.researching); $('#tb-re').textContent = T.name.split(' ')[0] + ' ' + Math.floor((e.techProg[e.researching] || 0) / techCost(e, e.researching) * 100) + '%'; }
-  else $('#tb-re').textContent = fmt(e.res.research) + (availableTechs(e).length ? ' (pick!)' : '');
+  else $('#tb-re').textContent = fmt(e.res.research) + (availableTechs(e).length ? (window.innerWidth <= 500 ? ' ❗' : ' (pick!)') : '');
   rr('#tb-rer', e.inc.re || 0);
   const cv = $('#tb-capv'); cv.textContent = `${e.used || 0}/${e.cap || 0}`; cv.style.color = (e.used || 0) > (e.cap || 0) ? '#ff8a65' : '';
   $('#tb-date').textContent = dateStr(G.time);
@@ -4770,11 +5097,13 @@ function fleetPanel(f) {
     if (f.at !== null && hasClass(f, 'colony') && G.stars[f.at].owner < 0 && !G.stars[f.at].colonizing) h += `<button class="good" data-act="colonize">Colonize ${esc(prim(G.stars[f.at]).n)}</button>`;
     if (canBombard(f)) h += f.bomb ? `<button data-act="bombard">Stop bombardment</button>` : `<button class="danger" data-act="bombard">💣 Bombard ${esc(prim(G.stars[f.at]).n)}</button>`;
     h += `</div>`;
+    if (freighterOnly(f)) h += routeHtml(f, live);
     if (f.crack) h += `<div class="btns"><button data-act="cancelCrack">Stand down the planet cracker</button></div>`;
     else if (f.at !== null && f.ships.some(sh => SHIPS[sh.c].cracker)) h += `<div class="sub">☄ To destroy a planet, open it in this system (tap it, or its row under Planets) and press <b>Destroy</b>.</div>`;
     if (canBombard(f) && !f.bomb) h += `<div class="sub">Bombardment kills the garrison and population and wrecks buildings once the orbital defenses are down. Every empire will think less of you.</div>`;
     if (tr) h += `<div class="sub">🪖 ${Math.round(tr)} soldiers aboard. They land automatically once an enemy world's orbital defenses are destroyed and no enemy warships remain.</div>`;
   }
+  if (e.pirate) h += `<div class="sub">☠ Outlaws at war with everyone. ${f.base ? 'This is a pirate den: destroying it ends the raids from here.' : 'Raiders preying on trade.'} Bounty: about ₡${Math.round(f.ships.reduce((a, sh) => a + costValue(SHIPS[sh.c].cost), 0) * 0.6)} for the lot.</div>`;
   // individual ships: condition words, no health bars
   let list = '';
   const ships = f.ships.slice().sort((a, b) => CLASS_ORDER.indexOf(a.c) - CLASS_ORDER.indexOf(b.c));
@@ -4808,7 +5137,7 @@ function colonyBlock(s, live, w) {
   s.buildings.forEach((b, i) => { h += `<span class="chip">${BUILDINGS[b].icon} ${BUILDINGS[b].name}<button data-act="demolish" data-arg="${i}" title="Demolish (no refund)">✕</button></span>`; });
   if (!s.buildings.length) h += `<span class="muted">None yet</span>`;
   h += `</div>`;
-  s.bq.forEach((q, i) => { w['bq' + i] = q.p / q.t * 100; const nm = queueName(s, q); h += `<div class="row"><div class="grow">${esc(nm)}${i ? ' <small>(queued)</small>' : ''}${bar('bq' + i)}</div><button data-act="cancelB" data-arg="${i}" title="Cancel (full refund)">✕</button></div>`; });
+  s.bq.forEach((q, i) => { w['bq' + i] = q.p / q.t * 100; const nm = queueName(s, q); if (!i) live.rb = '₡' + rushCost(q, queueCost(q)); h += `<div class="row"><div class="grow">${esc(nm)}${i ? ' <small>(queued)</small>' : ''}${bar('bq' + i)}</div>${i ? '' : '<button data-act="rush" data-arg="b" title="Finish now with credits">⏩ <span data-live="rb"></span></button>'}<button data-act="cancelB" data-arg="${i}" title="Cancel (full refund)">✕</button></div>`; });
   h += `<h4>Construct</h4><div class="grid2">`;
   for (const k in BUILDINGS) {
     const B = BUILDINGS[k];
@@ -4818,13 +5147,15 @@ function colonyBlock(s, live, w) {
   h += `</div><h4>Major projects</h4><div class="grid2">`;
   for (const k in PROJECTS) {
     const P = PROJECTS[k], n = pj(s, k), queued = s.bq.some(q => q.k === 'proj' && q.pj === k), cost = projCost(s, k);
-    const done = n >= P.max, need = P.needs && !s.buildings.includes(P.needs);
-    h += `<button class="opt" data-act="project" data-arg="${k}" ${done || queued || need || !canAfford(pe, cost) ? 'disabled' : ''}><b>${P.icon} ${P.name}${P.max > 1 ? ` (${n}/${P.max})` : ''}</b><small>${done ? '✓ Complete' : queued ? 'In progress' : need ? 'Needs a ' + BUILDINGS[P.needs].name : costStr(cost) + ' · ' + P.time + 'd'}</small><small>${P.desc}</small></button>`;
+    const done = n >= P.max, need = P.needs && !s.buildings.includes(P.needs), noTech = P.tech && !pe.techs[P.tech];
+    h += `<button class="opt" data-act="project" data-arg="${k}" ${done || queued || need || noTech || !canAfford(pe, cost) ? 'disabled' : ''}><b>${P.icon} ${P.name}${P.max > 1 ? ` (${n}/${P.max})` : ''}</b><small>${done ? '✓ Complete' : queued ? 'In progress' : need ? 'Needs a ' + BUILDINGS[P.needs].name : noTech ? 'Requires ' + TECHS[P.tech].name : costStr(cost) + ' · ' + P.time + 'd'}</small><small>${P.desc}</small></button>`;
   }
   h += `</div>`;
   if (s.buildings.includes('shipyard')) {
     h += `<h4>Shipyard · fleet capacity ${pe.used}/${pe.cap}</h4>`;
-    s.sq.forEach((q, i) => { w['sq' + i] = q.p / q.t * 100; h += `<div class="row">${shipSVG(q.k, false, pe.color, 20)}<div class="grow">${SHIPS[q.k].name}${i ? ' <small>(queued)</small>' : ''}${bar('sq' + i)}</div><button data-act="cancelS" data-arg="${i}" title="Cancel (full refund)">✕</button></div>`; });
+    const mw = G.time < (pe.mercT || -999);
+    h += `<div class="btns" style="margin-top:0"><button data-act="mercs" ${mw || pe.res.credits < MERCS.cost ? 'disabled' : ''} title="${MERCS.ships.map(c => SHIPS[c].name).join(', ')}">🪖 Hire mercenaries · ₡${MERCS.cost}${mw ? ` (in ${Math.ceil(pe.mercT - G.time)}d)` : ''}</button></div>`;
+    s.sq.forEach((q, i) => { w['sq' + i] = q.p / q.t * 100; if (!i) live.rs = '₡' + rushCost(q, SHIPS[q.k].cost); h += `<div class="row">${shipSVG(q.k, false, pe.color, 20)}<div class="grow">${SHIPS[q.k].name}${i ? ' <small>(queued)</small>' : ''}${bar('sq' + i)}</div>${i ? '' : '<button data-act="rush" data-arg="s" title="Finish now with credits">⏩ <span data-live="rs"></span></button>'}<button data-act="cancelS" data-arg="${i}" title="Cancel (full refund)">✕</button></div>`; });
     h += `<div class="grid2">`;
     for (const c in SHIPS) {
       const S = SHIPS[c], locked = S.tech && !pe.techs[S.tech], taken = S.unique && hasUnique(pe, c);
@@ -4841,6 +5172,39 @@ function devastHtml(s, live) {
   if (G.time - (s._bomb || -99) < 1) h += `<div class="ground">💣 <b>Orbital bombardment!</b> ${s.owner === PLAYER ? 'Drive off the enemy fleet to stop it.' : ''}</div>`;
   if (s.devast > 0.01) { live.dev = `${Math.round(s.devast * 100)}% (output −${Math.round(s.devast * 60)}%)`; h += `<div class="kv"><span>Devastation</span><span class="c-bad" data-live="dev"></span></div>`; }
   return h;
+}
+// a freighter's trade run: where it's going, what it carries, what it made
+function routeHtml(f, live) {
+  const R = f.route, cap = cargoCap(f);
+  let h = `<h4>Trade run · cargo hold ${cap} units</h4>`;
+  if (!R) return h + `<div class="sub">Idle. Freighters buy commodities where they're cheap and sell where they're dear. Pirates prey on busy routes.</div><div class="btns"><button class="good" data-act="autoTrade">⇄ Auto-trade</button><button data-act="openRoutes">Choose a route…</button></div>`;
+  const nm = id => id != null ? esc(G.stars[id].name) : '…';
+  live.rt = R.cargo ? `Carrying ${R.cargo} ${COMM[R.k].icon} ${COMM[R.k].name} (paid ₡${Math.round(R.cost)}) → ${nm(R.dst)}` : `Empty → ${nm(R.dst != null ? R.dst : R.a)}, looking for cargo`;
+  h += `<div class="sub">${R.auto ? 'Auto-trading: picks the most profitable run each time' : `Route ${nm(R.a)} ⇄ ${nm(R.b)}`}</div><div class="sub" data-live="rt"></div>`;
+  if (R.last != null) h += `<div class="sub" style="color:${R.last >= 0 ? 'var(--good)' : 'var(--bad)'}">Last run: ${R.last >= 0 ? '+' : ''}₡${R.last}</div>`;
+  return h + `<div class="btns">${R.auto ? '' : '<button data-act="autoTrade">⇄ Auto-trade</button>'}<button data-act="openRoutes">Change route…</button><button data-act="stopTrade">Stop trading</button></div>`;
+}
+function routesView() {
+  const f = sel.fleet; if (!f || !G.fleets.includes(f)) return { html: '<p class="muted">Select a freighter first.</p>' };
+  const from = f.at !== null ? f.at : f.to, list = bestRoutes(PLAYER, from, cargoCap(f), 10);
+  let h = `<p class="muted" style="margin-top:0">Best runs for ${esc(f.name)} (${cargoCap(f)} units). Profit is per one-way trip at today's prices; markets drift, so auto-trade re-checks each time. ⚠ means pirates nearby.</p>`;
+  if (!list.length) h += `<p>No profitable routes yet: a freighter needs two markets. Settle a second world (Alpha Centauri is close) or meet another empire, and routes will open up. On <b>Auto-trade</b> the freighter starts by itself as soon as one does.</p>`;
+  for (const r of list) h += `<div class="row"><div class="grow"><b>${esc(G.stars[r.a].name)} → ${esc(G.stars[r.b].name)}</b> ${r.risk ? '<span class="tag" style="background:#4a1d1d;color:#ffab91">⚠ pirates</span>' : ''}<br><small>${COMM[r.k].icon} ${COMM[r.k].name} · +₡${Math.round(r.profit)} per trip · ~${Math.round(r.days)} days</small></div><button class="primary" data-act="setRoute" data-arg="${r.a}:${r.b}">Run</button></div>`;
+  return { html: h };
+}
+// market prices and branch office for a system
+function marketHtml(s) {
+  if (s.owner < 0 || emp(s.owner).pirate || !vis[s.id]) return '';
+  const pr = marketOf(s), ks = Object.keys(COMM).sort((a, b) => pr[a] / COMM[a].base - pr[b] / COMM[b].base);
+  let h = `<h4>Market</h4><div class="chips">` + ks.map(k => { const r = pr[k] / COMM[k].base; return `<span class="chip" title="${COMM[k].name}" style="color:${r < 0.8 ? '#9fe0a8' : r > 1.25 ? '#ffab91' : ''}">${COMM[k].icon} ₡${pr[k].toFixed(2)}</span>`; }).join('') + `</div><div class="sub" style="font-size:11.5px">Green = cheap here (buy), red = in demand (sell).</div>`;
+  if (s.branch != null) h += `<div class="sub">🏢 ${s.branch === PLAYER ? '<b>Your</b>' : esc(emp(s.branch).name)} branch office operates here.</div>`;
+  else if (s.owner !== PLAYER) { const why = canBranch(emp(PLAYER), s); h += `<div class="btns"><button data-act="branch" data-arg="${s.id}" ${why ? 'disabled' : ''}>🏢 Open branch office · ₡${BRANCH.credits} ◆${BRANCH.minerals}</button></div>${why ? `<div class="sub muted">${esc(why)}</div>` : `<div class="sub">Earns ₡${(BRANCH.income * (1 + s.pop / 20)).toFixed(1)}/day and counts towards a business victory.</div>`}`; }
+  return h;
+}
+function victoryView() {
+  let h = `<p class="muted" style="margin-top:0">Win any way you like. Bars show how close you are.</p>`;
+  for (const v of victoryStatus()) { const w = clamp(v.p * 100, 0, 100); h += `<div class="dcard"><div class="dh"><span style="font-size:20px">${v.icon}</span><b>${v.name} victory</b><span class="muted">${Math.round(w)}%</span></div><div class="sub">${v.desc}</div><div class="bar" style="margin:6px 0"><i style="width:${w.toFixed(1)}%"></i></div><div class="sub" style="color:var(--text)">${v.txt}</div></div>`; }
+  return { html: h };
 }
 function planetsList(s) {
   let h = `<h4>Planets (${s.planets.length})</h4>`;
@@ -4880,7 +5244,7 @@ function starPanel(s) {
       else h += `<div class="sub">Build a Colony Ship at a shipyard to settle this world.</div>`;
     }
   }
-  h += planetsList(s);
+  h += marketHtml(s) + planetsList(s);
   const fl = fleetsAt(s.id).filter(fleetVisible);
   if (fl.length) {
     h += `<h4>Fleets here</h4>`;
@@ -4985,7 +5349,7 @@ function refreshUI(force) {
     if (force) panel._html = null; applyView(panel, v); $('#mapctl').classList.toggle('up', !(panelCollapsed && window.innerWidth <= 760)); $('#mapctl').classList.toggle('upc', panelCollapsed && window.innerWidth <= 760);
   }
   else { panel.classList.add('hidden'); panel._html = null; $('#mapctl').classList.remove('up', 'upc'); }
-  if (modalKind && ['tech', 'diplo', 'empire'].includes(modalKind)) renderModal();
+  if (modalKind && ['tech', 'diplo', 'empire', 'victory'].includes(modalKind)) renderModal();
   tutTick();
 }
 
@@ -4993,7 +5357,7 @@ function refreshUI(force) {
 // MODALS
 // =====================================================================
 function openModal(kind, arg) { modalKind = kind; modalArg = arg; $('#modal-body')._html = null; $('#modal').classList.remove('hidden'); renderModal(); }
-function toggleModal(kind) { if (modalKind === kind) actions.closeModal(); else if (!modalKind || ['tech', 'diplo', 'empire'].includes(modalKind)) openModal(kind); }
+function toggleModal(kind) { if (modalKind === kind) actions.closeModal(); else if (!modalKind || ['tech', 'diplo', 'empire', 'victory'].includes(modalKind)) openModal(kind); }
 function modalPauses() { return modalKind && ['menu', 'dialog', 'gameover', 'help', 'load', 'save', 'savetext', 'import'].includes(modalKind); }
 function showNextDialog() {
   while (dialogQueue.length) {
@@ -5014,6 +5378,8 @@ function renderModal() {
   else if (modalKind === 'save') { title = 'Save Game'; small = true; v = { html: slotsView('save') }; }
   else if (modalKind === 'load') { title = 'Load Game'; small = true; v = { html: slotsView('load') }; }
   else if (modalKind === 'help') { title = 'How to Play'; v = { html: helpHtml() }; }
+  else if (modalKind === 'victory') { title = 'Paths to Victory'; v = victoryView(); }
+  else if (modalKind === 'routes') { title = 'Trade Routes'; v = routesView(); }
   else if (modalKind === 'savetext') { title = 'Export Save'; small = true; v = { html: `<p class="muted" style="margin-top:0">This copy of the game can't save files directly. Copy the text below and keep it somewhere safe (Notes, a message to yourself). Paste it into <b>Import save</b> to restore it.</p><textarea class="savebox" id="savetext" readonly>${esc(modalArg)}</textarea><div class="btns"><button class="primary" data-act="copySave">Copy</button><button data-act="closeModal">Done</button></div>` }; }
   else if (modalKind === 'import') { title = 'Import Save'; small = true; v = { html: `<div class="btns" style="margin-top:0"><button class="primary" data-act="pickSaveFile">Choose a save file…</button></div><p class="muted">…or paste exported save text:</p><textarea class="savebox" id="importtext" placeholder="Paste save text here"></textarea><div class="btns"><button data-act="importPasted">Load pasted save</button><button data-act="closeModal">Cancel</button></div>` }; }
   else if (modalKind === 'dialog') {
@@ -5026,7 +5392,7 @@ function renderModal() {
     small = true;
     const k = modalArg;
     title = k === 'defeat' ? 'Defeat' : 'Victory!';
-    const msg = k === 'defeat' ? 'Your empire has fallen. Humanity’s light among the stars is extinguished.' : k === 'conquest' ? 'Every rival empire has been destroyed. The local stars are yours!' : 'You control 60% of the local stars. Your hegemony is unchallenged!';
+    const msg = { defeat: 'Your empire has fallen. Humanity’s light among the stars is extinguished.', conquest: 'Every rival empire has been destroyed. The local stars are yours!', hegemony: 'You control 60% of the local stars. Your hegemony is unchallenged!', trade: 'For half a year, nearly half of all the goods moving between the stars have passed through your hands. Every market answers to Earth: a trade victory!', business: 'Your megacorp has offices in every capital and more money than most empires. Business victory!', science: 'The Gateway Nexus opens onto the wider galaxy. Humanity steps through first: a science victory!', diplomacy: 'Every empire of the local stars stands with you in one alliance. Diplomatic victory!' }[k];
     v = { html: `<p style="font-size:16px">${msg}</p><p class="muted">Day ${Math.floor(G.time)} · ${G.stars.filter(s => s.owner === PLAYER).length} systems</p>
       <div class="btns">${k !== 'defeat' ? '<button class="primary" data-act="closeModal">Keep playing</button>' : '<button data-act="closeModal">Observe</button>'}<button data-act="newGameScreen">New game</button><button data-act="title">Title screen</button></div>` };
   }
@@ -5067,7 +5433,7 @@ function diploView() {
   const p = emp(PLAYER), live = {};
   let h = `<p class="muted" style="margin-top:0">AI empires judge you by shared borders, wars, alliances, gifts and common enemies. Alliances are defensive: if someone declares war on an ally, the other joins in.</p>`;
   for (const e of G.empires) {
-    if (e.isPlayer) continue;
+    if (e.isPlayer || e.pirate) continue;
     const rs = e.alive ? relS(PLAYER, e.id) : 'dead';
     h += `<div class="dcard"><div class="dh"><span class="dot" style="background:${e.color}"></span><b>${esc(e.name)}</b><span class="badge ${rs}">${rs === 'dead' ? 'destroyed' : rs}</span></div>`;
     if (!e.alive) { h += `</div>`; continue; }
@@ -5076,7 +5442,7 @@ function diploView() {
     const op = opinion(e.id, PLAYER);
     live['op' + e.id] = `${op > 0 ? '+' : ''}${op} (${opinionWord(op)})`;
     live['sys' + e.id] = String(G.stars.filter(s => s.owner === e.id).length);
-    const wars = G.empires.filter(o => o.alive && o.id !== e.id && atWar(e.id, o.id)).map(o => o.id === PLAYER ? 'You' : o.name);
+    const wars = G.empires.filter(o => o.alive && !o.pirate && o.id !== e.id && atWar(e.id, o.id)).map(o => o.id === PLAYER ? 'You' : o.name);
     const allies = G.empires.filter(o => o.alive && o.id !== e.id && relS(e.id, o.id) === 'alliance').map(o => o.id === PLAYER ? 'You' : o.name);
     const home = G.stars[e.capital];
     h += `<div class="sub">${PERS[e.pers].name} · capital ${home ? esc(home.name) : '?'} · <span data-live="sys${e.id}"></span> systems · Military: ${strength}${borders(PLAYER, e.id) ? ' · Shares a border' : ''}</div>
@@ -5086,7 +5452,7 @@ function diploView() {
     if (rs === 'war') h += `<button class="good" data-act="peace" data-arg="${e.id}">Propose peace</button>`;
     if (rs === 'peace') h += `<button class="danger" data-act="war" data-arg="${e.id}" ${r.truce > G.time ? 'disabled' : ''}>Declare war</button><button data-act="ally" data-arg="${e.id}">Propose alliance</button>`;
     if (rs === 'alliance') h += `<button data-act="breakAlly" data-arg="${e.id}">End alliance</button>`;
-    h += `<button data-act="gift" data-arg="${e.id}" ${p.res.energy < 100 ? 'disabled' : ''}>Gift ⚡100</button></div></div>`;
+    h += `<button data-act="gift" data-arg="${e.id}" ${p.res.energy < 100 ? 'disabled' : ''}>Gift ⚡100</button><button data-act="giftCr" data-arg="${e.id}" ${p.res.credits < 200 ? 'disabled' : ''}>Gift ₡200</button></div></div>`;
   }
   return { html: h, live };
 }
@@ -5103,7 +5469,10 @@ function empireView() {
     <div class="kv"><span>Net income/day</span><b data-live="einc"></b></div><div class="kv"><span>Total upkeep</span><span data-live="eup"></span></div><div class="kv"><span>Storage (each resource)</span><span>${fmt(storageCap(e))}</span></div>
     <div class="kv"><span>Technologies</span><span>${Object.keys(e.techs).length}/${Object.keys(TECHS).length}</span></div>
     <div class="kv"><span>Difficulty</span><span>${DIFF[G.diff].name}</span></div>
-    <h4>Galactic market</h4><div class="btns" style="margin-top:0"><button data-act="trade" data-arg="en" ${e.res.energy < TRADE.give ? 'disabled' : ''}>Sell ⚡${TRADE.give} → ◆${TRADE.get}</button><button data-act="trade" data-arg="mi" ${e.res.minerals < TRADE.give ? 'disabled' : ''}>Sell ◆${TRADE.give} → ⚡${TRADE.get}</button></div>
+    <h4>Galactic market (credits ₡${fmt(e.res.credits)})</h4><div class="btns" style="margin-top:0">
+      <button data-act="mkt" data-arg="sell:minerals" ${e.res.minerals < 100 ? 'disabled' : ''}>Sell ◆100 → ₡${MARKET.sell.minerals}</button><button data-act="mkt" data-arg="sell:energy" ${e.res.energy < 100 ? 'disabled' : ''}>Sell ⚡100 → ₡${MARKET.sell.energy}</button>
+      <button data-act="mkt" data-arg="buy:minerals" ${e.res.credits < MARKET.buy.minerals ? 'disabled' : ''}>Buy ◆100 for ₡${MARKET.buy.minerals}</button><button data-act="mkt" data-arg="buy:energy" ${e.res.credits < MARKET.buy.energy ? 'disabled' : ''}>Buy ⚡100 for ₡${MARKET.buy.energy}</button></div>
+    <div class="kv"><span>Credit income</span><span>₡${(e.inc.cr || 0).toFixed(1)}/day + freighter runs (${(e.trProfit || 0) >= 0 ? '+' : ''}₡${fmt(e.trProfit || 0)} so far)</span></div>
     <h4>Systems</h4>`;
   for (const s of stars.sort((a, b) => b.pop - a.pop)) h += `<div class="row"><span class="pl" style="background:${PLANETS[s.type].color}"></span><div class="grow">${esc(prim(s).n)} <small>${esc(s.name)}${isCapital(s) ? ' ★' : ''} · pop ${s.pop.toFixed(0)} · ${s.buildings.length}/${slots(s)}${s.buildings.includes('shipyard') ? ' · ⚓' : ''}${s.inv ? ' · ⚔ invaded' : ''}</small></div><button data-act="goto" data-arg="${s.id}">Go</button></div>`;
   h += `<h4>Fleets</h4>`;
@@ -5267,7 +5636,7 @@ function helpHtml() {
   const sec = (title, body, open) => `<details${open ? ' open' : ''}><summary>${title}</summary><div>${body}</div></details>`;
   const shipRows = CLASS_ORDER.map(c => `<tr><td>${shipSVG(c, false, '#4fc3f7', 18)} ${SHIPS[c].name}</td><td>${SHIPS[c].desc}${SHIPS[c].tech ? ` <small>(${TECHS[SHIPS[c].tech].name})</small>` : ''}</td></tr>`).join('');
   return `<div class="help">
-  ${sec('Goal', `<p>Lead humanity from Earth into the real stars around the Sun. Win by destroying every alien empire <b>or</b> holding 60% of all systems. You lose if your last world falls.</p><p>New to the game? Open <b>☰ Menu → Tutorial</b> for a guided start.</p>`, true)}
+  ${sec('Goal', `<p>Lead humanity from Earth into the real stars around the Sun. There are six ways to win (tap <b>🏆</b> to see your progress): <b>Conquest</b> (destroy every rival), <b>Domination</b> (60% of all systems), <b>Trade</b> (45% of galactic trade for 180 days), <b>Business</b> (a megacorp with branch offices across every rival and a fortune in the bank), <b>Science</b> (every technology plus the Gateway Nexus) and <b>Diplomacy</b> (allied with every surviving empire for 120 days). You lose if your last world falls.</p><p>New to the game? Open <b>☰ Menu → Tutorial</b> for a guided start.</p>`, true)}
   ${sec('Getting started', `<ol style="padding-left:18px;margin:4px 0"><li>On Earth, build a <b>Research Lab</b> and pick a technology under <b>Tech</b>.</li><li>Build a <b>Colony Ship</b> at Earth's Shipyard and send it to an unclaimed star (Alpha Centauri is close).</li><li>Add <b>Mining Complexes</b> and <b>Power Plants</b>; give colonies Shipyards; settle the other planets in your systems and build stations in their orbits.</li><li>Build warships before your neighbours notice you. Speed time up with 2×/4×/8×.</li></ol>`)}
   ${sec('Moving around', `<ul><li><b>Galaxy:</b> every star is a real star at its true 3D position, with its real spectral type and many real exoplanets. <b>Double-tap a star</b> (or zoom right in) to enter it.</li><li><b>Star system:</b> planets orbit and battles play out ship by ship. Double-tap a planet to see its surface; zoom out to go back.</li><li><b>Planet:</b> a rotating globe. Watch ground battles and bombardments here.</li><li><b>Drag</b> to rotate, <b>pinch / wheel</b> to zoom, <b>two fingers / right-drag</b> to pan. Bottom buttons: + − zoom, ⌂ home, ◎ focus, ⤒ top, ◢ angled, ▭ side, ⟳ auto-orbit, ⟲/✋ swap drag between rotate and pan.</li></ul>`)}
   ${sec('Orders', `<p>Select one of your fleets, then tap a star (galaxy), or a planet or hyperlane exit (system view), to send it. Right-click also works on a computer. Space pauses; keys 1–4 set speed.</p><p>Fleet panel buttons: <b>Split</b> / <b>Merge</b>, <b>Stop</b>, <b>Colonize</b>, and <b>💣 Bombard</b> over an enemy world.</p>`)}
@@ -5276,6 +5645,7 @@ function helpHtml() {
   ${sec('Conquest and bombardment', `<p>Warships destroy a world's <b>orbital defenses</b> (Siege Bombers are best at it). Then <b>Troop Transports</b> in orbit land automatically and fight the garrison. When the garrison falls, the world is yours.</p><p><b>💣 Bombard</b>: once the defenses are down, a fleet ordered to bombard kills soldiers and civilians, flattens buildings and leaves the world <b>devastated</b> (lower output, slowly recovering). It makes invasions easy, but the victim and every other empire will hate you.</p>`)}
   ${sec('Economy', `<ul><li>⚡ Energy pays upkeep; ◆ Minerals build; 🔬 Research unlocks technology. Storage is limited, so spend or trade surpluses (Empire screen).</li><li>Each building needs a worker.</li><li><b>Settlements:</b> every other planet in your systems can be settled in a way that suits it: Helium-3 Skimmers or a Cloud City on gas giants, Sub-Ice Ocean Colonies on ice worlds, Magma Foundries on lava worlds, Dome Colonies, Arcology and Sea Cities, Atmospheric Refineries, and mining swarms on shattered worlds. Some add population.</li><li><b>Orbital stations:</b> zoom into any planet of a system you hold (<b>Zoom to orbit</b>) to build stations around it: Defense Platforms, an Orbital Shipyard, Research Stations, Orbital Collectors, Ring Habitats and Trade Hubs (3 around the main world, 2 elsewhere).</li><li><b>⚓ Fleet capacity</b> grows with systems, shipyards, Naval Yards and Starbases; going over it makes upkeep soar.</li></ul>`)}
   ${sec('Destroying planets', `<p>Research <b>Graviton Planet Cracker</b> (after Titans) to build a <b>World Breaker</b>, one per empire. Take it to an enemy system, knock out the orbital defenses and clear any warships, then open a planet and press <b>☄ Destroy</b>. The cannon charges for 8 days (the planet's crust glows as it cracks) and the ship must stay in orbit. Then the world splits apart. Destroying a main world kills everyone on it and the system is lost to its owner. What remains is a debris field that can be mined. Every empire will hate you for it, and the victim most of all.</p>`)}
+  ${sec('Trade, credits and pirates', `<p><b>Credits ₡</b> come from your populated worlds, Trade Hubs, branch offices, pirate bounties and above all <b>freighters</b>. Each system has a <b>market</b> (in its panel) where commodities like ore, fuel, food, alloys, medicine, electronics and luxuries are cheap or in demand depending on what its worlds produce and need. Select a Freighter and tap <b>Auto-trade</b>, or <b>Choose a route</b>, and it buys low and sells high. Each sale floods that market for a while, so spread your routes out. Trade with other empires earns them a cut and improves their opinion of you.</p><p><b>Spend credits</b> on the galactic market (Empire screen), <b>⏩ rushing</b> construction, <b>🪖 mercenaries</b> (an instant squadron at a shipyard), gifts, and <b>🏢 branch offices</b> in other empires' systems (needs Interstellar Commerce), which earn income and count towards a business victory.</p><p><b>☠ Pirates</b> (the Void Reavers) set up dens in empty systems and send raiders after freighters and lightly defended worlds. Escort your trade, build Defense Platforms on busy routes, and hunt their dens: every pirate ship destroyed pays a bounty.</p>`)}
   ${sec('Diplomacy', `<p>Peace, war or a defensive alliance with each empire. Gifts raise opinion; shared borders, wars and bombardment lower it. Peace brings a 150-day truce.</p>`)}
   ${sec('Saving', `<p>The game autosaves every 2 minutes and when you leave. There are three manual slots. <b>Export</b> gives you a file (or copyable text on an iPhone home-screen app) and <b>Import</b> restores it on any device.</p>`)}
   </div>`;
@@ -5301,9 +5671,11 @@ const TUT = [
     done: () => G.stars.some(s => s.id !== 0 && (s.owner === PLAYER || (s.colonizing && s.colonizing.owner === PLAYER))) || G.fleets.some(f => f.owner === PLAYER && colonyOnly(f) && f.autoCol && (f.at === null || f.path.length)) },
   { t: 'Explore', b: () => `Now select your <b>1st Fleet</b> (the warships beside Sol) and tap another nearby star to scout it. Fleets fly along the hyperlanes. (Lost? <b>⌂</b> flies home.)`, hl: '[data-act="home"]',
     done: () => G.fleets.some(f => f.owner === PLAYER && isArmed(f) && (f.at === null || f.path.length)) },
+  { t: 'Start trading', b: () => `You also own a <b>Freighter</b> at Sol. Select it (tap its icon beside Sol) and tap <b>⇄ Auto-trade</b>: it buys commodities where they're cheap and sells them where they're dear, earning <b>credits ₡</b>. Watch out for pirates.`,
+    done: () => G.fleets.some(f => f.owner === PLAYER && freighterOnly(f) && f.route) },
   { t: 'Build up', b: () => `Back at Earth, use the <b>Shipyard</b> for more Colony Ships and warships. Add <b>Power Plants</b> ⚡ and <b>Research Labs</b> 🔬, settle the other planets (gas giants, ice worlds…) and tap <b>Zoom to orbit</b> on any planet to build <b>stations</b> around it. Watch ⚓ fleet capacity: going over makes upkeep soar.`, next: 'Next' },
   { t: 'War and conquest', b: () => `Warships knock out a world's <b>orbital defenses</b>. Then land <b>Troop Transports</b>, or select your fleet over the world and tap <b>💣 Bombard</b> to wipe out the garrison first (Siege Bombers do it best, but every empire will hate you). <b>Diplo</b> handles peace, war and alliances.`, next: 'Next' },
-  { t: "You're ready", b: () => `Win by destroying every rival or holding 60% of the stars. <b>☰ → How to play</b> explains everything else. Good luck, Commander!`, next: 'Finish' },
+  { t: "You're ready", b: () => `Win by conquest, domination, trade, business, science or diplomacy. Tap <b>🏆</b> any time to see how close you are. <b>☰ → How to play</b> explains everything else. Good luck, Commander!`, next: 'Finish' },
 ];
 let tutShown = -1, tutDoneT = 0;
 function tutTick() {
@@ -5406,6 +5778,16 @@ const actions = {
     refreshUI(true);
   },
   research(k) { emp(PLAYER).researching = k; refreshUI(true); },
+  openVictory() { if (G) toggleModal('victory'); },
+  openRoutes() { if (sel.fleet) openModal('routes'); },
+  autoTrade() { const f = sel.fleet; if (!f) return; f.route = { auto: true }; toast(`${f.name} is auto-trading`, '#66bb6a'); refreshUI(true); },
+  setRoute(a) { const f = sel.fleet; if (!f) return; const [x, y] = a.split(':').map(Number); f.route = { a: x, b: y }; actions.closeModal(); toast(`${f.name}: ${G.stars[x].name} ⇄ ${G.stars[y].name}`, '#66bb6a'); refreshUI(true); },
+  stopTrade() { const f = sel.fleet; if (f) { f.route = null; f.path = []; } refreshUI(true); },
+  mkt(a) { const [kind, res] = a.split(':'); const err = marketTrade(emp(PLAYER), kind, res); if (err) toast(err, '#ef5350'); renderModal(); },
+  rush(which) { const err = rushQueue(emp(PLAYER), curStar(), which); if (err) toast(err, '#ef5350'); refreshUI(true); },
+  mercs() { const err = hireMercs(emp(PLAYER), curStar()); if (err) toast(err, '#ef5350'); refreshUI(true); },
+  branch(id) { const err = openBranch(emp(PLAYER), G.stars[+id]); if (err) toast(err, '#ef5350'); refreshUI(true); },
+  giftCr(id) { const p = emp(PLAYER); if (p.res.credits < 200) return; p.res.credits -= 200; const k = id + '>' + PLAYER, cur = G.op[k] || 0; G.op[k] = cur + 25 * (1 - clamp(cur, 0, 90) / 100); emp(+id).res.credits += 200; toast(`₡200 sent to the ${emp(+id).name}. Opinion improved.`, '#66bb6a'); renderModal(); },
   setDiff(k) { if (!G || !DIFF[k]) return; G.diff = k; for (const e of G.empires) if (!e.isPlayer) { e.mult = DIFF[k].mult; e._m = null; } toast(`Difficulty: ${DIFF[k].name}. ${DIFF[k].desc}.`, '#4fc3f7'); renderModal(); },
   pause() { G.paused = !G.paused; refreshUI(); },
   speed(v) { G.speed = +v; G.paused = false; refreshUI(); },

@@ -1,5 +1,5 @@
 // Offline cache for Stellar Dominion (used when served over https, e.g. Netlify or GitHub Pages).
-const CACHE = 'stellar-dominion-v12';
+const CACHE = 'stellar-dominion-v13';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-180.png', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
