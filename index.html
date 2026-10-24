@@ -3044,6 +3044,29 @@ function applyDragMode() {
   controls.mouseButtons = { LEFT: rot ? THREE.MOUSE.ROTATE : THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: rot ? THREE.MOUSE.PAN : THREE.MOUSE.ROTATE };
 }
 applyDragMode();
+let glLost = null;
+function rebuildScenes() {
+  teardownSystem();
+  if (PV) { PV.scene.remove(sky); disposeScene(PV.scene); PV = null; }
+  if (GX) { GX.scene.remove(sky); disposeScene(GX.scene); GX = null; }
+}
+glCanvas.addEventListener('webglcontextlost', e => {
+  e.preventDefault();
+  try { if (playing() && !G.over) saveTo('auto'); } catch (err) { }
+  if (!glLost) {
+    glLost = document.createElement('div');
+    glLost.style.cssText = 'position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);z-index:99;background:rgba(8,12,24,0.95);border:1px solid #2a3b63;border-radius:10px;padding:16px 20px;color:#cfe0ff;font:14px system-ui;text-align:center;max-width:300px';
+    document.body.appendChild(glLost);
+  }
+  glLost.innerHTML = 'The device paused the 3D graphics.<br><span style="color:#8fa3c7;font-size:12px">Your game was saved. Restoring…</span>';
+  glLost.style.display = 'block';
+  clearTimeout(glLost._t);
+  glLost._t = setTimeout(() => { glLost.innerHTML = 'The 3D graphics did not come back.<br><span style="color:#8fa3c7;font-size:12px">Your game is saved: reload and use Continue.</span><br><button style="margin-top:10px;padding:8px 18px;border-radius:8px;border:0;background:#2f6fe0;color:#fff;font:600 14px system-ui">Reload</button>'; glLost.querySelector('button').onclick = () => location.reload(); }, 5000);
+});
+glCanvas.addEventListener('webglcontextrestored', () => {
+  if (glLost) { clearTimeout(glLost._t); glLost.style.display = 'none'; }
+  rebuildScenes();
+});
 const UP = new THREE.Vector3(0, 1, 0);
 let trans = null; // fade between views
 
@@ -3448,7 +3471,7 @@ function buildSystem(s) {
   if (L.belt) { const r = mulberry32(s.id + 99), pts = []; for (let i = 0; i < 900; i++) { const a = r() * 6.283, rr = L.belt + (r() - 0.5) * 26; pts.push(new THREE.Vector3(Math.cos(a) * rr, (r() - 0.5) * 6, Math.sin(a) * rr)); } sc.add(new THREE.Points(new THREE.BufferGeometry().setFromPoints(pts), new THREE.PointsMaterial({ color: 0xa89c8a, size: 1.6, sizeAttenuation: true }))); }
   // planets
   const planets = s.planets.map((p, i) => {
-    const R = planetDrawR(s, i), lights = i === s.pi && s.owner >= 0 ? 0.9 : 0;
+    const R = planetDrawR(s, i), lights = i === s.pi && shownOwner(s) >= 0 ? 0.9 : 0;
     const m = planetMesh(p, R, false, lights, i === s.pi ? 48 : 32); sc.add(m);
     const moons = [];
     for (let k = 0; k < (p.moons || 0); k++) { const mm = planetMesh({ seed: p.seed + k + 1, t: 'barren', tex: null }, Math.max(1.2, R * 0.16), false, 0, 16); sc.add(mm); moons.push(mm); }
@@ -3654,11 +3677,12 @@ function updateSystem(time, vdt) {
     pl.m.userData.mat.uniforms.sun.value.set(0, 0, 0); pl.m.userData.mat.uniforms.cloudOff.value = G.time * 0.002;
     pl.moons.forEach((mm, k) => { const a = G.time * (0.4 / (k + 1)) + k * 2.1, mr = pl.R * (1.8 + k * 0.5); mm.position.set(x + Math.cos(a) * mr, y + Math.sin(a * 0.7) * mr * 0.15, z + Math.sin(a) * mr); mm.userData.mat.uniforms.sun.value.set(0, 0, 0); });
   });
-  if (SY.ownerShown !== s.owner) {
-    SY.ownerShown = s.owner;
+  const so = shownOwner(s);
+  if (SY.ownerShown !== so) {
+    SY.ownerShown = so;
     const mat = SY.mainOrbit.material;
-    if (s.owner >= 0) { mat.color.set(emp(s.owner).color); mat.opacity = 0.5; } else { mat.color.set(0x4a6aa8); mat.opacity = 0.28; }
-    SY.planets[s.pi].m.userData.mat.uniforms.lights.value = s.owner >= 0 ? 0.9 : 0;
+    if (so >= 0) { mat.color.set(emp(so).color); mat.opacity = 0.5; } else { mat.color.set(0x4a6aa8); mat.opacity = 0.28; }
+    SY.planets[s.pi].m.userData.mat.uniforms.lights.value = so >= 0 ? 0.9 : 0;
   }
   // keep the camera riding along with the main world while it orbits
   const [px, py, pz] = planetPosSys(s, s.pi), PP = new THREE.Vector3(px, py, pz);
@@ -3743,7 +3767,7 @@ function buildPlanetView(s, i) {
   const sunDir = new THREE.Vector3(-1, 0.25, 0.55).normalize(), sunPos = sunDir.clone().multiplyScalar(20000);
   const dl = new THREE.DirectionalLight(new THREE.Color(s.col), 1.6); dl.position.copy(sunDir); sc.add(dl); sc.add(new THREE.AmbientLight(0x8090b0, 0.25));
   const glare = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: new THREE.Color(s.col), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); glare.position.copy(sunDir.clone().multiplyScalar(9000)); glare.scale.setScalar(2600); sc.add(glare);
-  const lights = i === s.pi && s.owner >= 0 ? clamp(s.pop / 12, 0.15, 1) : 0;
+  const lights = i === s.pi && shownOwner(s) >= 0 ? clamp(s.pop / 12, 0.15, 1) : 0;
   const pm = planetMesh(p, 100, true, lights, 96); pm.userData.mat.uniforms.sun.value.copy(sunPos); sc.add(pm);
   const moons = []; for (let k = 0; k < (p.moons || 0); k++) { const mm = planetMesh({ seed: p.seed + k + 1, t: 'barren', tex: null }, 12 + k * 3, false, 0, 32); mm.userData.mat.uniforms.sun.value.copy(sunPos); sc.add(mm); moons.push(mm); }
   PV = { scene: sc, s, i, pm, moons, recs: new Map() };
@@ -3811,6 +3835,17 @@ function drawGroundStrip(s, y0, h, time, vdt) {
   ctx.textAlign = 'center';
 }
 
+// out of sensor range: no live view of the surface
+function drawNoIntel(s, y0, h) {
+  const g = ctx.createLinearGradient(0, y0, 0, y0 + h);
+  g.addColorStop(0, 'rgba(10,14,28,0)'); g.addColorStop(0.4, 'rgba(10,14,28,0.75)'); g.addColorStop(1, 'rgba(10,14,28,0.9)');
+  ctx.fillStyle = g; ctx.fillRect(0, y0, W, h);
+  const W2 = (window.innerWidth > 760 && !$('#panel').classList.contains('hidden')) ? W - 360 : W;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#8fa3c7'; ctx.font = 'bold 14px system-ui';
+  ctx.fillText('No sensor contact: ground forces unknown', W2 / 2, y0 + h * 0.3);
+  ctx.font = '12px system-ui'; ctx.fillStyle = '#5f7092'; ctx.fillText('Bring a ship or extend your borders here to see the surface live', W2 / 2, y0 + h * 0.3 + 20);
+}
+
 // ---------- camera presets & focus ----------
 let camAnim = null;
 function animateCamera(pos, target, dur = 0.7) { camAnim = { p0: camera.position.clone(), t0: controls.target.clone(), p1: pos.clone(), t1: target.clone(), t: 0, dur }; }
@@ -3861,7 +3896,7 @@ function draw(time, dt) {
   renderer.render(scene, camera);
   if (view.mode === 'galaxy') drawGalaxyLabels(time);
   else if (view.mode === 'system') drawSystemLabels();
-  else { const s = G.stars[view.star]; if (view.planet === s.pi && s.owner >= 0) drawGroundStrip(s, H - Math.min(170, H * 0.24), Math.min(170, H * 0.24), time, vdt); }
+  else { const s = G.stars[view.star], sh = Math.min(170, H * 0.24); if (view.planet === s.pi) { if (vis[s.id] && s.owner >= 0) drawGroundStrip(s, H - sh, sh, time, vdt); else if (!vis[s.id] && shownOwner(s) >= 0) drawNoIntel(s, H - sh, sh); } }
   if (trans) { trans.t += dt / 0.45; ctx.fillStyle = `rgba(2,3,10,${clamp(1 - trans.t, 0, 1)})`; ctx.fillRect(0, 0, W, H); if (trans.t >= 1) trans = null; }
 }
 
@@ -4226,7 +4261,7 @@ function refreshUI(force) {
   if (window.innerWidth > 760) panel.style.top = ($('#topbar').offsetHeight + 8) + 'px'; else panel.style.top = '';
   let v = null;
   if (sel.fleet && G.fleets.includes(sel.fleet)) v = fleetPanel(sel.fleet);
-  else if (view.mode !== 'galaxy' && sel.planet != null) v = planetPanel(G.stars[view.star], sel.planet);
+  else if (view.mode !== 'galaxy' && sel.planet != null && G.stars[view.star].planets[sel.planet]) v = planetPanel(G.stars[view.star], sel.planet);
   else if (view.mode === 'system') v = starPanel(G.stars[view.star]);
   else if (view.mode === 'galaxy' && sel.star != null) v = starPanel(G.stars[sel.star]);
   if (v) {
