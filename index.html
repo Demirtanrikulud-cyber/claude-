@@ -1702,6 +1702,7 @@ const PIRATES = { name: 'Void Reavers', color: '#c9c9c9' };
 
 // grace: days of guaranteed peace at the start; shy: how much more reluctant AIs are to attack you than each other
 const DIFF = {
+  sandbox: { name: 'Sandbox', sandbox: true, mult: 0.95, ai: 2.2, mil: 0.85, war: 1.9, grace: 500, shy: 1.3, warn: 60, pir: 0.85, desc: 'Infinite energy, minerals, credits and research for you; rivals play as on Normal' },
   relaxed: { name: 'Relaxed', mult: 0.6, ai: 4.0, mil: 0.45, war: 3.2, grace: 1500, shy: 2.2, warn: 120, pir: 0.4, desc: 'Long peaceful start, timid rivals' },
   easy: { name: 'Easy', mult: 0.75, ai: 3.0, mil: 0.6, war: 2.6, grace: 900, shy: 1.6, warn: 90, pir: 0.6, desc: 'Plenty of time to build up' },
   normal: { name: 'Normal', mult: 0.95, ai: 2.2, mil: 0.85, war: 1.9, grace: 500, shy: 1.3, warn: 60, pir: 0.85, desc: 'A fair fight' },
@@ -2266,12 +2267,15 @@ function economy(dt) {
     e.inc = { en: net, mi: t.mi, re: t.re, up: t.up, gross: t.en, over, cr: e.inc.cr };
     e.res.energy += net * dt; e.res.minerals += t.mi * dt; e.res.research += t.re * dt;
     // storage limits: surpluses beyond the silos are lost
+    // sandbox: the player's coffers never run dry
+    const sbx = e.isPlayer && DIFF[G.diff] && DIFF[G.diff].sandbox;
+    if (sbx) { e.res.energy = e.res.minerals = e.res.credits = e.res.research = 1e6; e.deficit = false; }
     const sc = storageCap(e); e.store = sc;
-    for (const k of ['energy', 'minerals']) if (e.res[k] > sc) {
+    for (const k of ['energy', 'minerals']) if (e.res[k] > sc && !sbx) {
       e.res[k] = sc;
       if (e.isPlayer && G.time - (e['_full' + k] || -999) > 120) { e['_full' + k] = G.time; notify(`${k === 'energy' ? 'Energy' : 'Mineral'} storage is full (${fmt(sc)}). Spend it on projects or ships, or trade it in the Empire screen.`, { color: '#ffca28' }); }
     }
-    const rc = researchCap(e); if (e.res.research > rc) e.res.research = rc;
+    const rc = researchCap(e); if (e.res.research > rc && !sbx) e.res.research = rc;
     if (e.res.energy < 0) { e.res.energy = 0; if (!e.deficit && e.isPlayer) notify('Energy deficit! Mineral and research output halved. Build power plants or reduce your fleet.', { color: '#ef5350' }); e.deficit = true; }
     else if (e.res.energy > 5) e.deficit = false;
     if (e.researching) {
@@ -5053,9 +5057,11 @@ function updateTopbar() {
   const rr = (id, v) => { const n = $(id); n.textContent = ' ' + sgn(v); n.className = v >= 0 ? 'pos' : 'neg'; };
   rr('#tb-enr', e.inc.en || 0); rr('#tb-mir', e.inc.mi || 0);
   $('#tb-crv').textContent = fmt(e.res.credits || 0); rr('#tb-crr', e.inc.cr || 0);
+  if (DIFF[G.diff] && DIFF[G.diff].sandbox) { for (const id of ['#tb-en', '#tb-mi', '#tb-crv']) { $(id).textContent = '∞'; $(id).style.color = '#9be7ff'; } } else $('#tb-crv').style.color = '';
   if (e.researching) { const T = techInfo(e.researching); $('#tb-re').textContent = T.name.split(' ')[0] + ' ' + Math.floor((e.techProg[e.researching] || 0) / techCost(e, e.researching) * 100) + '%'; }
   else $('#tb-re').textContent = fmt(e.res.research) + (availableTechs(e).length ? (window.innerWidth <= 500 ? ' ❗' : ' (pick!)') : '');
   rr('#tb-rer', e.inc.re || 0);
+  if (DIFF[G.diff] && DIFF[G.diff].sandbox && !e.researching) $('#tb-re').textContent = '∞ pick a tech';
   const cv = $('#tb-capv'); cv.textContent = `${e.used || 0}/${e.cap || 0}`; cv.style.color = (e.used || 0) > (e.cap || 0) ? '#ff8a65' : '';
   $('#tb-date').textContent = dateStr(G.time);
   for (const v of [0, 1, 2, 4, 8]) $('#sp' + v).classList.toggle('on', v === 0 ? G.paused : (!G.paused && G.speed === v));
@@ -5788,7 +5794,7 @@ const actions = {
   mercs() { const err = hireMercs(emp(PLAYER), curStar()); if (err) toast(err, '#ef5350'); refreshUI(true); },
   branch(id) { const err = openBranch(emp(PLAYER), G.stars[+id]); if (err) toast(err, '#ef5350'); refreshUI(true); },
   giftCr(id) { const p = emp(PLAYER); if (p.res.credits < 200) return; p.res.credits -= 200; const k = id + '>' + PLAYER, cur = G.op[k] || 0; G.op[k] = cur + 25 * (1 - clamp(cur, 0, 90) / 100); emp(+id).res.credits += 200; toast(`₡200 sent to the ${emp(+id).name}. Opinion improved.`, '#66bb6a'); renderModal(); },
-  setDiff(k) { if (!G || !DIFF[k]) return; G.diff = k; for (const e of G.empires) if (!e.isPlayer) { e.mult = DIFF[k].mult; e._m = null; } toast(`Difficulty: ${DIFF[k].name}. ${DIFF[k].desc}.`, '#4fc3f7'); renderModal(); },
+  setDiff(k) { if (!G || !DIFF[k]) return; if (DIFF[G.diff].sandbox && !DIFF[k].sandbox) { const e = emp(PLAYER); e.res.energy = e.res.minerals = Math.min(e.res.energy, storageCap(e)); e.res.credits = 2000; e.res.research = 0; } G.diff = k; for (const e of G.empires) if (!e.isPlayer) { e.mult = DIFF[k].mult; e._m = null; } toast(`Difficulty: ${DIFF[k].name}. ${DIFF[k].desc}.`, '#4fc3f7'); renderModal(); },
   pause() { G.paused = !G.paused; refreshUI(); },
   speed(v) { G.speed = +v; G.paused = false; refreshUI(); },
   openTech() { if (G && !G.over) openModal('tech'); },
