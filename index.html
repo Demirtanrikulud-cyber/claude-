@@ -4844,7 +4844,7 @@ function newGameScreen() {
     <label>Map<select id="ng-size">${Object.entries(SIZES).map(([k, v]) => `<option value="${k}" ${k === 'medium' ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label>
     <label>Alien rivals: <b id="ng-ai-v">4</b><input type="range" id="ng-ai" min="1" max="7" value="4" oninput="document.getElementById('ng-ai-v').textContent=this.value"></label>
     <label>Difficulty<select id="ng-diff">${Object.entries(DIFF).map(([k, v]) => `<option value="${k}" ${k === 'normal' ? 'selected' : ''}>${v.name}</option>`).join('')}</select></label>
-    <label class="check"><input type="checkbox" id="ng-tut" ${anySaves() ? '' : 'checked'}> Guided tutorial (recommended for your first game)</label>
+    <label class="check"><input type="checkbox" id="ng-tut" ${lsGet('stellar_dominion_tutorial_seen') ? '' : 'checked'}> Guided tutorial (recommended for your first game)</label>
     <div class="btns" style="justify-content:space-between"><button data-act="title">Back</button><button class="primary" data-act="startGame">Launch ▶</button></div>
   </div></div>`);
 }
@@ -4919,7 +4919,7 @@ function tutTick() {
   document.querySelectorAll('.tut-hl').forEach(n => n.classList.remove('tut-hl'));
   if (st.hl && !modalKind) document.querySelectorAll(st.hl).forEach(n => n.classList.add('tut-hl'));
 }
-function tutAdvance() { const st = TUT[G.tut]; if (st && st.go) st.go(); G.tut++; if (G.tut >= TUT.length) { G.tut = null; toast('Tutorial complete. Have fun!', '#66bb6a'); } tutShown = -1; tutTick(); }
+function tutAdvance() { const st = TUT[G.tut]; if (st && st.go) st.go(); G.tut++; if (G.tut >= TUT.length) { G.tut = null; lsSet('stellar_dominion_tutorial_seen', '1'); toast('Tutorial complete. Have fun!', '#66bb6a'); } tutShown = -1; tutTick(); }
 
 // =====================================================================
 // ACTIONS
@@ -4934,7 +4934,7 @@ const actions = {
   },
   togglePanel() { panelCollapsed = !panelCollapsed; refreshUI(true); },
   tutNext() { if (G && G.tut != null) tutAdvance(); },
-  tutEnd() { if (!G) return; const st = TUT[G.tut]; if (st && st.go) st.go(); G.tut = null; tutTick(); toast('Tutorial closed. Restart it any time from ☰ Menu.', '#4fc3f7'); },
+  tutEnd() { if (!G) return; const st = TUT[G.tut]; if (st && st.go) st.go(); G.tut = null; lsSet('stellar_dominion_tutorial_seen', '1'); tutTick(); toast('Tutorial closed. Restart it any time from ☰ Menu.', '#4fc3f7'); },
   tutMin() { $('#tut').classList.toggle('min'); tutTick(); },
   tutRestart() { if (!G) return; G.tut = 0; tutShown = -1; G.paused = true; actions.closeModal(); if (view.mode !== 'system' || view.star !== 0) { if (view.mode === 'planet') backToSystem(); if (view.mode !== 'system' || view.star !== 0) enterSystem(0); } tutTick(); },
   deselect() { sel.fleet = null; sel.planet = null; if (view.mode === 'galaxy') sel.star = null; refreshUI(true); },
